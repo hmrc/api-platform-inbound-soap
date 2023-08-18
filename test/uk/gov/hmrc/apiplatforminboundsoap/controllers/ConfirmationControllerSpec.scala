@@ -49,6 +49,15 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers  with GuiceOn
     }
   }
 
+  "POST acknowledgement endpoint with exp claim in the past" should {
+    val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      .withHeaders("Authorization"-> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTIzNTkxNDJ9.SLEu_OlkHea19WwAYq_wG5nRJ43-uBv013QH3U_Gqvs")
+    "return 403" in new Setup {
+      val result = controller.message()(fakeRequest)
+      status(result) shouldBe Status.FORBIDDEN
+    }
+  }
+
   "POST acknowledgement endpoint with empty authorisation header" should {
     val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
       .withHeaders("Authorization"-> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDc5NzcwNzd9.bgdyMvTvicf5FvAlQXN-311k0WTZg0-72wqR4hb66dQ")
