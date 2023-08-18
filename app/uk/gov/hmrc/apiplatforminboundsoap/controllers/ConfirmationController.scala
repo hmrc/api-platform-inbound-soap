@@ -16,21 +16,18 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
-import play.api.http.Status
-import play.api.test.Helpers._
-import play.api.test.{FakeRequest, Helpers}
+import javax.inject.{Inject, Singleton}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.apiplatformoutboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-class MicroserviceHelloWorldControllerSpec extends AnyWordSpec with Matchers {
+import scala.concurrent.Future
 
-  private val fakeRequest = FakeRequest("GET", "/")
-  private val controller = new MicroserviceHelloWorldController(Helpers.stubControllerComponents())
+@Singleton()
+class ConfirmationController @Inject()(cc: ControllerComponents, verifyJwtTokenAction: VerifyJwtTokenAction)
+    extends BackendController(cc) {
 
-  "GET /" should {
-    "return 200" in {
-      val result = controller.hello()(fakeRequest)
-      status(result) shouldBe Status.OK
-    }
+  def message(): Action[AnyContent] = (Action andThen verifyJwtTokenAction).async { implicit request =>
+    Future.successful(Ok("Hello world"))
   }
 }
