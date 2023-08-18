@@ -1,3 +1,4 @@
 # microservice specific routes
 
 GET        /hello-world             uk.gov.hmrc.apiplatforminboundsoap.controllers.MicroserviceHelloWorldController.hello
+POST       /ccn2/acknowledgementV2  uk.gov.hmrc.apiplatforminboundsoap.controllers.ConfirmationController.message
