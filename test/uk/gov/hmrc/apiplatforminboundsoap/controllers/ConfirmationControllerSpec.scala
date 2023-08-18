@@ -32,10 +32,31 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers  with GuiceOn
        verifyJwtTokenAction)
   }
   private val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
+
   "POST acknowledgement endpoint with no authorisation header" should {
     "return 403" in new Setup {
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.FORBIDDEN
     }
   }
+
+  "POST acknowledgement endpoint with empty authorisation header" should {
+    val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      .withHeaders("Authorization"-> "Bearer")
+    "return 403" in new Setup {
+      val result = controller.message()(fakeRequest)
+      status(result) shouldBe Status.FORBIDDEN
+    }
+  }
+
+  "POST acknowledgement endpoint with empty authorisation header" should {
+    val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      .withHeaders("Authorization"-> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDc5NzcwNzd9.bgdyMvTvicf5FvAlQXN-311k0WTZg0-72wqR4hb66dQ")
+    "return 200" in new Setup {
+      val result = controller.message()(fakeRequest)
+      status(result) shouldBe Status.OK
+    }
+  }
 }
+
+
