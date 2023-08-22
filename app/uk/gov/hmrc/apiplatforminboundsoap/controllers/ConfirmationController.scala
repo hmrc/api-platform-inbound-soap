@@ -28,6 +28,6 @@ class ConfirmationController @Inject()(cc: ControllerComponents, verifyJwtTokenA
     extends BackendController(cc) {
 
   def message(): Action[AnyContent] = (Action andThen verifyJwtTokenAction).async { implicit request =>
-    Future.successful(Ok("Hello world"))
+    Future.successful(Ok)
   }
 }

@@ -31,9 +31,9 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers  with GuiceOn
     val controller = new ConfirmationController(Helpers.stubControllerComponents(),
        verifyJwtTokenAction)
   }
-  private val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
 
   "POST acknowledgement endpoint with no authorisation header" should {
+    val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
     "return 403" in new Setup {
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.FORBIDDEN
