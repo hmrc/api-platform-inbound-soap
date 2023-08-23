@@ -36,7 +36,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers  with GuiceOn
     val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
     "return 403" in new Setup {
       val result = controller.message()(fakeRequest)
-      status(result) shouldBe Status.FORBIDDEN
+      status(result) shouldBe Status.UNAUTHORIZED
     }
   }
 
@@ -45,7 +45,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers  with GuiceOn
       .withHeaders("Authorization"-> "Bearer")
     "return 403" in new Setup {
       val result = controller.message()(fakeRequest)
-      status(result) shouldBe Status.FORBIDDEN
+      status(result) shouldBe Status.UNAUTHORIZED
     }
   }
 
@@ -54,7 +54,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers  with GuiceOn
       .withHeaders("Authorization"-> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTIzNTkxNDJ9.SLEu_OlkHea19WwAYq_wG5nRJ43-uBv013QH3U_Gqvs")
     "return 403" in new Setup {
       val result = controller.message()(fakeRequest)
-      status(result) shouldBe Status.FORBIDDEN
+      status(result) shouldBe Status.UNAUTHORIZED
     }
   }
 
