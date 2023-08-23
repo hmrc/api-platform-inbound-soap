@@ -14,14 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.config
+package uk.gov.hmrc.apiplatforminboundsoap.jwt
 
-import com.google.inject.AbstractModule
+import com.auth0.jwt.{JWT, RegisteredClaims}
+import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.interfaces.JWTVerifier
+import javax.inject.{Inject, Singleton}
+import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 
-class Module extends AbstractModule {
 
-  override def configure(): Unit = {
+@Singleton
+class JWTVerifierBuilder @Inject()(appConfig: AppConfig) {
 
-    bind(classOf[AppConfig]).asEagerSingleton()
+  def build(): JWTVerifier = {
+    JWT
+      .require(Algorithm.HMAC256(appConfig.hmacSecret))
+      .withClaimPresence(RegisteredClaims.EXPIRES_AT)
+      .build()
   }
 }

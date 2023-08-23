@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.config
+package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.apiplatformoutboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-@Singleton
-class AppConfig @Inject()(config: Configuration) {
+import scala.concurrent.Future
 
-  val appName: String = config.get[String]("appName")
-  val hmacSecret: String = config.get[String]("hmacSecret")
+@Singleton()
+class ConfirmationController @Inject()(cc: ControllerComponents, verifyJwtTokenAction: VerifyJwtTokenAction)
+    extends BackendController(cc) {
+
+  def message(): Action[AnyContent] = (Action andThen verifyJwtTokenAction).async { implicit request =>
+    Future.successful(Ok)
+  }
 }

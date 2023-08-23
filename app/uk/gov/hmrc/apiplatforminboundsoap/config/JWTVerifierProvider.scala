@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.config
 
-import com.google.inject.AbstractModule
+import com.auth0.jwt.interfaces.JWTVerifier
+import javax.inject.{Inject, Provider, Singleton}
+import uk.gov.hmrc.apiplatforminboundsoap.jwt.JWTVerifierBuilder
 
-class Module extends AbstractModule {
+@Singleton
+class JWTVerifierProvider @Inject() (jwtVerifierBuilder: JWTVerifierBuilder) extends Provider[JWTVerifier] {
 
-  override def configure(): Unit = {
-
-    bind(classOf[AppConfig]).asEagerSingleton()
+  override def get(): JWTVerifier = {
+    jwtVerifierBuilder.build()
   }
 }
