@@ -38,7 +38,7 @@ class VerifyJwtTokenAction @Inject()(jwtVerifier: JWTVerifier)(implicit ec: Exec
       case Right(_) => successful(Some(Ok))
       case Left(e) => {
         logger.warn(s"""JWT token verification failed. ${e.getMessage}""")
-        successful(Some(Forbidden))
+        successful(Some(Unauthorized))
       }
     }
   }
