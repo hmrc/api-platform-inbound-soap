@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.config
+package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
+import uk.gov.hmrc.apiplatforminboundsoap.models.SoapRequest
+import uk.gov.hmrc.http.HeaderCarrier
+
+import scala.xml.NodeSeq
 
 @Singleton
-class AppConfig @Inject()(config: Configuration) {
+class IncomingMessageService @Inject() (appConfig: AppConfig, inboundConnector: InboundConnector){
+  def processIncomingMessage(soapRequest: NodeSeq)(implicit hc:HeaderCarrier): Unit = {
+    inboundConnector.postMessage(SoapRequest(soapRequest.text, appConfig.forwardMessageUrl))
 
-  val appName: String = config.get[String]("appName")
-  val hmacSecret: String = config.get[String]("hmacSecret")
-  val forwardMessageUrl: String = config.get[String]("forwardMessageUrl")
+  }
+
 }
