@@ -37,13 +37,12 @@ class InboundConnector @Inject() (httpClient: HttpClient)(implicit ec: Execution
         "x-message-id"     -> "x-message-id-value"
       )
     def postHttpRequest(soapRequest: SoapRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
-      logger.warn("Inside connector")
       httpClient.POSTString[Either[UpstreamErrorResponse, HttpResponse]](soapRequest.destinationUrl, soapRequest.soapEnvelope)
     }
 
     postHttpRequest(soapRequest).map {
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
-        logger.warn(s"""Sending message failed with status code $statusCode""")
+        logger.warn(s"Sending message failed with status code $statusCode")
         SendFail(statusCode)
       case Right(response: HttpResponse)                    =>
         SendSuccess

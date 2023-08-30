@@ -33,7 +33,7 @@ class CCN2MessageController @Inject() (
     verifyJwtTokenAction: VerifyJwtTokenAction,
     incomingMessageService: InboundMessageService
   )(implicit ec: ExecutionContext
-  ) extends BackendController(cc) with Logging {
+  ) extends BackendController(cc) {
 
   def message(path: String): Action[NodeSeq] = (Action andThen verifyJwtTokenAction).async(parse.xml) { implicit request =>
     incomingMessageService.processInboundMessage(request.body) flatMap {

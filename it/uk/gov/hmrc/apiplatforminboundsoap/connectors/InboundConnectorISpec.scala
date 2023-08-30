@@ -44,7 +44,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
   "postMessage" should {
     val message = SoapRequest("<Envelope><Body>foobar</Body></Envelope>", wireMockUrl)
 
-    "return successful statuses returned by the CCN2 service" in new Setup {
+    "return successful statuses returned by the internal service" in new Setup {
       val expectedStatus: Int = OK
       primeStubForSuccess(message.soapEnvelope, expectedStatus)
 
@@ -53,7 +53,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       result shouldBe SendSuccess
     }
 
-    "return error statuses returned by the CCN2 service" in new Setup {
+    "return error statuses returned by the internal service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
       primeStubForSuccess(message.soapEnvelope, expectedStatus)
 
@@ -62,7 +62,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       result shouldBe SendFail(expectedStatus)
     }
 
-    "return error status when soap fault is returned by the CCN2 service" in new Setup {
+    "return error status when soap fault is returned by the internal service" in new Setup {
       Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
         primeStubForFault(message.soapEnvelope, fault)
         val result: SendResult = await(underTest.postMessage(message))
@@ -70,7 +70,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       }
     }
 
-    "send the given message to the CCN2 service" in new Setup {
+    "send the given message to the internal service" in new Setup {
       primeStubForSuccess(message.soapEnvelope, OK)
 
       await(underTest.postMessage(message))
