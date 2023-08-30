@@ -1,4 +1,4 @@
 # microservice specific routes
 
-POST       /ccn2/acknowledgementV2  uk.gov.hmrc.apiplatforminboundsoap.controllers.ConfirmationController.message
-POST       /ics2/*path              uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message(path)
+POST       /ccn2/acknowledgementV2            uk.gov.hmrc.apiplatforminboundsoap.controllers.ConfirmationController.message
+POST       /ics2/:path                        uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message(path)

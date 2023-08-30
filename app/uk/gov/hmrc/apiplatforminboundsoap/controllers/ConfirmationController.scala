@@ -17,14 +17,14 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.Future
+
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.apiplatformoutboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.Future
-
 @Singleton()
-class ConfirmationController @Inject()(cc: ControllerComponents, verifyJwtTokenAction: VerifyJwtTokenAction)
+class ConfirmationController @Inject() (cc: ControllerComponents, verifyJwtTokenAction: VerifyJwtTokenAction)
     extends BackendController(cc) {
 
   def message(): Action[AnyContent] = (Action andThen verifyJwtTokenAction).async { implicit request =>

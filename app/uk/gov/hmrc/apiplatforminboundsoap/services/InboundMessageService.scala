@@ -17,18 +17,19 @@
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import javax.inject.{Inject, Singleton}
+import play.api.Logging
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models.SoapRequest
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendResult, SoapRequest}
 import uk.gov.hmrc.http.HeaderCarrier
 
+import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 @Singleton
-class IncomingMessageService @Inject() (appConfig: AppConfig, inboundConnector: InboundConnector){
-  def processIncomingMessage(soapRequest: NodeSeq)(implicit hc:HeaderCarrier): Unit = {
+class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: InboundConnector) extends Logging {
+
+  def processInboundMessage(soapRequest: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
     inboundConnector.postMessage(SoapRequest(soapRequest.text, appConfig.forwardMessageUrl))
-
   }
-
 }

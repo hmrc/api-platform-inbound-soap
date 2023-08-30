@@ -16,5 +16,4 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.models
 
-
 case class SoapRequest(soapEnvelope: String, destinationUrl: String)

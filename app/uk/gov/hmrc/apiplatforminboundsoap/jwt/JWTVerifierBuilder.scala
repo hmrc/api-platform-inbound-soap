@@ -16,15 +16,14 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.jwt
 
-import com.auth0.jwt.{JWT, RegisteredClaims}
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
+import com.auth0.jwt.{JWT, RegisteredClaims}
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 
-
 @Singleton
-class JWTVerifierBuilder @Inject()(appConfig: AppConfig) {
+class JWTVerifierBuilder @Inject() (appConfig: AppConfig) {
 
   def build(): JWTVerifier = {
     JWT

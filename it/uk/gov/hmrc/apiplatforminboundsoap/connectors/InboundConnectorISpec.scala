@@ -23,7 +23,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
-import uk.gov.hmrc.apiplatforminboundsoap.models.SoapRequest
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess, SoapRequest}
 import uk.gov.hmrc.apiplatforminboundsoap.support.ImportControlInboundSoapStub
 import uk.gov.hmrc.http.test.WireMockSupport
 
@@ -39,7 +39,6 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
   trait Setup {
     val underTest: InboundConnector = app.injector.instanceOf[InboundConnector]
-    val messageId                    = "messageId"
   }
 
   "postMessage" should {
@@ -49,42 +48,58 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedStatus: Int = OK
       primeStubForSuccess(message.soapEnvelope, expectedStatus)
 
-      val result: Int = await(underTest.postMessage(message))
+      val result: SendResult = await(underTest.postMessage(message))
 
-      result shouldBe expectedStatus
+      result shouldBe SendSuccess
     }
 
     "return error statuses returned by the CCN2 service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
       primeStubForSuccess(message.soapEnvelope, expectedStatus)
 
-      val result: Int = await(underTest.postMessage(message))
+      val result: SendResult = await(underTest.postMessage(message))
 
-      result shouldBe expectedStatus
+      result shouldBe SendFail(expectedStatus)
     }
 
     "return error status when soap fault is returned by the CCN2 service" in new Setup {
       Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
         primeStubForFault(message.soapEnvelope, fault)
-        val result: Int = await(underTest.postMessage(message))
-        result shouldBe INTERNAL_SERVER_ERROR
+        val result: SendResult = await(underTest.postMessage(message))
+        result shouldBe SendFail(INTERNAL_SERVER_ERROR)
       }
     }
 
     "send the given message to the CCN2 service" in new Setup {
       primeStubForSuccess(message.soapEnvelope, OK)
 
-      await(underTest.postMessage( message))
+      await(underTest.postMessage(message))
 
       verifyRequestBody(message.soapEnvelope)
     }
 
-    "send the right SOAP content type header" in new Setup {
+    "send the right SOAP action header" in new Setup {
       primeStubForSuccess(message.soapEnvelope, OK)
 
-      await(underTest.postMessage( message))
+      await(underTest.postMessage(message))
 
       verifyHeader("x-soap-action", "action from message")
+    }
+
+    "send the right Correlation ID header" in new Setup {
+      primeStubForSuccess(message.soapEnvelope, OK)
+
+      await(underTest.postMessage(message))
+
+      verifyHeader("x-correlation-id", "x-correlation-id-value")
+    }
+
+    "send the right Message ID header" in new Setup {
+      primeStubForSuccess(message.soapEnvelope, OK)
+
+      await(underTest.postMessage(message))
+
+      verifyHeader("x-message-id", "x-message-id-value")
     }
   }
 }
