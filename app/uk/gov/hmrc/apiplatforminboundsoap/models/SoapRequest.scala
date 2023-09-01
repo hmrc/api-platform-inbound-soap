@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.config
+package uk.gov.hmrc.apiplatforminboundsoap.models
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
-
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
-
-  val appName: String           = config.get[String]("appName")
-  val hmacSecret: String        = config.get[String]("hmacSecret")
-  val forwardMessageUrl: String = config.get[String]("forwardMessageUrl")
-}
+case class SoapRequest(soapEnvelope: String, destinationUrl: String)

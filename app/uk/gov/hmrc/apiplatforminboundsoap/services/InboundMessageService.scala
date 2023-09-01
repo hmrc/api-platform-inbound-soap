@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.jwt
+package uk.gov.hmrc.apiplatforminboundsoap.services
 
-import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.interfaces.JWTVerifier
-import com.auth0.jwt.{JWT, RegisteredClaims}
 import javax.inject.{Inject, Singleton}
+import play.api.Logging
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendResult, SoapRequest}
+import uk.gov.hmrc.http.HeaderCarrier
+
+import scala.concurrent.Future
+import scala.xml.NodeSeq
 
 @Singleton
-class JWTVerifierBuilder @Inject() (appConfig: AppConfig) {
+class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: InboundConnector) extends Logging {
 
-  def build(): JWTVerifier = {
-    JWT
-      .require(Algorithm.HMAC256(appConfig.hmacSecret))
-      .withClaimPresence(RegisteredClaims.EXPIRES_AT)
-      .build()
+  def processInboundMessage(soapRequest: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
+    inboundConnector.postMessage(SoapRequest(soapRequest.text, appConfig.forwardMessageUrl))
   }
 }

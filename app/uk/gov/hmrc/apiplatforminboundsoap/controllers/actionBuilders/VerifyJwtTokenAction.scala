@@ -16,28 +16,29 @@
 
 package uk.gov.hmrc.apiplatformoutboundsoap.controllers.actionBuilders
 
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.Future.successful
+import scala.concurrent.{ExecutionContext, Future}
+
 import _root_.uk.gov.hmrc.http.HttpErrorFunctions
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.JWTVerifier
-import javax.inject.{Inject, Singleton}
+
 import play.api.Logging
 import play.api.mvc.Results._
 import play.api.mvc.{ActionFilter, Request, Result}
 
-import scala.concurrent.Future.successful
-import scala.concurrent.{ExecutionContext, Future}
-
 @Singleton
-class VerifyJwtTokenAction @Inject()(jwtVerifier: JWTVerifier)(implicit ec: ExecutionContext)
+class VerifyJwtTokenAction @Inject() (jwtVerifier: JWTVerifier)(implicit ec: ExecutionContext)
     extends ActionFilter[Request] with HttpErrorFunctions with Logging {
   override def executionContext: ExecutionContext = ec
 
   override protected def filter[A](request: Request[A]): Future[Option[Result]] = {
     val jwtToken: Option[String] = request.headers.get("Authorization")
     verifyJwtToken(jwtToken) match {
-      case Right(_) => successful(Some(Ok))
-      case Left(e) => {
-        logger.warn(s"""JWT token verification failed. ${e.getMessage}""")
+      case Right(_) => successful(None)
+      case Left(e)  => {
+        logger.warn(s"JWT token verification failed. ${e.getMessage}")
         successful(Some(Unauthorized))
       }
     }
@@ -45,7 +46,7 @@ class VerifyJwtTokenAction @Inject()(jwtVerifier: JWTVerifier)(implicit ec: Exec
 
   private def verifyJwtToken(jwtToken: Option[String]): Either[JWTVerificationException, Unit] = {
     def extractJwtTokenFromHeaderValue(authHeader: Option[String]): String = {
-       authHeader.map(headerValue => headerValue.split("\\s")).filter(parts => parts.length == 2).map(parts => parts(1)).getOrElse("")
+      authHeader.map(headerValue => headerValue.split("\\s")).filter(parts => parts.length == 2).map(parts => parts(1)).getOrElse("")
     }
 
     try {

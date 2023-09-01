@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.config
+package uk.gov.hmrc.apiplatforminboundsoap.models
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+sealed trait SendResult
 
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
-
-  val appName: String           = config.get[String]("appName")
-  val hmacSecret: String        = config.get[String]("hmacSecret")
-  val forwardMessageUrl: String = config.get[String]("forwardMessageUrl")
-}
+case object SendSuccess          extends SendResult
+case class SendFail(status: Int) extends SendResult
