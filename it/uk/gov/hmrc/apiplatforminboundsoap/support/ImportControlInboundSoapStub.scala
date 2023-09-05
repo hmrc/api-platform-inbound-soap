@@ -18,7 +18,6 @@ package uk.gov.hmrc.apiplatforminboundsoap.support
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.Fault
-import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 
 trait ImportControlInboundSoapStub {
