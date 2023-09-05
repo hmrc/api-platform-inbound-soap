@@ -18,10 +18,12 @@ package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.{failed, successful}
+
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import play.api.Application
 import play.api.http.Status.OK
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -40,7 +42,7 @@ class InboundConnectorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
 
   trait Setup {
     val appConfigMock: AppConfig   = mock[AppConfig]
-    val headers = Headers("key" -> "value")
+    val headers                    = Headers("key" -> "value")
     val mockHttpClient: HttpClient = mock[HttpClient]
     val underTest                  = new InboundConnector(mockHttpClient)
   }

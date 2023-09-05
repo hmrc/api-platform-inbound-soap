@@ -17,6 +17,7 @@
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import java.util.UUID
+import scala.concurrent.Future.successful
 
 import akka.stream.Materializer
 import org.joda.time.DateTime
@@ -26,6 +27,7 @@ import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import play.api.http.Status.IM_A_TEAPOT
 import play.api.mvc.Headers
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
@@ -33,8 +35,6 @@ import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest}
 import uk.gov.hmrc.http.HeaderCarrier
-
-import scala.concurrent.Future.successful
 
 class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
 
@@ -54,22 +54,23 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
   }
 
   "processInboundMessage" should {
-    val xmlBody            = xml.XML.loadString("<xml>blah</xml>")
+    val xmlBody = xml.XML.loadString("<xml>blah</xml>")
 
-    val requestHeaders = Headers("x-soap-action"-> "action from message",
-      "x-correlation-id" -> "x-correlation-id-value",
-      "x-message-id"  -> "x-message-id-value",
-      "server" -> "anyvalue", "x-envoy-upstream-service-time" -> "anyothervalue")
-    val forwardedHeaders = Headers("x-soap-action"-> "action from message",
-      "x-correlation-id" -> "x-correlation-id-value",
-      "x-message-id"  -> "x-message-id-value")
+    val requestHeaders     = Headers(
+      "x-soap-action"                 -> "action from message",
+      "x-correlation-id"              -> "x-correlation-id-value",
+      "x-message-id"                  -> "x-message-id-value",
+      "server"                        -> "anyvalue",
+      "x-envoy-upstream-service-time" -> "anyothervalue"
+    )
+    val forwardedHeaders   = Headers("x-soap-action" -> "action from message", "x-correlation-id" -> "x-correlation-id-value", "x-message-id" -> "x-message-id-value")
     val forwardingUrl      = "some url"
     val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)
 
     "return success when connector returns success" in new Setup {
-      val bodyCaptor = ArgCaptor[SoapRequest]
+      val bodyCaptor   = ArgCaptor[SoapRequest]
       val headerCaptor = ArgCaptor[Headers]
-      when(inboundConnectorMock.postMessage(bodyCaptor,headerCaptor)).thenReturn(successful(SendSuccess))
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)).thenReturn(successful(SendSuccess))
       when(appConfigMock.forwardMessageUrl).thenReturn(forwardingUrl)
 
       val result = await(service.processInboundMessage(xmlBody, requestHeaders))
@@ -82,9 +83,9 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return failure when connector returns failure" in new Setup {
-      val bodyCaptor = ArgCaptor[SoapRequest]
+      val bodyCaptor   = ArgCaptor[SoapRequest]
       val headerCaptor = ArgCaptor[Headers]
-      when(inboundConnectorMock.postMessage(bodyCaptor,headerCaptor)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
       when(appConfigMock.forwardMessageUrl).thenReturn(forwardingUrl)
 
       val result = await(service.processInboundMessage(xmlBody, requestHeaders))

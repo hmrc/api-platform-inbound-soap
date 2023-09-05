@@ -39,7 +39,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       )
 
   trait Setup {
-    val headers = Headers("key" -> "value")
+    val headers                     = Headers("key" -> "value")
     val underTest: InboundConnector = app.injector.instanceOf[InboundConnector]
   }
 
@@ -50,7 +50,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedStatus: Int = OK
       primeStubForSuccess(message.soapEnvelope, expectedStatus)
 
-      val result: SendResult = await(underTest.postMessage(message,headers))
+      val result: SendResult = await(underTest.postMessage(message, headers))
 
       result shouldBe SendSuccess
     }
@@ -59,7 +59,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
       primeStubForSuccess(message.soapEnvelope, expectedStatus)
 
-      val result: SendResult = await(underTest.postMessage(message,headers))
+      val result: SendResult = await(underTest.postMessage(message, headers))
 
       result shouldBe SendFail(expectedStatus)
     }
@@ -68,7 +68,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
         primeStubForFault(message.soapEnvelope, fault)
 
-        val result: SendResult = await(underTest.postMessage(message,headers))
+        val result: SendResult = await(underTest.postMessage(message, headers))
 
         result shouldBe SendFail(INTERNAL_SERVER_ERROR)
       }
@@ -77,7 +77,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     "send the given message to the internal service" in new Setup {
       primeStubForSuccess(message.soapEnvelope, OK)
 
-      await(underTest.postMessage(message,headers))
+      await(underTest.postMessage(message, headers))
 
       verifyRequestBody(message.soapEnvelope)
     }
