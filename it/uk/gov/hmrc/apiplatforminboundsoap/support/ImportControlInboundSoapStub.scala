@@ -46,11 +46,7 @@ trait ImportControlInboundSoapStub {
       .withRequestBody(equalTo(expectedRequestBody)))
   }
 
-  def verifyHeaderPresent(headerName: String, headerValue: String): Unit = {
+  def verifyHeader(headerName: String, headerValue: String): Unit = {
     verify(postRequestedFor(urlPathEqualTo("/")).withHeader(headerName, equalTo(headerValue)))
-  }
-
-  def verifyHeaderAbsent(headerName: String*): Unit = {
-    headerName.foreach(nm => verify(postRequestedFor(urlPathEqualTo("/")).withoutHeader(nm)))
   }
 }
