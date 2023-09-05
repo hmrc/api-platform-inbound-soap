@@ -30,10 +30,9 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorR
 @Singleton
 class InboundConnector @Inject() (httpClient: HttpClient)(implicit ec: ExecutionContext) extends Logging {
 
-  def postMessage(soapRequest: SoapRequest, headers: Headers): Future[SendResult] = {
-    implicit val hc: HeaderCarrier = HeaderCarrier()
+  def postMessage(soapRequest: SoapRequest, headers: Headers)(implicit hc:HeaderCarrier): Future[SendResult] = {
 
-    def postHttpRequest(soapRequest: SoapRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+    def postHttpRequest(soapRequest: SoapRequest): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
       httpClient.POSTString[Either[UpstreamErrorResponse, HttpResponse]](soapRequest.destinationUrl, soapRequest.soapEnvelope, headers.headers)
     }
 

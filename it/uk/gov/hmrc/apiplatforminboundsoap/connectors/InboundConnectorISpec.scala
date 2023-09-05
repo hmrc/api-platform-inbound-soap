@@ -26,10 +26,12 @@ import play.api.mvc.Headers
 import play.api.test.Helpers._
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess, SoapRequest}
 import uk.gov.hmrc.apiplatforminboundsoap.support.ImportControlInboundSoapStub
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 
 class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with WireMockSupport with ImportControlInboundSoapStub {
   override implicit lazy val app: Application = appBuilder.build()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

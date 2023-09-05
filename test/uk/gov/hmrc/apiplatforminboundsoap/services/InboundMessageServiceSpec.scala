@@ -70,7 +70,8 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return success when connector returns success" in new Setup {
       val bodyCaptor   = ArgCaptor[SoapRequest]
       val headerCaptor = ArgCaptor[Headers]
-      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)).thenReturn(successful(SendSuccess))
+      val hcCaptor = ArgCaptor[HeaderCarrier]
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(hcCaptor)).thenReturn(successful(SendSuccess))
       when(appConfigMock.forwardMessageUrl).thenReturn(forwardingUrl)
 
       val result = await(service.processInboundMessage(xmlBody, requestHeaders))
@@ -85,7 +86,8 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return failure when connector returns failure" in new Setup {
       val bodyCaptor   = ArgCaptor[SoapRequest]
       val headerCaptor = ArgCaptor[Headers]
-      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
+      val hcCaptor = ArgCaptor[HeaderCarrier]
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(hcCaptor)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
       when(appConfigMock.forwardMessageUrl).thenReturn(forwardingUrl)
 
       val result = await(service.processInboundMessage(xmlBody, requestHeaders))
