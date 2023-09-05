@@ -18,6 +18,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.support
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.Fault
+import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 
 trait ImportControlInboundSoapStub {
@@ -45,7 +46,11 @@ trait ImportControlInboundSoapStub {
       .withRequestBody(equalTo(expectedRequestBody)))
   }
 
-  def verifyHeader(headerName: String, headerValue: String): Unit = {
+  def verifyHeaderPresent(headerName: String, headerValue: String): Unit = {
     verify(postRequestedFor(urlPathEqualTo("/")).withHeader(headerName, equalTo(headerValue)))
+  }
+
+  def verifyHeaderAbsent(headerName: String*): Unit = {
+    headerName.foreach(nm => verify(postRequestedFor(urlPathEqualTo("/")).withoutHeader(nm)))
   }
 }

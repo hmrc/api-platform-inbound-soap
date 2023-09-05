@@ -22,6 +22,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.Headers
 import play.api.test.Helpers._
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess, SoapRequest}
 import uk.gov.hmrc.apiplatforminboundsoap.support.ImportControlInboundSoapStub
@@ -38,6 +39,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       )
 
   trait Setup {
+    val headers = Headers("key" -> "value")
     val underTest: InboundConnector = app.injector.instanceOf[InboundConnector]
   }
 
@@ -48,7 +50,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedStatus: Int = OK
       primeStubForSuccess(message.soapEnvelope, expectedStatus)
 
-      val result: SendResult = await(underTest.postMessage(message))
+      val result: SendResult = await(underTest.postMessage(message,headers))
 
       result shouldBe SendSuccess
     }
@@ -57,7 +59,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
       primeStubForSuccess(message.soapEnvelope, expectedStatus)
 
-      val result: SendResult = await(underTest.postMessage(message))
+      val result: SendResult = await(underTest.postMessage(message,headers))
 
       result shouldBe SendFail(expectedStatus)
     }
@@ -65,7 +67,9 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     "return error status when soap fault is returned by the internal service" in new Setup {
       Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
         primeStubForFault(message.soapEnvelope, fault)
-        val result: SendResult = await(underTest.postMessage(message))
+
+        val result: SendResult = await(underTest.postMessage(message,headers))
+
         result shouldBe SendFail(INTERNAL_SERVER_ERROR)
       }
     }
@@ -73,33 +77,9 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     "send the given message to the internal service" in new Setup {
       primeStubForSuccess(message.soapEnvelope, OK)
 
-      await(underTest.postMessage(message))
+      await(underTest.postMessage(message,headers))
 
       verifyRequestBody(message.soapEnvelope)
-    }
-
-    "send the right SOAP action header" in new Setup {
-      primeStubForSuccess(message.soapEnvelope, OK)
-
-      await(underTest.postMessage(message))
-
-      verifyHeader("x-soap-action", "action from message")
-    }
-
-    "send the right Correlation ID header" in new Setup {
-      primeStubForSuccess(message.soapEnvelope, OK)
-
-      await(underTest.postMessage(message))
-
-      verifyHeader("x-correlation-id", "x-correlation-id-value")
-    }
-
-    "send the right Message ID header" in new Setup {
-      primeStubForSuccess(message.soapEnvelope, OK)
-
-      await(underTest.postMessage(message))
-
-      verifyHeader("x-message-id", "x-message-id-value")
     }
   }
 }

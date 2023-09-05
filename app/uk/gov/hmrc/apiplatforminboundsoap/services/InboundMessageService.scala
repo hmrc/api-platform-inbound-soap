@@ -18,6 +18,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import javax.inject.{Inject, Singleton}
 import play.api.Logging
+import play.api.mvc.{Headers, Request}
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendResult, SoapRequest}
@@ -29,7 +30,13 @@ import scala.xml.NodeSeq
 @Singleton
 class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: InboundConnector) extends Logging {
 
-  def processInboundMessage(soapRequest: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    inboundConnector.postMessage(SoapRequest(soapRequest.text, appConfig.forwardMessageUrl))
+  def processInboundMessage(soapRequest: NodeSeq, headers: Headers)(implicit hc: HeaderCarrier): Future[SendResult] = {
+    val existingHeaders = headers
+    val newHeaders: Headers = existingHeaders
+      .remove("server", "x-envoy-upstream-service-time")
+      .add("x-soap-action"-> "action from message",
+      "x-correlation-id" -> "x-correlation-id-value",
+      "x-message-id"  -> "x-message-id-value")
+    inboundConnector.postMessage(SoapRequest(soapRequest.text, appConfig.forwardMessageUrl), newHeaders)
   }
 }

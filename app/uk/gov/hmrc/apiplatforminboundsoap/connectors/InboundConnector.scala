@@ -17,27 +17,24 @@
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.NonFatal
-
 import play.api.Logging
 import play.api.http.Status
+import play.api.mvc.Headers
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess, SoapRequest}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
 
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
+
 @Singleton
 class InboundConnector @Inject() (httpClient: HttpClient)(implicit ec: ExecutionContext) extends Logging {
 
-  def postMessage(soapRequest: SoapRequest): Future[SendResult] = {
+  def postMessage(soapRequest: SoapRequest, headers: Headers): Future[SendResult] = {
     implicit val hc: HeaderCarrier                                                                                                 = HeaderCarrier()
-      .withExtraHeaders(
-        "x-soap-action"    -> "action from message",
-        "x-correlation-id" -> "x-correlation-id-value",
-        "x-message-id"     -> "x-message-id-value"
-      )
+
     def postHttpRequest(soapRequest: SoapRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
-      httpClient.POSTString[Either[UpstreamErrorResponse, HttpResponse]](soapRequest.destinationUrl, soapRequest.soapEnvelope)
+      httpClient.POSTString[Either[UpstreamErrorResponse, HttpResponse]](soapRequest.destinationUrl, soapRequest.soapEnvelope, headers.headers)
     }
 
     postHttpRequest(soapRequest).map {

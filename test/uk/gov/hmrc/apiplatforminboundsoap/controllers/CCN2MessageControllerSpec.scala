@@ -19,13 +19,12 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.xml.{Elem, XML}
-
 import org.mockito.captor.{ArgCaptor, Captor}
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
+import play.api.mvc.Headers
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
@@ -37,6 +36,10 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
   trait Setup {
     private val verifyJwtTokenAction = app.injector.instanceOf[VerifyJwtTokenAction]
     val incomingMessageServiceMock   = mock[InboundMessageService]
+    val headers                      = Headers(
+      "Host"-> "localhost",
+      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDc5NzcwNzd9.bgdyMvTvicf5FvAlQXN-311k0WTZg0-72wqR4hb66dQ",
+      "Content-Type" -> "text/xml")
     val controller                   = new CCN2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, incomingMessageServiceMock)
   }
 
@@ -47,27 +50,30 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
     "return 200 when successful" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
+      val requestHeaderCaptor: Captor[Headers] = ArgCaptor[Headers]
       val requestBody: Elem              = XML.loadString("<xml>blah</xml>")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, requestHeaderCaptor)(*)).thenReturn(successful(SendSuccess))
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*)(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*,*)(*)
       xmlRequestCaptor hasCaptured requestBody
+      requestHeaderCaptor hasCaptured headers
     }
 
     "return response code it received when not successful" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
+      val requestHeaderCaptor: Captor[Headers] = ArgCaptor[Headers]
       val requestBody: Elem              = XML.loadString("<xml>blah</xml>")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, requestHeaderCaptor)(*)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe PRECONDITION_FAILED
-      verify(incomingMessageServiceMock).processInboundMessage(*)(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*,*)(*)
       xmlRequestCaptor hasCaptured requestBody
+      requestHeaderCaptor hasCaptured headers
     }
   }
-
 }
