@@ -16,18 +16,13 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
-import java.util.UUID
-import scala.concurrent.Future.successful
 
 import akka.stream.Materializer
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone.UTC
 import org.mockito.captor.ArgCaptor
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import play.api.http.Status.IM_A_TEAPOT
 import play.api.mvc.Headers
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
@@ -35,6 +30,8 @@ import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest}
 import uk.gov.hmrc.http.HeaderCarrier
+
+import scala.concurrent.Future.successful
 
 class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
 
@@ -45,9 +42,6 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     val inboundConnectorMock: InboundConnector = mock[InboundConnector]
     val httpStatus: Int                        = 200
     val appConfigMock: AppConfig               = mock[AppConfig]
-
-    val expectedCreateDateTime: DateTime = DateTime.now(UTC)
-    val expectedGlobalId: UUID           = UUID.randomUUID
 
     val service: InboundMessageService =
       new InboundMessageService(appConfigMock, inboundConnectorMock)
