@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.config
 
-import com.auth0.jwt.interfaces.JWTVerifier
 import javax.inject.{Inject, Provider, Singleton}
+
+import com.auth0.jwt.interfaces.JWTVerifier
+
 import uk.gov.hmrc.apiplatforminboundsoap.jwt.JWTVerifierBuilder
 
 @Singleton

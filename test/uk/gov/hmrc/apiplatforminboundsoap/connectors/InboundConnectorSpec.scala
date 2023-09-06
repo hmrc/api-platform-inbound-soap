@@ -27,6 +27,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.http.Status.OK
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.Headers
 import play.api.test.Helpers.{INTERNAL_SERVER_ERROR, await, defaultAwaitTimeout}
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess, SoapRequest}
@@ -41,6 +42,7 @@ class InboundConnectorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
 
   trait Setup {
     val appConfigMock: AppConfig   = mock[AppConfig]
+    val headers                    = Headers("key" -> "value")
     val mockHttpClient: HttpClient = mock[HttpClient]
     val underTest                  = new InboundConnector(mockHttpClient)
   }
@@ -50,7 +52,7 @@ class InboundConnectorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val soapRequest: SoapRequest = SoapRequest("<xml>stuff</xml>", "some url")
       when(mockHttpClient.POSTString[Either[UpstreamErrorResponse, HttpResponse]](*, *, *)(*, *, *))
         .thenReturn(successful(Right(HttpResponse(OK, ""))))
-      val result: SendResult       = await(underTest.postMessage(soapRequest))
+      val result: SendResult       = await(underTest.postMessage(soapRequest, headers))
       result shouldBe SendSuccess
     }
 
@@ -58,7 +60,7 @@ class InboundConnectorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val soapRequest: SoapRequest = SoapRequest("<xml>stuff</xml>", "some url")
       when(mockHttpClient.POSTString[Either[UpstreamErrorResponse, HttpResponse]](*, *, *)(*, *, *))
         .thenReturn(successful(Left(UpstreamErrorResponse("unexpected error", INTERNAL_SERVER_ERROR))))
-      val result: SendResult       = await(underTest.postMessage(soapRequest))
+      val result: SendResult       = await(underTest.postMessage(soapRequest, headers))
       result shouldBe SendFail(INTERNAL_SERVER_ERROR)
     }
 
@@ -67,7 +69,7 @@ class InboundConnectorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
 
       when(mockHttpClient.POSTString[Either[UpstreamErrorResponse, HttpResponse]](*, *, *)(*, *, *))
         .thenReturn(failed(play.shaded.ahc.org.asynchttpclient.exception.RemotelyClosedException.INSTANCE))
-      val result: SendResult = await(underTest.postMessage(soapRequest))
+      val result: SendResult = await(underTest.postMessage(soapRequest, headers))
       result shouldBe SendFail(INTERNAL_SERVER_ERROR)
     }
   }
