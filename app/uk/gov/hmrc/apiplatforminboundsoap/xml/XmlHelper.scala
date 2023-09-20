@@ -17,39 +17,44 @@
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import javax.inject.Singleton
+import uk.gov.hmrc.apiplatforminboundsoap.models._
 
 import scala.xml.{Node, NodeSeq}
 
 @Singleton
 class XmlHelper {
 
-  def getMessageVersion(soapMessage: NodeSeq) = {
-    def isVersionTwoNamespace(soapMessage: NodeSeq): Boolean = {
-      soapMessage.map((n: Node) => Option(n.getNamespace("v2"))).filter(ns => ns.nonEmpty).nonEmpty
+  def getMessageVersion(soapMessage: NodeSeq): SoapMessageVersion = {
+    def isVersionTwoNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
+      soapMessage.map((n: Node) => Option(n.getNamespace("v2"))).exists(ns => ns.nonEmpty) match {
+        case true => Version1
+        case false => VersionNotRecognised
+      }
     }
 
-    def isVersionOneNamespace(soapMessage: NodeSeq): Boolean = {
+    def isVersionOneNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
       val body: NodeSeq = soapMessage \ "Body"
-      body.map((n: Node) => n.descendant.toString.contains("ns1")).contains(true)
-
+      body.map((n: Node) => n.descendant.toString.contains("ns1")).contains(true) match {
+        case true => Version2
+        case false => VersionNotRecognised
+      }
     }
 
-//TODO find a nicer way of doing this - using a match?
-    if (isVersionOneNamespace(soapMessage)) "v1"
-    else if (isVersionTwoNamespace(soapMessage)) "v2"
-    else
-      "Not recognised"
-
+    isVersionOneNamespace(soapMessage) match {
+      case Version1 => Version1
+      case VersionNotRecognised => isVersionTwoNamespace(soapMessage)
+    }
   }
+
   def getSoapAction(soapMessage: NodeSeq): String = {
     (soapMessage \\ "Action").text
   }
 
   def getMessageId(soapMessage: NodeSeq): String = {
-     (soapMessage  \\ "messageId").text
+    (soapMessage \\ "messageId").text
   }
 
   def isFileAttached(soapMessage: NodeSeq): Boolean = {
-     (soapMessage  \\ "binaryAttachment").nonEmpty || (soapMessage  \\ "binaryFile").nonEmpty
+    (soapMessage \\ "binaryAttachment").nonEmpty || (soapMessage \\ "binaryFile").nonEmpty
   }
 }

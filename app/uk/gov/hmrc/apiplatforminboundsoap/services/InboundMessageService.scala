@@ -39,7 +39,7 @@ class InboundMessageService @Inject()(appConfig: AppConfig, xmlHelper: XmlHelper
         "x-correlation-id" -> xmlHelper.getMessageId(soapRequest),
         "x-message-id" -> xmlHelper.getMessageId(soapRequest),
         "x-files-included"-> xmlHelper.isFileAttached(soapRequest).toString,
-        "x-version-id" -> xmlHelper.getMessageVersion(soapRequest))
+        "x-version-id" -> xmlHelper.getMessageVersion(soapRequest).displayName)
     inboundConnector.postMessage(SoapRequest(soapRequest.text, appConfig.forwardMessageUrl), newHeaders)
   }
 }

@@ -28,7 +28,7 @@ import play.api.mvc.Headers
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest, Version1}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -50,7 +50,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     when(xmlHelper.isFileAttached(*)).thenReturn(true)
     when(xmlHelper.getMessageId(*)).thenReturn("427b9e3c-d708-4893-b5fa-21b5641231e5")
     when(xmlHelper.isFileAttached(*)).thenReturn(true)
-    when(xmlHelper.getMessageVersion(*)).thenReturn("V1")
+    when(xmlHelper.getMessageVersion(*)).thenReturn(Version1)
     when(xmlHelper.getSoapAction(*)).thenReturn("CCN2.Service.Customs.EU.ICS.NESReferralBAS/IE4R02provideAdditionalInformation")
   }
 
