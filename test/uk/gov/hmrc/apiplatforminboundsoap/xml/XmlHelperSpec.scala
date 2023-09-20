@@ -63,18 +63,18 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
   }
 
   "get version namespace" should {
-    "return whether V1  namespace found in SOAP message" in new Setup {
+    "return whether V1 namespace found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4n05-v1.xml")
-      xmlHelper.getMessageVersion(xmlBody) shouldBe "v1"
+      xmlHelper.getMessageVersion(xmlBody).displayName shouldBe "V1"
     }
     "return whether V2 namespace found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4n09-v2.xml")
-      xmlHelper.getMessageVersion(xmlBody) shouldBe "v2"
+      xmlHelper.getMessageVersion(xmlBody).displayName shouldBe "V2"
     }
 
     "return whether invalid namespace found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = xml.XML.loadString("<xml>blah</xml>")
-      xmlHelper.getMessageVersion(xmlBody) shouldBe "Not recognised"
+      xmlHelper.getMessageVersion(xmlBody).displayName shouldBe "Not Recognised"
     }
   }
 

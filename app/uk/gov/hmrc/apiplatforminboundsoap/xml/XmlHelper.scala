@@ -25,24 +25,21 @@ import scala.xml.{Node, NodeSeq}
 class XmlHelper {
 
   def getMessageVersion(soapMessage: NodeSeq): SoapMessageVersion = {
-    def isVersionTwoNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
+    def getVersionTwoNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
       soapMessage.map((n: Node) => Option(n.getNamespace("v2"))).exists(ns => ns.nonEmpty) match {
-        case true => Version1
-        case false => VersionNotRecognised
-      }
-    }
-
-    def isVersionOneNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
-      val body: NodeSeq = soapMessage \ "Body"
-      body.map((n: Node) => n.descendant.toString.contains("ns1")).contains(true) match {
         case true => Version2
         case false => VersionNotRecognised
       }
     }
 
+    def isVersionOneNamespace(soapMessage: NodeSeq): Boolean = {
+      val body: NodeSeq = soapMessage \ "Body"
+      body.map((n: Node) => n.descendant.toString.contains("ns1")).contains(true)
+    }
+
     isVersionOneNamespace(soapMessage) match {
-      case Version1 => Version1
-      case VersionNotRecognised => isVersionTwoNamespace(soapMessage)
+      case true => Version1
+      case false => getVersionTwoNamespace(soapMessage)
     }
   }
 
