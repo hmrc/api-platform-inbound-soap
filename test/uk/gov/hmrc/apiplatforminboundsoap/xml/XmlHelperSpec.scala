@@ -44,7 +44,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     "return empty string when SOAP action not found in SOAP message" in new Setup {
       val xmlBody: Elem = xml.XML.loadString("<xml>blah</xml>")
       val soapAction = xmlHelper.getSoapAction(xmlBody)
-      soapAction shouldBe ""
+      soapAction shouldBe "Not defined"
     }
   }
 
@@ -58,7 +58,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     "return empty string when SOAP action not found in SOAP message" in new Setup {
       val xmlBody: Elem = xml.XML.loadString("<xml>blah</xml>")
       val messageId = xmlHelper.getMessageId(xmlBody)
-      messageId shouldBe ""
+      messageId shouldBe "Not defined"
     }
   }
 
