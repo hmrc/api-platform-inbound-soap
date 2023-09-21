@@ -17,24 +17,29 @@
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future
-import scala.xml.NodeSeq
-
 import play.api.Logging
 import play.api.mvc.Headers
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendResult, SoapRequest}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 import uk.gov.hmrc.http.HeaderCarrier
 
+import scala.concurrent.Future
+import scala.xml.NodeSeq
+
 @Singleton
-class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: InboundConnector) extends Logging {
+class InboundMessageService @Inject()(appConfig: AppConfig, xmlHelper: XmlHelper, inboundConnector: InboundConnector) extends Logging {
 
   def processInboundMessage(soapRequest: NodeSeq, headers: Headers)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val existingHeaders     = headers
+    val existingHeaders = headers
     val newHeaders: Headers = existingHeaders
       .remove("server", "x-envoy-upstream-service-time")
-      .add("x-soap-action" -> "action from message", "x-correlation-id" -> "x-correlation-id-value", "x-message-id" -> "x-message-id-value")
+      .add("x-soap-action" -> xmlHelper.getSoapAction(soapRequest),
+        "x-correlation-id" -> xmlHelper.getMessageId(soapRequest),
+        "x-message-id" -> xmlHelper.getMessageId(soapRequest),
+        "x-files-included"-> xmlHelper.isFileAttached(soapRequest).toString,
+        "x-version-id" -> xmlHelper.getMessageVersion(soapRequest).displayName)
     inboundConnector.postMessage(SoapRequest(soapRequest.text, appConfig.forwardMessageUrl), newHeaders)
   }
 }

@@ -1,0 +1,133 @@
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v2="http://xmlns.ec.eu/BusinessActivityService/ICS/IENSLifecycleManagementBAS/V2" xmlns:urn="urn:wco:datamodel:eu:ics2:2">
+    <soap:Header>
+        <soap:Action>CCN2.Service.Customs.EU.ICS.ENSLifecycleManagementBAS/IE4N09notifyControlDecision</soap:Action>
+    </soap:Header>
+    <soap:Body>
+        <v2:IE4N09notifyControlDecisionReqMsg>
+            <urn:IE4N09>
+                <urn:MessageHeader>
+                    <urn:messageId>dc4f3c40-5fb9-44eb-a327-d431611a9521</urn:messageId>
+                    <!--Optional:-->
+                    <urn:correlationId>?</urn:correlationId>
+                    <!--Optional:-->
+                    <urn:replyToMessageId>?</urn:replyToMessageId>
+                    <urn:messageTimestamp>?</urn:messageTimestamp>
+                    <urn:messageSender>?</urn:messageSender>
+                    <urn:messageRecipient>?</urn:messageRecipient>
+                    <!--Optional:-->
+                    <urn:conformanceCampaign>?</urn:conformanceCampaign>
+                </urn:MessageHeader>
+                <urn:MRN>?</urn:MRN>
+                <urn:notificationDate>
+                    <urn:DateTime>?</urn:DateTime>
+                </urn:notificationDate>
+                <!--Optional:-->
+                <urn:scheduledControlDate>
+                    <urn:DateTime>?</urn:DateTime>
+                </urn:scheduledControlDate>
+                <urn:customsOfficeOfControl>
+                    <urn:referenceNumber>?</urn:referenceNumber>
+                </urn:customsOfficeOfControl>
+                <!--Optional:-->
+                <urn:representative>
+                    <urn:identificationNumber>?</urn:identificationNumber>
+                </urn:representative>
+                <!--Optional:-->
+                <urn:transportDocument>
+                    <urn:documentNumber>?</urn:documentNumber>
+                    <urn:type>?</urn:type>
+                </urn:transportDocument>
+                <!--1 to 99999 repetitions:-->
+                <urn:control>
+                    <urn:examinationPlace>
+                        <!--Optional:-->
+                        <urn:placeOfExamination>?</urn:placeOfExamination>
+                        <!--Optional:-->
+                        <urn:referenceNumber>?</urn:referenceNumber>
+                    </urn:examinationPlace>
+                    <urn:controlSubject>
+                        <urn:consignmentMasterLevel>
+                            <!--0 to 999 repetitions:-->
+                            <urn:receptacle>
+                                <urn:receptacleIdentificationNumber>?</urn:receptacleIdentificationNumber>
+                            </urn:receptacle>
+                            <!--0 to 9999 repetitions:-->
+                            <urn:goodsItem>
+                                <urn:goodsItemNumber>?</urn:goodsItemNumber>
+                                <!--0 to 99 repetitions:-->
+                                <urn:packaging>
+                                    <urn:shippingMarks>?</urn:shippingMarks>
+                                    <urn:typeOfPackages>?</urn:typeOfPackages>
+                                </urn:packaging>
+                                <!--0 to 9999 repetitions:-->
+                                <urn:transportEquipment>
+                                    <urn:containerIdentificationNumber>?</urn:containerIdentificationNumber>
+                                </urn:transportEquipment>
+                            </urn:goodsItem>
+                            <!--0 to 99999 repetitions:-->
+                            <urn:consignmentHouseLevel>
+                                <!--0 to 9999 repetitions:-->
+                                <urn:goodsItem>
+                                    <urn:goodsItemNumber>?</urn:goodsItemNumber>
+                                    <!--0 to 99 repetitions:-->
+                                    <urn:packaging>
+                                        <urn:shippingMarks>?</urn:shippingMarks>
+                                        <urn:typeOfPackages>?</urn:typeOfPackages>
+                                    </urn:packaging>
+                                    <!--0 to 99 repetitions:-->
+                                    <urn:passiveBorderTransportMeans>
+                                        <urn:identificationNumber>?</urn:identificationNumber>
+                                        <urn:typeOfIdentification>?</urn:typeOfIdentification>
+                                        <!--Optional:-->
+                                        <urn:nationality>?</urn:nationality>
+                                    </urn:passiveBorderTransportMeans>
+                                    <!--0 to 9999 repetitions:-->
+                                    <urn:transportEquipment>
+                                        <urn:containerIdentificationNumber>?</urn:containerIdentificationNumber>
+                                    </urn:transportEquipment>
+                                </urn:goodsItem>
+                                <!--0 to 99 repetitions:-->
+                                <urn:passiveBorderTransportMeans>
+                                    <urn:identificationNumber>?</urn:identificationNumber>
+                                    <urn:typeOfIdentification>?</urn:typeOfIdentification>
+                                    <!--Optional:-->
+                                    <urn:nationality>?</urn:nationality>
+                                </urn:passiveBorderTransportMeans>
+                                <!--Optional:-->
+                                <urn:transportDocumentHouseLevel>
+                                    <urn:documentNumber>?</urn:documentNumber>
+                                    <urn:type>?</urn:type>
+                                </urn:transportDocumentHouseLevel>
+                                <!--0 to 9999 repetitions:-->
+                                <urn:transportEquipment>
+                                    <urn:containerIdentificationNumber>?</urn:containerIdentificationNumber>
+                                </urn:transportEquipment>
+                            </urn:consignmentHouseLevel>
+                            <!--0 to 99 repetitions:-->
+                            <urn:packaging>
+                                <urn:shippingMarks>?</urn:shippingMarks>
+                                <urn:typeOfPackages>?</urn:typeOfPackages>
+                            </urn:packaging>
+                            <!--0 to 9999 repetitions:-->
+                            <urn:transportEquipment>
+                                <urn:containerIdentificationNumber>?</urn:containerIdentificationNumber>
+                            </urn:transportEquipment>
+                        </urn:consignmentMasterLevel>
+                    </urn:controlSubject>
+                </urn:control>
+                <!--Optional:-->
+                <urn:declarant>
+                    <urn:identificationNumber>?</urn:identificationNumber>
+                </urn:declarant>
+                <!--Optional:-->
+                <urn:personNotifyingTheArrival>
+                    <urn:identificationNumber>?</urn:identificationNumber>
+                </urn:personNotifyingTheArrival>
+                <!--Optional:-->
+                <urn:notifyParty>
+                    <urn:identificationNumber>?</urn:identificationNumber>
+                </urn:notifyParty>
+            </urn:IE4N09>
+        </v2:IE4N09notifyControlDecisionReqMsg>
+    </soap:Body>
+</soap:Envelope>
