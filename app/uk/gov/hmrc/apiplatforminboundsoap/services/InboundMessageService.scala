@@ -32,14 +32,13 @@ import scala.xml.NodeSeq
 class InboundMessageService @Inject()(appConfig: AppConfig, xmlHelper: XmlHelper, inboundConnector: InboundConnector) extends Logging {
 
   def processInboundMessage(soapRequest: NodeSeq, headers: Headers)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val existingHeaders = headers
-    val newHeaders: Headers = existingHeaders
-      .remove("server", "x-envoy-upstream-service-time")
-      .add("x-soap-action" -> xmlHelper.getSoapAction(soapRequest),
-        "x-correlation-id" -> xmlHelper.getMessageId(soapRequest),
-        "x-message-id" -> xmlHelper.getMessageId(soapRequest),
-        "x-files-included"-> xmlHelper.isFileAttached(soapRequest).toString,
-        "x-version-id" -> xmlHelper.getMessageVersion(soapRequest).displayName)
+    val newHeaders: Headers = Headers(
+      "x-soap-action" -> xmlHelper.getSoapAction(soapRequest),
+      "x-correlation-id" -> xmlHelper.getMessageId(soapRequest),
+      "x-message-id" -> xmlHelper.getMessageId(soapRequest),
+      "x-files-included"-> xmlHelper.isFileAttached(soapRequest).toString,
+      "x-version-id" -> xmlHelper.getMessageVersion(soapRequest).displayName)
+
     inboundConnector.postMessage(SoapRequest(soapRequest.text, appConfig.forwardMessageUrl), newHeaders)
   }
 }
