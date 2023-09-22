@@ -38,6 +38,6 @@ class InboundMessageService @Inject()(appConfig: AppConfig, xmlHelper: XmlHelper
       "x-files-included"-> xmlHelper.isFileAttached(soapRequest).toString,
       "x-version-id" -> xmlHelper.getMessageVersion(soapRequest).displayName)
 
-    inboundConnector.postMessage(SoapRequest(soapRequest.text, appConfig.forwardMessageUrl), newHeaders)
+    inboundConnector.postMessage(SoapRequest(soapRequest.toString, appConfig.forwardMessageUrl), newHeaders)
   }
 }

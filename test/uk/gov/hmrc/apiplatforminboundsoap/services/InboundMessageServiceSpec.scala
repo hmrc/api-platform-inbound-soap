@@ -66,7 +66,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       "x-files-included" -> filesIncluded,
       "x-version-id" -> messageVersion)
     val forwardingUrl = "some url"
-    val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)
+    val inboundSoapMessage = SoapRequest(xmlBody.toString, forwardingUrl)
 
     "return success when connector returns success" in new Setup {
       val bodyCaptor = ArgCaptor[SoapRequest]
