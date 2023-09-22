@@ -35,7 +35,7 @@ class CCN2MessageController @Inject() (
   ) extends BackendController(cc) {
 
   def message(path: String): Action[NodeSeq] = (Action andThen verifyJwtTokenAction).async(parse.xml) { implicit request =>
-    incomingMessageService.processInboundMessage(request.body, request.headers) flatMap {
+    incomingMessageService.processInboundMessage(request.body) flatMap {
       case SendSuccess      =>
         Future.successful(Ok)
       case SendFail(status) =>
