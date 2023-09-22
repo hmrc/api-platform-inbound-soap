@@ -60,4 +60,11 @@ class XmlHelper {
   def isFileAttached(soapMessage: NodeSeq): Boolean = {
     (soapMessage \\ "binaryAttachment").nonEmpty || (soapMessage \\ "binaryFile").nonEmpty
   }
+
+  def getReferenceNumber(soapMessage: NodeSeq): String = {
+    (soapMessage \\ "MRN").text match {
+      case mrn: String if mrn.nonEmpty => mrn
+      case _ => (soapMessage \\ "LRN").text
+    }
+  }
 }

@@ -28,6 +28,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
 
   trait Setup {
     val xmlHelper: XmlHelper = new XmlHelper()
+    val xmlBodyForElementNotFoundScenario: NodeSeq = xml.XML.loadString("<xml>blah</xml>")
 
     def readFromFile(fileName: String) = {
       xml.XML.load(Source.fromResource(fileName).bufferedReader())
@@ -42,8 +43,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return empty string when SOAP action not found in SOAP message" in new Setup {
-      val xmlBody: Elem = xml.XML.loadString("<xml>blah</xml>")
-      val soapAction = xmlHelper.getSoapAction(xmlBody)
+      val soapAction = xmlHelper.getSoapAction(xmlBodyForElementNotFoundScenario)
       soapAction shouldBe "Not defined"
     }
   }
@@ -56,8 +56,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return empty string when SOAP action not found in SOAP message" in new Setup {
-      val xmlBody: Elem = xml.XML.loadString("<xml>blah</xml>")
-      val messageId = xmlHelper.getMessageId(xmlBody)
+      val messageId = xmlHelper.getMessageId(xmlBodyForElementNotFoundScenario)
       messageId shouldBe "Not defined"
     }
   }
@@ -73,8 +72,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return whether invalid namespace found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = xml.XML.loadString("<xml>blah</xml>")
-      xmlHelper.getMessageVersion(xmlBody).displayName shouldBe "Not Recognised"
+      xmlHelper.getMessageVersion(xmlBodyForElementNotFoundScenario).displayName shouldBe "Not Recognised"
     }
   }
 
@@ -90,8 +88,23 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return false when no binaryAttachment or binaryFile found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = xml.XML.loadString("<xml>blah</xml>")
-      xmlHelper.isFileAttached(xmlBody) shouldBe false
+      xmlHelper.isFileAttached(xmlBodyForElementNotFoundScenario) shouldBe false
+    }
+  }
+
+  "getReferenceNumber" should {
+    "return MRN when one is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4s03-v2.xml")
+      xmlHelper.getReferenceNumber(xmlBody) shouldBe "7c1aa850-9760-42ab-bebe-709e3a4a888f"
+    }
+
+    "return LRN when one is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4s03-with-LRN-v2.xml")
+      xmlHelper.getReferenceNumber(xmlBody) shouldBe "836478b5-9290-47fa-a549-9d7ca1d1d77d"
+    }
+
+    "return empty string when no LRN or MRN is found in SOAP message" in new Setup {
+      xmlHelper.getReferenceNumber(xmlBodyForElementNotFoundScenario) shouldBe ""
     }
   }
 }
