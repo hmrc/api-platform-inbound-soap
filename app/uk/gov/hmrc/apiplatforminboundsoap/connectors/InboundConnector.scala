@@ -21,20 +21,17 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import play.api.Logging
-import play.api.http.HeaderNames.CONTENT_TYPE
 import play.api.http.Status
 import play.api.mvc.Headers
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess, SoapRequest}
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, StringContextOps, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
 
 @Singleton
 class InboundConnector @Inject()(httpClient: HttpClient)(implicit ec: ExecutionContext) extends Logging {
 
   def postMessage(soapRequest: SoapRequest, headers: Headers): Future[SendResult] = {
     implicit val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders(headers.headers:_*)
-
 
     postHttpRequest(soapRequest).map {
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>

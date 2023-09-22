@@ -23,7 +23,6 @@ import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendResult, SoapRequest}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
-import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 import scala.xml.NodeSeq
@@ -31,7 +30,7 @@ import scala.xml.NodeSeq
 @Singleton
 class InboundMessageService @Inject()(appConfig: AppConfig, xmlHelper: XmlHelper, inboundConnector: InboundConnector) extends Logging {
 
-  def processInboundMessage(soapRequest: NodeSeq, headers: Headers)(implicit hc: HeaderCarrier): Future[SendResult] = {
+  def processInboundMessage(soapRequest: NodeSeq): Future[SendResult] = {
     val newHeaders: Headers = Headers(
       "x-soap-action" -> xmlHelper.getSoapAction(soapRequest),
       "x-correlation-id" -> xmlHelper.getMessageId(soapRequest),

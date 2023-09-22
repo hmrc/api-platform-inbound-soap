@@ -54,30 +54,26 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
     "return 200 when successful" in new Setup {
       val xmlRequestCaptor: Captor[Elem]       = ArgCaptor[Elem]
-      val requestHeaderCaptor: Captor[Headers] = ArgCaptor[Headers]
       val requestBody: Elem                    = XML.loadString("<xml>blah</xml>")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, requestHeaderCaptor)(*)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*)
       xmlRequestCaptor hasCaptured requestBody
-      requestHeaderCaptor hasCaptured headers
     }
 
     "return response code it received when not successful" in new Setup {
       val xmlRequestCaptor: Captor[Elem]       = ArgCaptor[Elem]
-      val requestHeaderCaptor: Captor[Headers] = ArgCaptor[Headers]
       val requestBody: Elem                    = XML.loadString("<xml>blah</xml>")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, requestHeaderCaptor)(*)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe PRECONDITION_FAILED
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*)
       xmlRequestCaptor hasCaptured requestBody
-      requestHeaderCaptor hasCaptured headers
     }
   }
 }

@@ -30,14 +30,12 @@ import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest, Version1}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
-import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future.successful
 
 class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
-  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
     val inboundConnectorMock: InboundConnector = mock[InboundConnector]
@@ -61,10 +59,6 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     val messageVersion = "V1"
     val filesIncluded = "true"
 
-    val receivedRequestHeaders = Headers(
-      "server" -> "anyvalue",
-      "x-envoy-upstream-service-time" -> "anyothervalue"
-    )
     val forwardedHeaders = Headers(
       "x-soap-action" -> soapAction,
       "x-correlation-id" -> messageId,
@@ -77,32 +71,28 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return success when connector returns success" in new Setup {
       val bodyCaptor = ArgCaptor[SoapRequest]
       val headerCaptor = ArgCaptor[Headers]
-      val hcCaptor = ArgCaptor[HeaderCarrier]
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)).thenReturn(successful(SendSuccess))
       when(appConfigMock.forwardMessageUrl).thenReturn(forwardingUrl)
 
-      val result = await(service.processInboundMessage(xmlBody, receivedRequestHeaders))
+      val result = await(service.processInboundMessage(xmlBody))
 
       result shouldBe SendSuccess
       verify(inboundConnectorMock).postMessage(inboundSoapMessage, forwardedHeaders)
       bodyCaptor hasCaptured inboundSoapMessage
-//      headerCaptor hasCaptured forwardedHeaders
 
     }
 
     "return failure when connector returns failure" in new Setup {
       val bodyCaptor = ArgCaptor[SoapRequest]
       val headerCaptor = ArgCaptor[Headers]
-      val hcCaptor = ArgCaptor[HeaderCarrier]
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
       when(appConfigMock.forwardMessageUrl).thenReturn(forwardingUrl)
 
-      val result = await(service.processInboundMessage(xmlBody, receivedRequestHeaders))
+      val result = await(service.processInboundMessage(xmlBody))
 
       result shouldBe SendFail(IM_A_TEAPOT)
       verify(inboundConnectorMock).postMessage(inboundSoapMessage, forwardedHeaders)
       bodyCaptor hasCaptured inboundSoapMessage
-//      headerCaptor hasCaptured forwardedHeaders
     }
   }
 }
