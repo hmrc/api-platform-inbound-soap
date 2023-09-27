@@ -107,4 +107,63 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
       xmlHelper.getReferenceNumber(xmlBodyForElementNotFoundScenario) shouldBe ""
     }
   }
+
+  "getFilename" should {
+    "return filename when one is found in SOAP message within binaryAttachment or binaryFile" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4s03-v2.xml")
+      val binaryElement = xmlHelper.getBinaryFile(xmlBody)
+      xmlHelper.getFilename(binaryElement) shouldBe "test-filename.txt"
+    }
+
+    "return empty string when no filename is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4s03-v2-no-filename-element.xml")
+      val binaryElement = xmlHelper.getBinaryFile(xmlBody)
+      xmlHelper.getFilename(binaryElement) shouldBe ""    }
+  }
+"getMimeType" should {
+    "return MIME when one is found in SOAP message within binaryAttachment or binaryFile" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4s03-v2.xml")
+      val binaryElement = xmlHelper.getBinaryFile(xmlBody)
+      xmlHelper.getMimeType(binaryElement) shouldBe "application/pdf"
+    }
+
+    "return empty string when no filename is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4s03-v2-no-mime-element.xml")
+      val binaryElement = xmlHelper.getBinaryFile(xmlBody)
+      xmlHelper.getMimeType(binaryElement) shouldBe ""    }
+  }
+"getDescription" should {
+    "return description when one is found in SOAP message within binaryAttachment or binaryFile" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4s03-v2.xml")
+      val binaryElement = xmlHelper.getBinaryFile(xmlBody)
+      xmlHelper.getDescription(binaryElement) shouldBe "a file made up for unit testing"
+    }
+
+    "return empty string when no description is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4s03-v2-no-description-element.xml")
+      val binaryElement = xmlHelper.getBinaryFile(xmlBody)
+      xmlHelper.getDescription(binaryElement) shouldBe ""    }
+  }
+"getReferralRequestReference" should {
+    "return referralRequestReference when one is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2.xml")
+      xmlHelper.getReferralRequestReference(xmlBody) shouldBe "d4af29b4-d1d7-4f42-a186-ca5a71fabeba"
+    }
+
+    "return empty string when no referralRequestReference is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-no-referralRequestReference-element.xml")
+      xmlHelper.getReferralRequestReference(xmlBody) shouldBe ""    }
+  }
+
+  "getBinaryObject" should {
+    "return binaryObject element value when one is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2.xml")
+      val binaryElement = xmlHelper.getBinaryAttachment(xmlBody)
+      xmlHelper.getBinaryObject(binaryElement) shouldBe "dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo="
+    }
+
+    "return empty string when no binaryObject is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-no-includeBinaryObject-element.xml")
+      xmlHelper.getBinaryObject(xmlBody) shouldBe ""    }
+  }
 }

@@ -133,7 +133,6 @@
                         <urn:description>?</urn:description>
                         <!--0 to 9 repetitions:-->
                         <urn:binaryFile>
-                            <urn:filename>test-filename.txt</urn:filename>
                             <!--Optional:-->
                             <urn:URI>?</urn:URI>
                             <!--Optional:-->
