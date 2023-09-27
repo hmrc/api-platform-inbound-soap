@@ -17,10 +17,11 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import javax.inject.{Inject, Singleton}
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
-
 import play.api.mvc.{Action, ControllerComponents}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.SoapMessageValidateAction
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 import uk.gov.hmrc.apiplatformoutboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
@@ -30,11 +31,13 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 class CCN2MessageController @Inject() (
     cc: ControllerComponents,
     verifyJwtTokenAction: VerifyJwtTokenAction,
+    soapMessageValidateAction: SoapMessageValidateAction,
     incomingMessageService: InboundMessageService
   )(implicit ec: ExecutionContext
   ) extends BackendController(cc) {
 
-  def message(path: String): Action[NodeSeq] = (Action andThen verifyJwtTokenAction).async(parse.xml) { implicit request =>
+  def message(path: String): Action[NodeSeq] = (Action andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
+    implicit request =>
     incomingMessageService.processInboundMessage(request.body) flatMap {
       case SendSuccess      =>
         Future.successful(Ok)
