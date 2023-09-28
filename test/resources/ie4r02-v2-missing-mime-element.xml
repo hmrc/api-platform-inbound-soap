@@ -36,6 +36,7 @@
             </urn:declarant>
             <!--1 to 999 repetitions:-->
             <urn:additionalInformationResponse>
+               <urn:referralRequestReference>d4af29b4-d1d7-4f42-a186-ca5a71fabeba</urn:referralRequestReference>
                <!--0 to 99 repetitions:-->
                <urn:additionalInformation>
                   <!--Optional:-->
@@ -51,9 +52,7 @@
                   <!--Optional:-->
                   <urn:URI>?</urn:URI>
                   <!--Optional:-->
-                  <urn:MIME>?</urn:MIME>
-                  <!--Optional:-->
-                  <urn:includedBinaryObject>cid:837900875320</urn:includedBinaryObject>
+                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
                   <!--Optional:-->
                   <urn:description>?</urn:description>
                </urn:binaryAttachment>
@@ -87,16 +86,6 @@
                   <urn:identificationNumber>?</urn:identificationNumber>
                   <urn:typeOfPerson>?</urn:typeOfPerson>
                </urn:authorizedPerson>
-               <!--0 to 9 repetitions:-->
-               <urn:binaryFile>
-                  <urn:filename>?</urn:filename>
-                  <!--Optional:-->
-                  <urn:URI>?</urn:URI>
-                  <!--Optional:-->
-                  <urn:includedBinaryObject>cid:465261535411</urn:includedBinaryObject>
-                  <!--Optional:-->
-                  <urn:description>?</urn:description>
-               </urn:binaryFile>
                <!--Optional:-->
                <urn:facilityPlace>
                   <urn:address>

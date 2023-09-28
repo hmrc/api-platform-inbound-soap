@@ -78,7 +78,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
   "POST CCN2 message endpoint " should {
     "return 200 when successful" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val requestBody: Elem              = readFromFile("ie4s03-v2.xml")
+      val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
@@ -90,7 +90,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
     "return response code it received when not successful" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val requestBody: Elem              = readFromFile("ie4s03-v2.xml")
+      val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
 
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
 
@@ -128,6 +128,126 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument description too long", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when filename element is missing" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-missing-filename-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when filename element is blank" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-blank-filename-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when filename element is too long" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-too-long-filename-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename too long", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when MIME element is missing" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-missing-mime-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when MIME element is blank" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-blank-mime-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when MIME element is too long" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-too-long--mime-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME too long", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when referralRequestReference element is missing" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-missing-referralRequestReference-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when referralRequestReference element is blank" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-blank-referralRequestReference-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when referralRequestReference element is too long" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-too-long-referralRequestReference-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference too long", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when includedBinaryObject element is missing" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-missing-includedBinaryObject-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument includedBinaryObject is not valid base 64 data", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when includedBinaryObject element is blank" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-blank-includedBinaryObject-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument includedBinaryObject is not valid base 64 data", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when includedBinaryObject element is not base 64 data" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-includedBinaryObject-element-not-base64.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument includedBinaryObject is not valid base 64 data", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
   }

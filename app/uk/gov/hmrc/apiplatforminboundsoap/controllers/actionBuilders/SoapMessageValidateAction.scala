@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders
 
+import java.util.Base64
+
 import _root_.uk.gov.hmrc.http.HttpErrorFunctions
 import javax.inject.{Inject, Singleton}
 import play.api.Logging
@@ -38,11 +40,11 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
 
     verifyElements(body) match {
       case Right(_)    => successful(None)
-      case Left(value) => {
-        logger.warn(s"Invalid ${value._1}")
+      case Left(problemDescription) => {
+        logger.warn(s"Received a request that contained a ${problemDescription._1} that was ${problemDescription._2}")
         val statusCode = BAD_REQUEST
         val requestId  = request.headers.get("x-request-id").getOrElse("requestId not known")
-        val reason     = s"Argument ${value._1} too ${value._2}"
+        val reason     = s"Argument ${problemDescription._1} ${problemDescription._2}"
         successful(Some(BadRequest(createSoapErrorResponse(statusCode, reason, requestId))))
       }
     }
@@ -74,8 +76,8 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
     val mimeMaxLength                                                               = 70
     val referralRequestReferenceMaxLength                                           = 35
     def verifyStringLength(string: String, maxLength: Int): Either[String, Boolean] = {
-      if (string.trim.isEmpty) Left("short")
-      else if (string.length > maxLength) Left("long")
+      if (string.trim.isEmpty) Left("too short")
+      else if (string.length > maxLength) Left("too long")
       else Right(true)
     }
     def verifyDescription(soapMessage: NodeSeq): Either[(String, String), Boolean]  = {
@@ -97,16 +99,28 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
     def verifyMime(soapMessage: NodeSeq): Either[(String, String), Boolean] = {
       val mime = xmlHelper.getBinaryMimeType(soapMessage)
       verifyStringLength(mime, mimeMaxLength) match {
-        case Left(problem) => Left("mime", problem)
+        case Left(problem) => Left("MIME", problem)
         case Right(_)      => Right(true)
       }
     }
 
     def verifyReferralRequestReference(soapMessage: NodeSeq): Either[(String, String), Boolean] = {
-      val referralRequestReference = xmlHelper.getBinaryMimeType(soapMessage)
+      val referralRequestReference = xmlHelper.getReferralRequestReference(soapMessage)
       verifyStringLength(referralRequestReference, referralRequestReferenceMaxLength) match {
         case Left(problem) => Left("referralRequestReference", problem)
         case Right(_)      => Right(true)
+      }
+    }
+
+    def verifyIncludedBinaryObject(soapMessage: NodeSeq): Either[(String, String), Boolean] = {
+      val failLeft = Left("includedBinaryObject","is not valid base 64 data")
+      val includedBinaryObject = xmlHelper.getBinaryObject(soapMessage)
+      try {
+        val decoded = Base64.getDecoder().decode(includedBinaryObject)
+        logger.warn(s"Decoded base 64 string is $decoded")
+        if (decoded.isEmpty) failLeft else Right(true)
+      } catch{
+        case _:Throwable => failLeft
       }
     }
 
@@ -114,9 +128,12 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
       case Right(_)    => verifyFilename(soapMessage) match {
           case Right(_)    => verifyMime(soapMessage) match {
               case Right(_)    => verifyReferralRequestReference(soapMessage) match {
-                  case Right(_)    => Right(true)
+                case Right(_) => verifyIncludedBinaryObject(soapMessage) match {
+                  case Right(_) => Right(true)
                   case Left(value) => Left(value)
                 }
+                case Left(value) => Left(value)
+              }
               case Left(value) => Left(value)
             }
           case Left(value) => Left(value)

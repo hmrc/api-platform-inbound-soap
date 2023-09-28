@@ -36,7 +36,7 @@
             </urn:declarant>
             <!--1 to 999 repetitions:-->
             <urn:additionalInformationResponse>
-               <urn:referralRequestReference>d4af29b4-d1d7-4f42-a186-ca5a71fab</urn:referralRequestReference>
+               <urn:referralRequestReference>d4af29b4-d1d7-4f42-a186-ca5a71fabeba</urn:referralRequestReference>
                <!--0 to 99 repetitions:-->
                <urn:additionalInformation>
                   <!--Optional:-->
@@ -48,7 +48,7 @@
                </urn:additionalInformation>
                <!--0 to 9 repetitions:-->
                <urn:binaryAttachment>
-                  <urn:filename>?</urn:filename>
+                  <urn:filename></urn:filename>
                   <!--Optional:-->
                   <urn:URI>?</urn:URI>
                   <!--Optional:-->

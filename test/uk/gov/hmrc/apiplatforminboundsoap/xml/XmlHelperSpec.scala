@@ -116,7 +116,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return empty string when no filename is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4s03-v2-no-filename-element.xml")
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-blank-filename-element.xml")
       val binaryElement = xmlHelper.getBinaryElement(xmlBody)
       xmlHelper.getBinaryFilename(binaryElement) shouldBe ""    }
   }
@@ -128,7 +128,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return empty string when no filename is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4s03-v2-no-mime-element.xml")
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-missing-mime-element.xml")
       val binaryElement = xmlHelper.getBinaryElement(xmlBody)
       xmlHelper.getBinaryMimeType(binaryElement) shouldBe ""    }
   }
@@ -140,18 +140,18 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return empty string when no description is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4s03-v2-no-description-element.xml")
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-blank-description-element.xml")
       val binaryElement = xmlHelper.getBinaryElement(xmlBody)
       xmlHelper.getBinaryDescription(binaryElement) shouldBe ""    }
   }
 "getReferralRequestReference" should {
     "return referralRequestReference when one is found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4r02-v2.xml")
-      xmlHelper.getReferralRequestReference(xmlBody) shouldBe "d4af29b4-d1d7-4f42-a186-ca5a71fabeba"
+      xmlHelper.getReferralRequestReference(xmlBody) shouldBe "d4af29b4-d1d7-4f42-a186-ca5a71fab"
     }
 
     "return empty string when no referralRequestReference is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-no-referralRequestReference-element.xml")
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-blank-referralRequestReference-element.xml")
       xmlHelper.getReferralRequestReference(xmlBody) shouldBe ""    }
   }
 
