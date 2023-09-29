@@ -33,6 +33,17 @@ import scala.xml.NodeSeq
 @Singleton
 class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: ExecutionContext)
     extends ActionFilter[Request] with HttpErrorFunctions with Logging {
+  val descriptionMaxLength                                                        = 256
+  val filenameMaxLength                                                           = 256
+  val mimeMaxLength                                                               = 70
+  val referralRequestReferenceMaxLength                                           = 35
+  val actionMaxLength                                                             = 9999
+  val descriptionMinLength                                                        = 1
+  val filenameMinLength                                                           = 1
+  val mimeMinLength                                                               = 1
+  val referralRequestReferenceMinLength                                           = 1
+  val actionMinLength                                                             = 3
+
   override def executionContext: ExecutionContext                                         = ec
 
   override protected def filter[A](request: Request[A]): Future[Option[Result]] = {
@@ -71,50 +82,51 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
   }
 
   private def verifyElements(soapMessage: NodeSeq): Either[(String, String), Boolean] = {
-    val descriptionMaxLength                                                        = 256
-    val filenameMaxLength                                                           = 256
-    val mimeMaxLength                                                               = 70
-    val referralRequestReferenceMaxLength                                           = 35
-    def verifyStringLength(string: String, maxLength: Int): Either[String, Boolean] = {
-      if (string.trim.isEmpty) Left("too short")
-      else if (string.length > maxLength) Left("too long")
-      else Right(true)
-    }
+
     def verifyDescription(soapMessage: NodeSeq): Either[(String, String), Boolean]  = {
       val description = xmlHelper.getBinaryDescription(soapMessage)
-      verifyStringLength(description, descriptionMaxLength) match {
-        case Left(problem) => Left("description", problem)
+      verifyStringLength(description, descriptionMinLength, descriptionMaxLength) match {
+        case Left(problem) => Left(("description", problem): (String, String))
         case Right(_)      => Right(true)
       }
     }
 
     def verifyFilename(soapMessage: NodeSeq): Either[(String, String), Boolean] = {
       val filename = xmlHelper.getBinaryFilename(soapMessage)
-      verifyStringLength(filename, filenameMaxLength) match {
-        case Left(problem) => Left("filename", problem)
+      verifyStringLength(filename, filenameMinLength, filenameMaxLength) match {
+        case Left(problem) => Left(("filename", problem): (String, String))
         case Right(_)      => Right(true)
       }
     }
 
     def verifyMime(soapMessage: NodeSeq): Either[(String, String), Boolean] = {
       val mime = xmlHelper.getBinaryMimeType(soapMessage)
-      verifyStringLength(mime, mimeMaxLength) match {
-        case Left(problem) => Left("MIME", problem)
+      verifyStringLength(mime, mimeMinLength, mimeMaxLength) match {
+        case Left(problem) => Left(("MIME", problem): (String, String))
         case Right(_)      => Right(true)
       }
     }
 
     def verifyReferralRequestReference(soapMessage: NodeSeq): Either[(String, String), Boolean] = {
       val referralRequestReference = xmlHelper.getReferralRequestReference(soapMessage)
-      verifyStringLength(referralRequestReference, referralRequestReferenceMaxLength) match {
-        case Left(problem) => Left("referralRequestReference", problem)
+      verifyStringLength(referralRequestReference, referralRequestReferenceMinLength, referralRequestReferenceMaxLength) match {
+        case Left(problem) => Left(("referralRequestReference", problem): (String, String))
         case Right(_)      => Right(true)
+      }
+    }
+
+    def verifyAction(soapMessage: NodeSeq): Either[(String, String), Boolean] = {
+      val action = xmlHelper.getSoapAction(soapMessage)
+      if (action.length > 3 && action.length < 9999 && action.contains("/")) {
+        Right(true)
+      } else {
+        Left(("action", "should contain / character but does not"): (String, String))
       }
     }
 
     def verifyIncludedBinaryObject(soapMessage: NodeSeq): Either[(String, String), Boolean] = {
       val failLeft = Left("includedBinaryObject","is not valid base 64 data")
-      val includedBinaryObject = xmlHelper.getBinaryObject(soapMessage)
+      val includedBinaryObject = xmlHelper.getBinaryBase64Object(soapMessage)
       try {
         val decoded = Base64.getDecoder().decode(includedBinaryObject)
         logger.warn(s"Decoded base 64 string is $decoded")
@@ -126,6 +138,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
 
     verifyDescription(soapMessage) match {
       case Right(_)    => verifyFilename(soapMessage) match {
+        case Right(_)    => verifyAction(soapMessage) match {
           case Right(_)    => verifyMime(soapMessage) match {
               case Right(_)    => verifyReferralRequestReference(soapMessage) match {
                 case Right(_) => verifyIncludedBinaryObject(soapMessage) match {
@@ -135,10 +148,24 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
                 case Left(value) => Left(value)
               }
               case Left(value) => Left(value)
+              }
+            case Left(value) => Left(value)
             }
           case Left(value) => Left(value)
         }
       case Left(value) => Left(value)
     }
+
+    /*for {
+     desc <- verifyDescription(soapMessage)
+     filename <- verifyFilename(soapMessage)
+     mime <- verifyMime(soapMessage)
+     refRequestRef <- verifyReferralRequestReference(soapMessage)
+
+    } yield desc.*/
   }
-}
+  private def verifyStringLength(string: String, minLength: Int, maxLength: Int): Either[String, Boolean] = {
+    if (string.trim.length < minLength) Left("too short")
+    else if (string.length > maxLength) Left("too long")
+    else Right(true)
+  }}

@@ -250,5 +250,35 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument includedBinaryObject is not valid base 64 data", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
+
+    "return 400 when action element is missing" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-missing-action-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument action should contain / character but does not", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when action element is blank" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-blank-action-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument action should contain / character but does not", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+   /* "return 400 when action element is a single slash" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-single-slash-action-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument Action too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }*/
   }
 }

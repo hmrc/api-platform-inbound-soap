@@ -44,10 +44,7 @@ class XmlHelper {
   }
 
   def getSoapAction(soapMessage: NodeSeq): String = {
-    soapMessage \\ "Action" match {
-      case nodeSeq if (nodeSeq.nonEmpty) => nodeSeq.text
-      case _                             => "Not defined"
-    }
+    (soapMessage \\ "Action").text
   }
 
   def getMessageId(soapMessage: NodeSeq): String = {
@@ -69,17 +66,17 @@ class XmlHelper {
     soapMessage \\ "binaryFile"
   }
 
-  def getBinaryElement(soapMessage: NodeSeq): NodeSeq = {
+  private def getBinaryElement(soapMessage: NodeSeq): NodeSeq = {
     val attachment = getBinaryAttachment(soapMessage)
     if (attachment.isEmpty) getBinaryFile(soapMessage) else attachment
   }
 
   def getBinaryFilename(soapMessage: NodeSeq): String                 = {
-    (soapMessage \\ "filename").text
+    (getBinaryElement(soapMessage) \\ "filename").text
   }
 
   def getBinaryMimeType(soapMessage: NodeSeq): String                 = {
-    (soapMessage \\ "MIME").text
+    (getBinaryElement(soapMessage) \\ "MIME").text
   }
 
   def getReferralRequestReference(soapMessage: NodeSeq): String = {
@@ -87,11 +84,11 @@ class XmlHelper {
   }
 
   def getBinaryDescription(soapMessage: NodeSeq): String              = {
-    (soapMessage \\ "description").text
+    (getBinaryElement(soapMessage) \\ "description").text
   }
 
-  def getBinaryObject(soapMessage: NodeSeq): String             = {
-    (soapMessage \\ "includedBinaryObject").text
+  def getBinaryBase64Object(soapMessage: NodeSeq): String             = {
+    (getBinaryElement(soapMessage) \\ "includedBinaryObject").text
   }
 
   def getReferenceNumber(soapMessage: NodeSeq): String = {
