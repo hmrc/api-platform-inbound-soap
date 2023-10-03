@@ -232,6 +232,36 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
+    "return 400 when messageId element is missing" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-missing-messageId-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument messageId is too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when messageId element is blank" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-blank-messageId-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument messageId is too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when messageId element is too long" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-too-long-messageId-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument messageId is too long", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
     "return 400 when includedBinaryObject element is missing" in new Setup {
       val requestBody: Elem = readFromFile("ie4r02-v2-missing-includedBinaryObject-element.xml")
 

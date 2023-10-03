@@ -57,7 +57,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
 
     "return empty string when SOAP action not found in SOAP message" in new Setup {
       val messageId = xmlHelper.getMessageId(xmlBodyForElementNotFoundScenario)
-      messageId shouldBe "Not defined"
+      messageId shouldBe ""
     }
   }
 
@@ -66,6 +66,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
       val xmlBody: NodeSeq = readFromFile("ie4n05-v1.xml")
       xmlHelper.getMessageVersion(xmlBody).displayName shouldBe "V1"
     }
+
     "return whether V2 namespace found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4n09-v2.xml")
       xmlHelper.getMessageVersion(xmlBody).displayName shouldBe "V2"

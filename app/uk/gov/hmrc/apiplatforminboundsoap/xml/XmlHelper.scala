@@ -48,10 +48,7 @@ class XmlHelper {
   }
 
   def getMessageId(soapMessage: NodeSeq): String = {
-    soapMessage \\ "messageId" match {
-      case nodeSeq: NodeSeq if (nodeSeq.nonEmpty) => nodeSeq.text
-      case _                                      => "Not defined"
-    }
+    (soapMessage \\ "messageId").text
   }
 
   def isFileAttached(soapMessage: NodeSeq): Boolean = {

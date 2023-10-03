@@ -35,18 +35,20 @@ import scala.xml.NodeSeq
 @Singleton
 class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: ExecutionContext)
     extends ActionFilter[Request] with HttpErrorFunctions with Logging {
-  case class ValidRequest(validDescription: Boolean, validFilename: Boolean, validMime: Boolean, validReferralRequestReference: Boolean, validAction: Boolean, validActionLength: Boolean, validIncludedBinaryObject: Boolean)
+  case class ValidRequest(validDescription: Boolean, validFilename: Boolean, validMessageId: Boolean, validMime: Boolean, validReferralRequestReference: Boolean, validAction: Boolean, validActionLength: Boolean, validIncludedBinaryObject: Boolean)
 
-  val descriptionMaxLength                                                        = 256
-  val filenameMaxLength                                                           = 256
-  val mimeMaxLength                                                               = 70
-  val referralRequestReferenceMaxLength                                           = 35
-  val actionMaxLength                                                             = 9999
+  val actionMinLength                                                             = 3
   val descriptionMinLength                                                        = 1
   val filenameMinLength                                                           = 1
+  val messageIdMinLength                                                          = 1
   val mimeMinLength                                                               = 1
   val referralRequestReferenceMinLength                                           = 1
-  val actionMinLength                                                             = 3
+  val actionMaxLength                                                             = 9999
+  val descriptionMaxLength                                                        = 256
+  val filenameMaxLength                                                           = 256
+  val messageIdMaxLength                                                          = 291
+  val mimeMaxLength                                                               = 70
+  val referralRequestReferenceMaxLength                                           = 35
 
   override def executionContext: ExecutionContext                                         = ec
 
@@ -91,14 +93,15 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
       (
         verifyDescription(soapMessage),
         verifyFilename(soapMessage),
+        verifyMessageId(soapMessage),
         verifyMime(soapMessage),
         verifyReferralRequestReference(soapMessage),
         verifyAction(soapMessage),
         verifyActionLength(soapMessage),
         verifyIncludedBinaryObject(soapMessage)
       )
-    }.mapN((validDescription, validFilename, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject) => {
-      ValidRequest(validDescription, validFilename, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject)
+    }.mapN((validDescription, validFilename, validMessageId, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject) => {
+      ValidRequest(validDescription, validFilename, validMessageId, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject)
     }).toEither
   }
 
@@ -106,6 +109,14 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
       val description = xmlHelper.getBinaryDescription(soapMessage)
       verifyStringLength(description, descriptionMinLength, descriptionMaxLength) match {
         case Left(problem) => ("description", problem).invalidNel[Boolean]
+        case Right(_)      => Validated.valid(true)
+      }
+    }
+
+   private def verifyMessageId(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean]  = {
+      val messageId = xmlHelper.getMessageId(soapMessage)
+      verifyStringLength(messageId, messageIdMinLength, messageIdMaxLength) match {
+        case Left(problem) => ("messageId", problem).invalidNel[Boolean]
         case Right(_)      => Validated.valid(true)
       }
     }
