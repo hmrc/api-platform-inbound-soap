@@ -8,8 +8,8 @@ object AppDependencies {
 
   private val bootstrapVersion = "7.20.0"
 
-  val jacksonVersion         = "2.13.4"
-  val jacksonDatabindVersion = "2.13.4.2"
+  val jacksonVersion         = "2.14.2"
+  val jacksonDatabindVersion = "2.14.2"
 
   val jacksonOverrides = Seq(
     "com.fasterxml.jackson.core"     % "jackson-core",
@@ -31,7 +31,8 @@ object AppDependencies {
 
   val compile = Seq(
     "uk.gov.hmrc"             %% "bootstrap-backend-play-28"  % bootstrapVersion,
-    "com.auth0"               %  "java-jwt"                   % "4.4.0"
+    "com.auth0"               %  "java-jwt"                   % "4.4.0",
+    "org.typelevel"           %% "cats-core"                  % "2.10.0"
     excludeAll(
       ExclusionRule("com.fasterxml.jackson.core", "jackson-databind")
     )

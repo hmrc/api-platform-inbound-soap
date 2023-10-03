@@ -191,6 +191,16 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
+    "return 400 when MIME element is too long and referralRequestReference is too long" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2-too-long--mime-and-referralRequest-Reference-elements.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME too long, Argument referralRequestReference too long", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
     "return 400 when referralRequestReference element is missing" in new Setup {
       val requestBody: Elem = readFromFile("ie4r02-v2-missing-referralRequestReference-element.xml")
 
