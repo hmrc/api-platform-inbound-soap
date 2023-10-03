@@ -35,7 +35,7 @@ import scala.xml.NodeSeq
 @Singleton
 class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: ExecutionContext)
     extends ActionFilter[Request] with HttpErrorFunctions with Logging {
-  case class ValidRequest(validDescription: Boolean, validFilename: Boolean, validMime: Boolean, validReferralRequestReference: Boolean, validAction: Boolean, validIncludedBinaryObject: Boolean)
+  case class ValidRequest(validDescription: Boolean, validFilename: Boolean, validMime: Boolean, validReferralRequestReference: Boolean, validAction: Boolean, validActionLength: Boolean, validIncludedBinaryObject: Boolean)
 
   val descriptionMaxLength                                                        = 256
   val filenameMaxLength                                                           = 256
@@ -57,9 +57,10 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
     verifyElements(body) match {
       case Right(_)    => successful(None)
       case Left(e) => {
-        logger.warn(mapErrorsToString(e, "Received a request that contained a ", " that was "))
         val statusCode = BAD_REQUEST
         val requestId  = request.headers.get("x-request-id").getOrElse("requestId not known")
+        logger.warn(s"RequestID: $requestId")
+        logger.warn(mapErrorsToString(e, "Received a request that contained a ", " that was rejected because it "))
         successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(e, "Argument ", " "), requestId))))
       }
     }
@@ -93,10 +94,11 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
         verifyMime(soapMessage),
         verifyReferralRequestReference(soapMessage),
         verifyAction(soapMessage),
+        verifyActionLength(soapMessage),
         verifyIncludedBinaryObject(soapMessage)
       )
-    }.mapN((validDescription, validFilename, validMime, validReferralRequestReference, validAction, validIncludedBinaryObject) => {
-      ValidRequest(validDescription, validFilename, validMime, validReferralRequestReference, validAction, validIncludedBinaryObject)
+    }.mapN((validDescription, validFilename, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject) => {
+      ValidRequest(validDescription, validFilename, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject)
     }).toEither
   }
 
@@ -132,9 +134,17 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
       }
     }
 
+  private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+    val action = xmlHelper.getSoapAction(soapMessage)
+    verifyStringLength(action, actionMinLength, actionMaxLength) match {
+      case Right(_)      => Validated.valid(true)
+      case Left(problem) => ("action", problem).invalidNel[Boolean]
+    }
+  }
+
   private def verifyAction(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
-      val action = xmlHelper.getSoapAction(soapMessage)
-      if (action.length > 3 && action.length < 9999 && action.contains("/")) {
+    val action = xmlHelper.getSoapAction(soapMessage)
+    if (action.contains("/")) {
         Validated.valid(true)
       } else {
         ("action", "should contain / character but does not").invalidNel[Boolean]
@@ -146,22 +156,26 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
       val includedBinaryObject = xmlHelper.getBinaryBase64Object(soapMessage)
       try {
         val decoded = Base64.getDecoder().decode(includedBinaryObject)
-        logger.warn(s"Decoded base 64 string is $decoded")
         if (decoded.isEmpty) failLeft else Validated.valid(true)
       } catch{
-        case _:Throwable => failLeft
+        case _:Throwable => {
+          logger.warn("Error while trying to decode includedBinaryObject as base 64 data. Perhaps it is not correctly encoded")
+          failLeft
+        }
       }
     }
 
   private def verifyStringLength(string: String, minLength: Int, maxLength: Int): Either[String, Boolean] = {
-    if (string.trim.length < minLength) Left("too short")
-    else if (string.length > maxLength) Left("too long")
+    if (string.trim.length < minLength)
+      Left("is too short")
+    else if (string.length > maxLength)
+      Left("is too long")
     else Right(true)
   }
 
-  private def mapErrorsToString(errorList: NonEmptyList[(String, String)], firstString: String, secondString: String): String = {
+  private def mapErrorsToString(errorList: NonEmptyList[(String, String)], fieldName: String, problem: String): String = {
     val flatListErrors: List[(String, String)] = errorList.toList
-    flatListErrors.map(problemDescription => s"$firstString${problemDescription._1}$secondString${problemDescription._2}").mkString(", ")
+    flatListErrors.map(problemDescription => s"$fieldName${problemDescription._1}$problem${problemDescription._2}").mkString("\n")
   }
 
 }

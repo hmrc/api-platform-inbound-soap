@@ -41,6 +41,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     val incomingMessageServiceMock        = mock[InboundMessageService]
     val xRequestIdHeaderValue             = randomUUID.toString()
 
+
     val headers                           = Headers(
       "Host"          -> "localhost",
       "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDc5NzcwNzd9.bgdyMvTvicf5FvAlQXN-311k0WTZg0-72wqR4hb66dQ",
@@ -107,7 +108,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument description too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument description is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -117,7 +118,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument description too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument description is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -127,7 +128,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument description too long", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument description is too long", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -137,7 +138,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -147,7 +148,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -157,7 +158,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename too long", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename is too long", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -167,7 +168,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -177,7 +178,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -187,7 +188,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME too long", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME is too long", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -197,7 +198,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME too long, Argument referralRequestReference too long", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME is too long\nArgument referralRequestReference is too long", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -207,7 +208,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -217,7 +218,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -227,7 +228,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference too long", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference is too long", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -267,7 +268,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument action should contain / character but does not", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument action should contain / character but does not\nArgument action is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -277,18 +278,18 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument action should contain / character but does not", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument action should contain / character but does not\nArgument action is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
-   /* "return 400 when action element is a single slash" in new Setup {
+    "return 400 when action element is a single slash" in new Setup {
       val requestBody: Elem = readFromFile("ie4r02-v2-single-slash-action-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument Action too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument action is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
-    }*/
+    }
   }
 }
