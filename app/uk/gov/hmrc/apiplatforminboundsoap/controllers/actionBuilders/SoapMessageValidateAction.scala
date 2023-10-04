@@ -16,49 +16,60 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders
 
-import _root_.uk.gov.hmrc.http.HttpErrorFunctions
-import cats.data.Validated._
-import cats.data._
-import cats.implicits._
-import play.api.Logging
-import play.api.http.Status.BAD_REQUEST
-import play.api.mvc.Results._
-import play.api.mvc.{ActionFilter, Request, Result}
-import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
-
 import java.util.Base64
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
+import _root_.uk.gov.hmrc.http.HttpErrorFunctions
+import cats.data.Validated._
+import cats.data._
+import cats.implicits._
+
+import play.api.Logging
+import play.api.http.Status.BAD_REQUEST
+import play.api.mvc.Results._
+import play.api.mvc.{ActionFilter, Request, Result}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
+
 @Singleton
 class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: ExecutionContext)
     extends ActionFilter[Request] with HttpErrorFunctions with Logging {
-  case class ValidRequest(validDescription: Boolean, validFilename: Boolean, validMessageId: Boolean, validMime: Boolean, validReferralRequestReference: Boolean, validAction: Boolean, validActionLength: Boolean, validIncludedBinaryObject: Boolean)
 
-  val actionMinLength                                                             = 3
-  val descriptionMinLength                                                        = 1
-  val filenameMinLength                                                           = 1
-  val messageIdMinLength                                                          = 1
-  val mimeMinLength                                                               = 1
-  val referralRequestReferenceMinLength                                           = 1
-  val actionMaxLength                                                             = 9999
-  val descriptionMaxLength                                                        = 256
-  val filenameMaxLength                                                           = 256
-  val messageIdMaxLength                                                          = 291
-  val mimeMaxLength                                                               = 70
-  val referralRequestReferenceMaxLength                                           = 35
+  case class ValidRequest(
+      validDescription: Boolean,
+      validFilename: Boolean,
+      validMessageId: Boolean,
+      validMime: Boolean,
+      validReferralRequestReference: Boolean,
+      validAction: Boolean,
+      validActionLength: Boolean,
+      validIncludedBinaryObject: Boolean
+    )
 
-  override def executionContext: ExecutionContext                                         = ec
+  val actionMinLength                   = 3
+  val descriptionMinLength              = 1
+  val filenameMinLength                 = 1
+  val messageIdMinLength                = 1
+  val mimeMinLength                     = 1
+  val referralRequestReferenceMinLength = 1
+  val actionMaxLength                   = 9999
+  val descriptionMaxLength              = 256
+  val filenameMaxLength                 = 256
+  val messageIdMaxLength                = 291
+  val mimeMaxLength                     = 70
+  val referralRequestReferenceMaxLength = 35
+
+  override def executionContext: ExecutionContext = ec
 
   override protected def filter[A](request: Request[A]): Future[Option[Result]] = {
 
     val body: NodeSeq = request.body.asInstanceOf[xml.NodeSeq]
 
     verifyElements(body) match {
-      case Right(_)    => successful(None)
-      case Left(e) => {
+      case Right(_) => successful(None)
+      case Left(e)  => {
         val statusCode = BAD_REQUEST
         val requestId  = request.headers.get("x-request-id").getOrElse("requestId not known")
         logger.warn(s"RequestID: $requestId")
@@ -105,45 +116,45 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
     }).toEither
   }
 
-  private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean]  = {
-      val description = xmlHelper.getBinaryDescription(soapMessage)
-      verifyStringLength(description, descriptionMinLength, descriptionMaxLength) match {
-        case Left(problem) => ("description", problem).invalidNel[Boolean]
-        case Right(_)      => Validated.valid(true)
-      }
+  private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+    val description = xmlHelper.getBinaryDescription(soapMessage)
+    verifyStringLength(description, descriptionMinLength, descriptionMaxLength) match {
+      case Left(problem) => ("description", problem).invalidNel[Boolean]
+      case Right(_)      => Validated.valid(true)
     }
+  }
 
-   private def verifyMessageId(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean]  = {
-      val messageId = xmlHelper.getMessageId(soapMessage)
-      verifyStringLength(messageId, messageIdMinLength, messageIdMaxLength) match {
-        case Left(problem) => ("messageId", problem).invalidNel[Boolean]
-        case Right(_)      => Validated.valid(true)
-      }
+  private def verifyMessageId(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+    val messageId = xmlHelper.getMessageId(soapMessage)
+    verifyStringLength(messageId, messageIdMinLength, messageIdMaxLength) match {
+      case Left(problem) => ("messageId", problem).invalidNel[Boolean]
+      case Right(_)      => Validated.valid(true)
     }
+  }
 
   private def verifyFilename(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
-      val filename = xmlHelper.getBinaryFilename(soapMessage)
-      verifyStringLength(filename, filenameMinLength, filenameMaxLength) match {
-        case Left(problem) => ("filename", problem).invalidNel[Boolean]
-        case Right(_)      => Validated.valid(true)
-      }
+    val filename = xmlHelper.getBinaryFilename(soapMessage)
+    verifyStringLength(filename, filenameMinLength, filenameMaxLength) match {
+      case Left(problem) => ("filename", problem).invalidNel[Boolean]
+      case Right(_)      => Validated.valid(true)
     }
+  }
 
   private def verifyMime(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
-      val mime = xmlHelper.getBinaryMimeType(soapMessage)
-      verifyStringLength(mime, mimeMinLength, mimeMaxLength) match {
-        case Right(_)      => Validated.valid(true)
-        case Left(problem) => ("MIME", problem).invalidNel[Boolean]
-      }
+    val mime = xmlHelper.getBinaryMimeType(soapMessage)
+    verifyStringLength(mime, mimeMinLength, mimeMaxLength) match {
+      case Right(_)      => Validated.valid(true)
+      case Left(problem) => ("MIME", problem).invalidNel[Boolean]
     }
+  }
 
   private def verifyReferralRequestReference(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
-      val referralRequestReference = xmlHelper.getReferralRequestReference(soapMessage)
-      verifyStringLength(referralRequestReference, referralRequestReferenceMinLength, referralRequestReferenceMaxLength) match {
-        case Right(_)      => Validated.valid(true)
-        case Left(problem) => ("referralRequestReference", problem).invalidNel[Boolean]
-      }
+    val referralRequestReference = xmlHelper.getReferralRequestReference(soapMessage)
+    verifyStringLength(referralRequestReference, referralRequestReferenceMinLength, referralRequestReferenceMaxLength) match {
+      case Right(_)      => Validated.valid(true)
+      case Left(problem) => ("referralRequestReference", problem).invalidNel[Boolean]
     }
+  }
 
   private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val action = xmlHelper.getSoapAction(soapMessage)
@@ -156,25 +167,25 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
   private def verifyAction(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val action = xmlHelper.getSoapAction(soapMessage)
     if (action.contains("/")) {
-        Validated.valid(true)
-      } else {
-        ("action", "should contain / character but does not").invalidNel[Boolean]
-      }
+      Validated.valid(true)
+    } else {
+      ("action", "should contain / character but does not").invalidNel[Boolean]
     }
+  }
 
   private def verifyIncludedBinaryObject(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
-      val failLeft = ("includedBinaryObject","is not valid base 64 data").invalidNel[Boolean]
-      val includedBinaryObject = xmlHelper.getBinaryBase64Object(soapMessage)
-      try {
-        val decoded = Base64.getDecoder().decode(includedBinaryObject)
-        if (decoded.isEmpty) failLeft else Validated.valid(true)
-      } catch{
-        case _:Throwable => {
-          logger.warn("Error while trying to decode includedBinaryObject as base 64 data. Perhaps it is not correctly encoded")
-          failLeft
-        }
+    val failLeft             = ("includedBinaryObject", "is not valid base 64 data").invalidNel[Boolean]
+    val includedBinaryObject = xmlHelper.getBinaryBase64Object(soapMessage)
+    try {
+      val decoded = Base64.getDecoder().decode(includedBinaryObject)
+      if (decoded.isEmpty) failLeft else Validated.valid(true)
+    } catch {
+      case _: Throwable => {
+        logger.warn("Error while trying to decode includedBinaryObject as base 64 data. Perhaps it is not correctly encoded")
+        failLeft
       }
     }
+  }
 
   private def verifyStringLength(string: String, minLength: Int, maxLength: Int): Either[String, Boolean] = {
     if (string.trim.length < minLength)

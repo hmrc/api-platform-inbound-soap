@@ -17,12 +17,17 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import java.util.UUID.randomUUID
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future.successful
+import scala.io.Source
+import scala.xml.{Elem, XML}
 
 import org.mockito.captor.{ArgCaptor, Captor}
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import play.api.mvc.Headers
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
@@ -31,16 +36,11 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 import uk.gov.hmrc.apiplatformoutboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
-import scala.io.Source
-import scala.xml.{Elem, XML}
-
 class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
-  trait Setup {
-    val incomingMessageServiceMock        = mock[InboundMessageService]
-    val xRequestIdHeaderValue             = randomUUID.toString()
 
+  trait Setup {
+    val incomingMessageServiceMock = mock[InboundMessageService]
+    val xRequestIdHeaderValue      = randomUUID.toString()
 
     val headers                           = Headers(
       "Host"          -> "localhost",
@@ -51,11 +51,13 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     private val verifyJwtTokenAction      = app.injector.instanceOf[VerifyJwtTokenAction]
     private val soapMessageValidateAction = app.injector.instanceOf[SoapMessageValidateAction]
     val controller                        = new CCN2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
-    val fakeRequest = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headers)
-    def readFromFile(fileName: String) = {
+    val fakeRequest                       = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headers)
+
+    def readFromFile(fileName: String)    = {
       XML.load(Source.fromResource(fileName).bufferedReader())
     }
   }
+
   private def getExpectedSoapFault(statusCode: Int, reason: String, requestId: String) = {
     s"""<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
        |    <soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>

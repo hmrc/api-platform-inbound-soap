@@ -31,7 +31,7 @@ import uk.gov.hmrc.http.test.WireMockSupport
 
 class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with WireMockSupport with ImportControlInboundSoapStub {
   override implicit lazy val app: Application = appBuilder.build()
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val hc: HeaderCarrier              = HeaderCarrier()
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

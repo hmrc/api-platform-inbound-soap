@@ -17,9 +17,9 @@
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import javax.inject.Singleton
-import uk.gov.hmrc.apiplatforminboundsoap.models._
-
 import scala.xml.{Node, NodeSeq}
+
+import uk.gov.hmrc.apiplatforminboundsoap.models._
 
 @Singleton
 class XmlHelper {
@@ -68,11 +68,11 @@ class XmlHelper {
     if (attachment.isEmpty) getBinaryFile(soapMessage) else attachment
   }
 
-  def getBinaryFilename(soapMessage: NodeSeq): String                 = {
+  def getBinaryFilename(soapMessage: NodeSeq): String = {
     (getBinaryElement(soapMessage) \\ "filename").text
   }
 
-  def getBinaryMimeType(soapMessage: NodeSeq): String                 = {
+  def getBinaryMimeType(soapMessage: NodeSeq): String = {
     (getBinaryElement(soapMessage) \\ "MIME").text
   }
 
@@ -80,11 +80,11 @@ class XmlHelper {
     (soapMessage \\ "referralRequestReference").text
   }
 
-  def getBinaryDescription(soapMessage: NodeSeq): String              = {
+  def getBinaryDescription(soapMessage: NodeSeq): String = {
     (getBinaryElement(soapMessage) \\ "description").text
   }
 
-  def getBinaryBase64Object(soapMessage: NodeSeq): String             = {
+  def getBinaryBase64Object(soapMessage: NodeSeq): String = {
     (getBinaryElement(soapMessage) \\ "includedBinaryObject").text
   }
 

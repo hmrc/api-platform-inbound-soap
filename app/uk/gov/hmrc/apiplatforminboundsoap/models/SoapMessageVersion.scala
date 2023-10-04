@@ -18,6 +18,6 @@ package uk.gov.hmrc.apiplatforminboundsoap.models
 
 case class SoapMessageVersion(displayName: String)
 
-object Version1 extends SoapMessageVersion("V1")
-object Version2 extends SoapMessageVersion("V2")
+object Version1             extends SoapMessageVersion("V1")
+object Version2             extends SoapMessageVersion("V2")
 object VersionNotRecognised extends SoapMessageVersion("Not Recognised")
