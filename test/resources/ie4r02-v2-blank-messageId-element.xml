@@ -6,7 +6,7 @@
       <v2:IE4R02provideAdditionalInformationReqMsg>
          <urn:IE4R02>
             <urn:MessageHeader>
-               <urn:messageId>?</urn:messageId>
+               <urn:messageId></urn:messageId>
                <!--Optional:-->
                <urn:correlationId>?</urn:correlationId>
                <!--Optional:-->

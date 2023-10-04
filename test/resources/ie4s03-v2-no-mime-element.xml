@@ -129,14 +129,13 @@
                             <urn:DateTime>?</urn:DateTime>
                         </urn:controlEndDateAndTime>
                         <urn:code>?</urn:code>
+                        <!--Optional:-->
                         <urn:description>?</urn:description>
                         <!--0 to 9 repetitions:-->
                         <urn:binaryFile>
                             <urn:filename>test-filename.txt</urn:filename>
                             <!--Optional:-->
                             <urn:URI>?</urn:URI>
-                            <!--Optional:-->
-                            <urn:MIME>application/pdf</urn:MIME>
                             <!--Optional:-->
                             <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
                             <!--Optional:-->

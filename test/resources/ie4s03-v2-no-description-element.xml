@@ -139,8 +139,6 @@
                             <urn:MIME>application/pdf</urn:MIME>
                             <!--Optional:-->
                             <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
-                            <!--Optional:-->
-                            <urn:description>a file made up for unit testing</urn:description>
                         </urn:binaryFile>
                     </urn:controlResult>
                 </urn:controlResults>

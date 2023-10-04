@@ -17,9 +17,9 @@
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import javax.inject.Singleton
-import uk.gov.hmrc.apiplatforminboundsoap.models._
-
 import scala.xml.{Node, NodeSeq}
+
+import uk.gov.hmrc.apiplatforminboundsoap.models._
 
 @Singleton
 class XmlHelper {
@@ -27,7 +27,7 @@ class XmlHelper {
   def getMessageVersion(soapMessage: NodeSeq): SoapMessageVersion = {
     def getVersionTwoNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
       soapMessage.map((n: Node) => Option(n.getNamespace("v2"))).exists(ns => ns.nonEmpty) match {
-        case true => Version2
+        case true  => Version2
         case false => VersionNotRecognised
       }
     }
@@ -38,26 +38,60 @@ class XmlHelper {
     }
 
     isVersionOneNamespace(soapMessage) match {
-      case true => Version1
+      case true  => Version1
       case false => getVersionTwoNamespace(soapMessage)
     }
   }
 
   def getSoapAction(soapMessage: NodeSeq): String = {
-    soapMessage \\ "Action" match {
-      case nodeSeq if (nodeSeq.nonEmpty) => nodeSeq.text
-      case _ => "Not defined"
-    }
+    (soapMessage \\ "Action").text
   }
 
   def getMessageId(soapMessage: NodeSeq): String = {
-    soapMessage \\ "messageId" match {
-      case nodeSeq: NodeSeq if (nodeSeq.nonEmpty) => nodeSeq.text
-      case _ => "Not defined"
-    }
+    (soapMessage \\ "messageId").text
   }
 
   def isFileAttached(soapMessage: NodeSeq): Boolean = {
-    (soapMessage \\ "binaryAttachment").nonEmpty || (soapMessage \\ "binaryFile").nonEmpty
+    getBinaryAttachment(soapMessage).nonEmpty || getBinaryFile(soapMessage).nonEmpty
+  }
+
+  private def getBinaryAttachment(soapMessage: NodeSeq): NodeSeq = {
+    soapMessage \\ "binaryAttachment"
+  }
+
+  private def getBinaryFile(soapMessage: NodeSeq): NodeSeq = {
+    soapMessage \\ "binaryFile"
+  }
+
+  private def getBinaryElement(soapMessage: NodeSeq): NodeSeq = {
+    val attachment = getBinaryAttachment(soapMessage)
+    if (attachment.isEmpty) getBinaryFile(soapMessage) else attachment
+  }
+
+  def getBinaryFilename(soapMessage: NodeSeq): String = {
+    (getBinaryElement(soapMessage) \\ "filename").text
+  }
+
+  def getBinaryMimeType(soapMessage: NodeSeq): String = {
+    (getBinaryElement(soapMessage) \\ "MIME").text
+  }
+
+  def getReferralRequestReference(soapMessage: NodeSeq): String = {
+    (soapMessage \\ "referralRequestReference").text
+  }
+
+  def getBinaryDescription(soapMessage: NodeSeq): String = {
+    (getBinaryElement(soapMessage) \\ "description").text
+  }
+
+  def getBinaryBase64Object(soapMessage: NodeSeq): String = {
+    (getBinaryElement(soapMessage) \\ "includedBinaryObject").text
+  }
+
+  def getReferenceNumber(soapMessage: NodeSeq): String = {
+    (soapMessage \\ "MRN").text match {
+      case mrn: String if mrn.nonEmpty => mrn
+      case _                           => (soapMessage \\ "LRN").text
+    }
   }
 }

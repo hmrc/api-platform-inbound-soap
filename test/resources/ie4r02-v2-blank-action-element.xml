@@ -1,6 +1,6 @@
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v2="http://xmlns.ec.eu/BusinessActivityService/ICS/IReferralManagementBAS/V2" xmlns:urn="urn:wco:datamodel:eu:ics2:2">
    <soap:Header>
-      <soap:Action>CCN2.Service.Customs.EU.ICS.ReferralManagementBAS/IE4R02provideAdditionalInformation</soap:Action>
+      <soap:Action></soap:Action>
    </soap:Header>
    <soap:Body>
       <v2:IE4R02provideAdditionalInformationReqMsg>
