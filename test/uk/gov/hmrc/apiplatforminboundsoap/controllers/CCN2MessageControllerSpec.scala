@@ -21,13 +21,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, XML}
-
 import org.mockito.captor.{ArgCaptor, Captor}
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import play.api.mvc.Headers
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
@@ -53,7 +51,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     val controller                        = new CCN2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
     val fakeRequest                       = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headers)
 
-    def readFromFile(fileName: String)    = {
+    def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())
     }
   }
