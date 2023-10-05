@@ -16,22 +16,21 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders
 
-import java.util.Base64
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future.successful
-import scala.concurrent.{ExecutionContext, Future}
-import scala.xml.NodeSeq
-
 import _root_.uk.gov.hmrc.http.HttpErrorFunctions
 import cats.data.Validated._
 import cats.data._
 import cats.implicits._
-
 import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import play.api.mvc.Results._
 import play.api.mvc.{ActionFilter, Request, Result}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
+
+import java.util.Base64
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.Future.successful
+import scala.concurrent.{ExecutionContext, Future}
+import scala.xml.NodeSeq
 
 @Singleton
 class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: ExecutionContext)
@@ -74,7 +73,8 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
         val requestId  = request.headers.get("x-request-id").getOrElse("requestId not known")
         logger.warn(s"RequestID: $requestId")
         logger.warn(mapErrorsToString(e, "Received a request that contained a ", " that was rejected because it "))
-        successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(e, "Argument ", " "), requestId))))
+        successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(e, "Argument ", " "), requestId))
+          .as("application/soap+xml")))
       }
     }
   }

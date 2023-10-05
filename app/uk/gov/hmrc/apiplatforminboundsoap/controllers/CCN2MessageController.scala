@@ -40,9 +40,9 @@ class CCN2MessageController @Inject() (
     implicit request =>
       incomingMessageService.processInboundMessage(request.body) flatMap {
         case SendSuccess      =>
-          Future.successful(Ok.withHeaders(("Content-Type", "application/soap+xml")))
+          Future.successful(Ok.as("application/soap+xml"))
         case SendFail(status) =>
-          Future.successful(new Status(status).withHeaders(("Content-Type", "application/soap+xml")))
+          Future.successful(new Status(status).as("application/soap+xml"))
       }
   }
 }
