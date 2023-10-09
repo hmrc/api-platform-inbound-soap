@@ -46,7 +46,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     val service: InboundMessageService =
       new InboundMessageService(appConfigMock, xmlHelper, inboundConnectorMock)
     when(xmlHelper.isFileAttached(*)).thenReturn(true)
-    when(xmlHelper.getMessageId(*)).thenReturn("427b9e3c-d708-4893-b5fa-21b5641231e5")
+    when(xmlHelper.getMessageId(*)).thenReturn(Some("427b9e3c-d708-4893-b5fa-21b5641231e5"))
     when(xmlHelper.isFileAttached(*)).thenReturn(true)
     when(xmlHelper.getMessageVersion(*)).thenReturn(Version1)
     when(xmlHelper.getSoapAction(*)).thenReturn(Some("CCN2.Service.Customs.EU.ICS.NESReferralBAS/IE4R02provideAdditionalInformation"))

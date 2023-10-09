@@ -51,13 +51,13 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
   "get messageId" should {
     "return messageId from SOAP message" in new Setup {
       val xmlBody: Elem = readFromFile("ie4n09-v2.xml")
-      val messageId     = xmlHelper.getMessageId(xmlBody)
+      val Some(messageId)     = xmlHelper.getMessageId(xmlBody)
       messageId shouldBe "dc4f3c40-5fb9-44eb-a327-d431611a9521"
     }
 
     "return empty string when SOAP action not found in SOAP message" in new Setup {
       val messageId = xmlHelper.getMessageId(xmlBodyForElementNotFoundScenario)
-      messageId shouldBe ""
+      messageId shouldBe None
     }
   }
 

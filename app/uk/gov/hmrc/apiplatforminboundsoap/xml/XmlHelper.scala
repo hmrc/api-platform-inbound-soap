@@ -48,8 +48,9 @@ class XmlHelper {
     if(action.isEmpty) None else Some(action.text)
   }
 
-  def getMessageId(soapMessage: NodeSeq): String = {
-    (soapMessage \\ "messageId").text
+  def getMessageId(soapMessage: NodeSeq): Option[String] = {
+    val messageId = soapMessage \\ "messageId"
+    if (messageId.isEmpty) None else Some(messageId.text)
   }
 
   def isFileAttached(soapMessage: NodeSeq): Boolean = {

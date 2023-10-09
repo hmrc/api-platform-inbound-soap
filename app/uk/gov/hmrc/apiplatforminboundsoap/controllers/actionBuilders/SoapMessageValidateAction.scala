@@ -120,7 +120,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
 
   private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val description = xmlHelper.getBinaryDescription(soapMessage)
-    verifyStringLength(description, descriptionMinLength, descriptionMaxLength) match {
+    verifyStringLength(Some(description), descriptionMinLength, descriptionMaxLength) match {
       case Left(problem) => ("description", problem).invalidNel[Boolean]
       case Right(_)      => Validated.valid(true)
     }
@@ -136,7 +136,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
 
   private def verifyFilename(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val filename = xmlHelper.getBinaryFilename(soapMessage)
-    verifyStringLength(filename, filenameMinLength, filenameMaxLength) match {
+    verifyStringLength(Some(filename), filenameMinLength, filenameMaxLength) match {
       case Left(problem) => ("filename", problem).invalidNel[Boolean]
       case Right(_)      => Validated.valid(true)
     }
@@ -144,7 +144,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
 
   private def verifyMime(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val mime = xmlHelper.getBinaryMimeType(soapMessage)
-    verifyStringLength(mime, mimeMinLength, mimeMaxLength) match {
+    verifyStringLength(Some(mime), mimeMinLength, mimeMaxLength) match {
       case Right(_)      => Validated.valid(true)
       case Left(problem) => ("MIME", problem).invalidNel[Boolean]
     }
@@ -152,7 +152,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
 
   private def verifyReferralRequestReference(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val referralRequestReference = xmlHelper.getReferralRequestReference(soapMessage)
-    verifyStringLength(referralRequestReference, referralRequestReferenceMinLength, referralRequestReferenceMaxLength) match {
+    verifyStringLength(Some(referralRequestReference), referralRequestReferenceMinLength, referralRequestReferenceMaxLength) match {
       case Right(_)      => Validated.valid(true)
       case Left(problem) => ("referralRequestReference", problem).invalidNel[Boolean]
     }
@@ -168,7 +168,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
   private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     xmlHelper.getSoapAction(soapMessage) match {
       case None => Validated.valid(true)
-      case Some(actionText) => verifyStringLength(actionText, actionMinLength, actionMaxLength) match {
+      case actionText => verifyStringLength(actionText, actionMinLength, actionMaxLength) match {
         case Right(_) => Validated.valid(true)
         case Left(problem) => ("action", problem).invalidNel[Boolean]
       }
@@ -200,12 +200,13 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
     }
   }
 
-  private def verifyStringLength(string: String, minLength: Int, maxLength: Int): Either[String, Boolean] = {
-    if (string.trim.length < minLength)
-      Left("is too short")
-    else if (string.length > maxLength)
-      Left("is too long")
-    else Right(true)
+  private def verifyStringLength(maybeString: Option[String], minLength: Int, maxLength: Int): Either[String, Boolean] = {
+    maybeString match {
+      case Some(string) if string.trim.length < minLength => Left("is too short")
+      case Some(string) if (string.length > maxLength) => Left("is too long")
+      case None => Left("is missing")
+      case _ => Right(true)
+  }
   }
 
   private def mapErrorsToString(errorList: NonEmptyList[(String, String)], fieldName: String, problem: String): String = {
