@@ -43,8 +43,9 @@ class XmlHelper {
     }
   }
 
-  def getSoapAction(soapMessage: NodeSeq): String = {
-    (soapMessage \\ "Action").text
+  def getSoapAction(soapMessage: NodeSeq): Option[String] = {
+    val action = (soapMessage \\ "Action")
+    if(action.isEmpty) None else Some(action.text)
   }
 
   def getMessageId(soapMessage: NodeSeq): String = {

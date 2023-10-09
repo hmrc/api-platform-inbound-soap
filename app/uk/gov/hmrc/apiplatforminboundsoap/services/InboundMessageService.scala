@@ -32,7 +32,7 @@ class InboundMessageService @Inject() (appConfig: AppConfig, xmlHelper: XmlHelpe
 
   def processInboundMessage(soapRequest: NodeSeq): Future[SendResult] = {
     val newHeaders: Headers = Headers(
-      "x-soap-action"    -> xmlHelper.getSoapAction(soapRequest),
+      "x-soap-action"    -> xmlHelper.getSoapAction(soapRequest).getOrElse(""),
       "x-correlation-id" -> xmlHelper.getMessageId(soapRequest),
       "x-message-id"     -> xmlHelper.getMessageId(soapRequest),
       "x-files-included" -> xmlHelper.isFileAttached(soapRequest).toString,

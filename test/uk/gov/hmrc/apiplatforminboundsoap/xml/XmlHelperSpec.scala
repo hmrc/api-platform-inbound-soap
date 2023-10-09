@@ -36,15 +36,15 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
   }
 
   "getSoapAction" should {
-    "return SOAP action from SOAP message" in new Setup {
+    "return SOAP action text from SOAP message" in new Setup {
       val xmlBody: Elem = readFromFile("ie4n09-v2.xml")
       val soapAction    = xmlHelper.getSoapAction(xmlBody)
-      soapAction shouldBe "CCN2.Service.Customs.EU.ICS.ENSLifecycleManagementBAS/IE4N09notifyControlDecision"
+      soapAction shouldBe Some("CCN2.Service.Customs.EU.ICS.ENSLifecycleManagementBAS/IE4N09notifyControlDecision")
     }
 
-    "return empty string when SOAP action not found in SOAP message" in new Setup {
+    "return None when SOAP action not found in SOAP message" in new Setup {
       val soapAction = xmlHelper.getSoapAction(xmlBodyForElementNotFoundScenario)
-      soapAction shouldBe ""
+      soapAction shouldBe None
     }
   }
 

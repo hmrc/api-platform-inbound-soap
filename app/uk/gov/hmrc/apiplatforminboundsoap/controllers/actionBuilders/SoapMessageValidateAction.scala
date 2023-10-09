@@ -36,7 +36,8 @@ import scala.xml.NodeSeq
 class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: ExecutionContext)
     extends ActionFilter[Request] with HttpErrorFunctions with Logging {
 
-  case class ValidRequest(
+  case class ValidationRequestResult(
+      actionExists: Boolean,
       validDescription: Boolean,
       validFilename: Boolean,
       validMessageId: Boolean,
@@ -99,9 +100,10 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
        |</soap:Envelope>""".stripMargin
   }
 
-  private def verifyElements(soapMessage: NodeSeq): Either[cats.data.NonEmptyList[(String, String)], ValidRequest] = {
+  private def verifyElements(soapMessage: NodeSeq): Either[cats.data.NonEmptyList[(String, String)], ValidationRequestResult] = {
     {
       (
+        verifyActionExists(soapMessage),
         verifyDescription(soapMessage),
         verifyFilename(soapMessage),
         verifyMessageId(soapMessage),
@@ -111,8 +113,8 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
         verifyActionLength(soapMessage),
         verifyIncludedBinaryObject(soapMessage)
       )
-    }.mapN((validDescription, validFilename, validMessageId, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject) => {
-      ValidRequest(validDescription, validFilename, validMessageId, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject)
+    }.mapN((actionExists, validDescription, validFilename, validMessageId, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject) => {
+      ValidationRequestResult(actionExists, validDescription, validFilename, validMessageId, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject)
     }).toEither
   }
 
@@ -156,20 +158,31 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
     }
   }
 
+  private def verifyActionExists(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+    xmlHelper.getSoapAction(soapMessage) match {
+      case Some(_) => Validated.valid(true)
+      case None => ("action", "SOAP Header Action missing").invalidNel[Boolean]
+    }
+  }
+
   private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
-    val action = xmlHelper.getSoapAction(soapMessage)
-    verifyStringLength(action, actionMinLength, actionMaxLength) match {
-      case Right(_)      => Validated.valid(true)
-      case Left(problem) => ("action", problem).invalidNel[Boolean]
+    xmlHelper.getSoapAction(soapMessage) match {
+      case None => Validated.valid(true)
+      case Some(actionText) => verifyStringLength(actionText, actionMinLength, actionMaxLength) match {
+        case Right(_) => Validated.valid(true)
+        case Left(problem) => ("action", problem).invalidNel[Boolean]
+      }
     }
   }
 
   private def verifyAction(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
-    val action = xmlHelper.getSoapAction(soapMessage)
-    if (action.contains("/")) {
-      Validated.valid(true)
-    } else {
-      ("action", "should contain / character but does not").invalidNel[Boolean]
+    xmlHelper.getSoapAction(soapMessage) match {
+      case None => Validated.valid(true)
+      case Some(actionText) => if (actionText.contains("/")) {
+        Validated.valid(true)
+      } else {
+        ("action", "should contain / character but does not").invalidNel[Boolean]
+      }
     }
   }
 
