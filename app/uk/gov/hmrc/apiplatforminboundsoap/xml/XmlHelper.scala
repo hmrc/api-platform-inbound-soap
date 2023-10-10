@@ -90,6 +90,11 @@ class XmlHelper {
     (getBinaryElement(soapMessage) \\ "includedBinaryObject").text
   }
 
+  def getBinaryUri(soapMessage: NodeSeq): Option[String] = {
+    val binaryElementUri = getBinaryElement(soapMessage) \\ "URI"
+    if (binaryElementUri.isEmpty) None else Some(binaryElementUri.text)
+  }
+
   def getReferenceNumber(soapMessage: NodeSeq): Option[String] = {
     val mrn = soapMessage \\ "MRN"
     val lrn = soapMessage \\ "LRN"

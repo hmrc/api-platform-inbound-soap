@@ -36,18 +36,23 @@ import scala.xml.NodeSeq
 class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: ExecutionContext)
     extends ActionFilter[Request] with HttpErrorFunctions with Logging {
 
+  case class AttachmentValidationResult(
+     validDescription: Boolean,
+     validFilename: Boolean,
+     validMime: Boolean,
+     validIncludedBinaryObject: Boolean,
+     validReferralRequestReference: Boolean
+   )
+
   case class ValidationRequestResult(
-      actionExists: Boolean,
-      validDescription: Boolean,
-      validFilename: Boolean,
-      validMessageId: Boolean,
-      validMime: Boolean,
-      validReference: Boolean,
-      validReferralRequestReference: Boolean,
-      validAction: Boolean,
-      validActionLength: Boolean,
-      validIncludedBinaryObject: Boolean
-    )
+    attachmentValid: AttachmentValidationResult,
+    actionExists: Boolean,
+    validMessageId: Boolean,
+    validReference: Boolean,
+    validAction: Boolean,
+    validActionLength: Boolean
+  )
+
 
   val actionMinLength                   = 3
   val descriptionMinLength              = 1
@@ -106,21 +111,32 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
   private def verifyElements(soapMessage: NodeSeq): Either[cats.data.NonEmptyList[(String, String)], ValidationRequestResult] = {
     {
       (
+        verifyAttachment(soapMessage),
         verifyActionExists(soapMessage),
-        verifyDescription(soapMessage),
-        verifyFilename(soapMessage),
         verifyMessageId(soapMessage),
-        verifyMime(soapMessage),
         verifyMRN(soapMessage),
-        verifyReferralRequestReference(soapMessage),
         verifyAction(soapMessage),
-        verifyActionLength(soapMessage),
-        verifyIncludedBinaryObject(soapMessage)
+        verifyActionLength(soapMessage)
       )
-    }.mapN((actionExists, validDescription, validFilename, validMessageId, validMime, validReference, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject) => {
-      ValidationRequestResult(actionExists, validDescription, validFilename, validMessageId, validMime, validReference, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject)
+    }.mapN((attachmentValid, actionExists, validMessageId, validReference, validAction, validActionLength) => {
+      ValidationRequestResult(attachmentValid, actionExists, validMessageId, validReference, validAction, validActionLength)
     }).toEither
   }
+
+ private def verifyAttachment(soapMessage: NodeSeq): ValidatedNel[(String, String), AttachmentValidationResult] = {
+   if(xmlHelper.isFileAttached(soapMessage)) {
+     {
+       (
+         verifyFilename(soapMessage),
+         verifyMime(soapMessage),
+         verifyDescription(soapMessage),
+         verifyIncludedBinaryObject(soapMessage),
+         verifyReferralRequestReference(soapMessage)
+       )
+     }.mapN((validFilename, validMime, validDescription, validBinaryObject, validReferralRequestReference) =>
+       AttachmentValidationResult(validFilename, validMime, validDescription, validBinaryObject, validReferralRequestReference))
+   } else Validated.valid(AttachmentValidationResult(true, true, true, true, true))
+ }
 
   private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val description = xmlHelper.getBinaryDescription(soapMessage)
@@ -129,6 +145,10 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
       case Right(_)      => Validated.valid(true)
     }
   }
+
+ private def hasUriForAttachment(soapMessage: NodeSeq): Boolean = {
+  xmlHelper.getBinaryUri(soapMessage).isDefined
+ }
 
  private def verifyMRN(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val referenceNumber = xmlHelper.getReferenceNumber(soapMessage)
@@ -159,6 +179,14 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
     verifyStringLength(Some(mime), mimeMinLength, mimeMaxLength) match {
       case Right(_)      => Validated.valid(true)
       case Left(problem) => ("MIME", problem).invalidNel[Boolean]
+    }
+  }
+
+  private def verifyAttribute(attributeValue: Option[String], attributeName: String, maxLength: Int, minLength: Int): ValidatedNel[(String, String), Boolean] = {
+
+    verifyStringLength(attributeValue, minLength, maxLength) match {
+      case Right(_)      => Validated.valid(true)
+      case Left(problem) => (attributeName, problem).invalidNel[Boolean]
     }
   }
 

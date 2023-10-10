@@ -120,6 +120,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
       xmlHelper.getBinaryFilename(xmlBody) shouldBe ""
     }
   }
+
   "getMimeType" should {
     "return MIME when one is found in SOAP message within binaryAttachment or binaryFile" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4s03-v2.xml")
@@ -131,6 +132,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
       xmlHelper.getBinaryMimeType(xmlBody) shouldBe ""
     }
   }
+
   "getDescription" should {
     "return description when one is found in SOAP message within binaryAttachment or binaryFile" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4s03-v2.xml")
@@ -142,6 +144,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
       xmlHelper.getBinaryDescription(xmlBody) shouldBe ""
     }
   }
+
   "getReferralRequestReference" should {
     "return referralRequestReference when one is found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4r02-v2.xml")
@@ -161,8 +164,20 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return empty string when no binaryObject is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-no-includeBinaryObject-element.xml")
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-blank-includedBinaryObject-element.xml")
       xmlHelper.getBinaryBase64Object(xmlBody) shouldBe ""
     }
+
+    "getBinaryUri" should {
+    "return binaryObject URI element value when one is found in SOAP message within binaryAttachment element" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-binaryAttachment-with-uri.xml")
+      xmlHelper.getBinaryUri(xmlBody) shouldBe Some("https://dummyhost.ec.eu")
+    }
+
+    "return empty string when no binaryAttachment URI is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-missing-attachment-uri-element.xml")
+      xmlHelper.getBinaryUri(xmlBody) shouldBe None
+    }
   }
+}
 }

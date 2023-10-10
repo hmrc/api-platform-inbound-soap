@@ -17,12 +17,14 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import java.util.UUID.randomUUID
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, XML}
 import org.mockito.captor.{ArgCaptor, Captor}
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import org.scalatest.Ignore
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -77,9 +79,33 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
   }
 
   "POST CCN2 message endpoint " should {
-    "return 200 when successful" in new Setup {
+    "return 200 when successful for a message with embedded attached file" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe OK
+      verify(incomingMessageServiceMock).processInboundMessage(*)
+      xmlRequestCaptor hasCaptured requestBody
+    }
+
+    "return 200 when successful for a message with attached file as URI" in new Setup {
+      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
+      val requestBody: Elem              = readFromFile("ie4r02-v2-uri-instead-of-includedBinaryObject-element.xml")
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe OK
+      verify(incomingMessageServiceMock).processInboundMessage(*)
+      xmlRequestCaptor hasCaptured requestBody
+    }
+
+  "return 200 when successful for a message with no attached file" in new Setup {
+      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
+      val requestBody: Elem              = readFromFile("ie4n09-v2.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
