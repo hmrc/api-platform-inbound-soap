@@ -42,6 +42,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
       validFilename: Boolean,
       validMessageId: Boolean,
       validMime: Boolean,
+      validReference: Boolean,
       validReferralRequestReference: Boolean,
       validAction: Boolean,
       validActionLength: Boolean,
@@ -53,12 +54,14 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
   val filenameMinLength                 = 1
   val messageIdMinLength                = 1
   val mimeMinLength                     = 1
+  val referenceMinLength                = 1
   val referralRequestReferenceMinLength = 1
   val actionMaxLength                   = 9999
   val descriptionMaxLength              = 256
   val filenameMaxLength                 = 256
   val messageIdMaxLength                = 291
   val mimeMaxLength                     = 70
+  val referenceMaxLength                = 18
   val referralRequestReferenceMaxLength = 35
 
   override def executionContext: ExecutionContext = ec
@@ -73,7 +76,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
         val statusCode = BAD_REQUEST
         val requestId  = request.headers.get("x-request-id").getOrElse("requestId not known")
         logger.warn(s"RequestID: $requestId")
-        logger.warn(mapErrorsToString(e, "Received a request that contained a ", " that was rejected because it "))
+        logger.warn(mapErrorsToString(e, "Received a request that had a ", " that was rejected for being "))
         successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(e, "Argument ", " "), requestId))
           .as("application/soap+xml")))
       }
@@ -108,13 +111,14 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
         verifyFilename(soapMessage),
         verifyMessageId(soapMessage),
         verifyMime(soapMessage),
+        verifyMRN(soapMessage),
         verifyReferralRequestReference(soapMessage),
         verifyAction(soapMessage),
         verifyActionLength(soapMessage),
         verifyIncludedBinaryObject(soapMessage)
       )
-    }.mapN((actionExists, validDescription, validFilename, validMessageId, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject) => {
-      ValidationRequestResult(actionExists, validDescription, validFilename, validMessageId, validMime, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject)
+    }.mapN((actionExists, validDescription, validFilename, validMessageId, validMime, validReference, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject) => {
+      ValidationRequestResult(actionExists, validDescription, validFilename, validMessageId, validMime, validReference, validReferralRequestReference, validAction, validActionLength, validIncludedBinaryObject)
     }).toEither
   }
 
@@ -122,6 +126,14 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
     val description = xmlHelper.getBinaryDescription(soapMessage)
     verifyStringLength(Some(description), descriptionMinLength, descriptionMaxLength) match {
       case Left(problem) => ("description", problem).invalidNel[Boolean]
+      case Right(_)      => Validated.valid(true)
+    }
+  }
+
+ private def verifyMRN(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+    val referenceNumber = xmlHelper.getReferenceNumber(soapMessage)
+    verifyStringLength(referenceNumber, referenceMinLength, referenceMaxLength) match {
+      case Left(problem) => ("MRN/LRN", problem).invalidNel[Boolean]
       case Right(_)      => Validated.valid(true)
     }
   }

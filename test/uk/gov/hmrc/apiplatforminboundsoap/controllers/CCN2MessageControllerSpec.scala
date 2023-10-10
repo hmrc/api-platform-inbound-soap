@@ -103,7 +103,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when description element is missing" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-missing-description-element.xml")
+      val requestBody: Elem = readFromFile("description/ie4r02-v2-missing-description-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -113,7 +113,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when description element is blank" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-blank-description-element.xml")
+      val requestBody: Elem = readFromFile("description/ie4r02-v2-blank-description-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -123,7 +123,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when description element is too long" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-too-long-description-element.xml")
+      val requestBody: Elem = readFromFile("description/ie4r02-v2-too-long-description-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -133,7 +133,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when filename element is missing" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-missing-filename-element.xml")
+      val requestBody: Elem = readFromFile("filename/ie4r02-v2-missing-filename-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -143,7 +143,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when filename element is blank" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-blank-filename-element.xml")
+      val requestBody: Elem = readFromFile("filename/ie4r02-v2-blank-filename-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -153,7 +153,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when filename element is too long" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-too-long-filename-element.xml")
+      val requestBody: Elem = readFromFile("filename/ie4r02-v2-too-long-filename-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -163,7 +163,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when MIME element is missing" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-missing-mime-element.xml")
+      val requestBody: Elem = readFromFile("MIME/ie4r02-v2-missing-mime-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -173,7 +173,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when MIME element is blank" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-blank-mime-element.xml")
+      val requestBody: Elem = readFromFile("MIME/ie4r02-v2-blank-mime-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -183,7 +183,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when MIME element is too long" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-too-long--mime-element.xml")
+      val requestBody: Elem = readFromFile("MIME/ie4r02-v2-too-long--mime-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -233,7 +233,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when messageId element is missing" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-missing-messageId-element.xml")
+      val requestBody: Elem = readFromFile("messageId/ie4r02-v2-missing-messageId-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -243,7 +243,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when messageId element is blank" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-blank-messageId-element.xml")
+      val requestBody: Elem = readFromFile("messageId/ie4r02-v2-blank-messageId-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -253,7 +253,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when messageId element is too long" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-too-long-messageId-element.xml")
+      val requestBody: Elem = readFromFile("messageId/ie4r02-v2-too-long-messageId-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -293,7 +293,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when action element is missing" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-missing-action-element.xml")
+      val requestBody: Elem = readFromFile("action/ie4r02-v2-missing-action-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -303,7 +303,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when action element is blank" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-blank-action-element.xml")
+      val requestBody: Elem = readFromFile("action/ie4r02-v2-blank-action-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -313,12 +313,42 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when action element is a single slash" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-single-slash-action-element.xml")
+      val requestBody: Elem = readFromFile("action/ie4r02-v2-single-slash-action-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument action is too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when MRN element is missing" in new Setup {
+      val requestBody: Elem = readFromFile("MRN/ie4r02-v2-missing-both-LRN-and-MRN-elements.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MRN/LRN is missing", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when MRN element is blank" in new Setup {
+      val requestBody: Elem = readFromFile("MRN/ie4r02-v2-blank-MRN-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MRN/LRN is too short", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when MRN element is too long" in new Setup {
+      val requestBody: Elem = readFromFile("MRN/ie4r02-v2-too-long-MRN-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MRN/LRN is too long", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
   }

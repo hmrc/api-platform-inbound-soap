@@ -96,16 +96,16 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
   "getReferenceNumber" should {
     "return MRN when one is found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4s03-v2.xml")
-      xmlHelper.getReferenceNumber(xmlBody) shouldBe "7c1aa850-9760-42ab-bebe-709e3a4a888f"
+      xmlHelper.getReferenceNumber(xmlBody) shouldBe Some("7c1aa850-9760-42ab-bebe-709e3a4a888f")
     }
 
     "return LRN when one is found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4s03-with-LRN-v2.xml")
-      xmlHelper.getReferenceNumber(xmlBody) shouldBe "836478b5-9290-47fa-a549-9d7ca1d1d77d"
+      xmlHelper.getReferenceNumber(xmlBody) shouldBe Some("836478b5-9290-47fa-a549-9d7ca1d1d77d")
     }
 
     "return empty string when no LRN or MRN is found in SOAP message" in new Setup {
-      xmlHelper.getReferenceNumber(xmlBodyForElementNotFoundScenario) shouldBe ""
+      xmlHelper.getReferenceNumber(xmlBodyForElementNotFoundScenario) shouldBe None
     }
   }
 
@@ -116,7 +116,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return empty string when no filename is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-blank-filename-element.xml")
+      val xmlBody: NodeSeq = readFromFile("filename/ie4r02-v2-blank-filename-element.xml")
       xmlHelper.getBinaryFilename(xmlBody) shouldBe ""
     }
   }
@@ -127,7 +127,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return empty string when no filename is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-missing-mime-element.xml")
+      val xmlBody: NodeSeq = readFromFile("MIME/ie4r02-v2-missing-mime-element.xml")
       xmlHelper.getBinaryMimeType(xmlBody) shouldBe ""
     }
   }
@@ -138,7 +138,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return empty string when no description is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-blank-description-element.xml")
+      val xmlBody: NodeSeq = readFromFile("description/ie4r02-v2-blank-description-element.xml")
       xmlHelper.getBinaryDescription(xmlBody) shouldBe ""
     }
   }

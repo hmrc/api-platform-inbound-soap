@@ -90,10 +90,13 @@ class XmlHelper {
     (getBinaryElement(soapMessage) \\ "includedBinaryObject").text
   }
 
-  def getReferenceNumber(soapMessage: NodeSeq): String = {
-    (soapMessage \\ "MRN").text match {
-      case mrn: String if mrn.nonEmpty => mrn
-      case _                           => (soapMessage \\ "LRN").text
+  def getReferenceNumber(soapMessage: NodeSeq): Option[String] = {
+    val mrn = soapMessage \\ "MRN"
+    val lrn = soapMessage \\ "LRN"
+    if (mrn.isEmpty && lrn.isEmpty) None else if (mrn.isEmpty) {
+      Some(lrn.text)
+    } else {
+      Some(mrn.text)
     }
   }
 }
