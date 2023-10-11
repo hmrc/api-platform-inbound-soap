@@ -17,17 +17,17 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import java.util.UUID.randomUUID
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, XML}
+
 import org.mockito.captor.{ArgCaptor, Captor}
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
-import org.scalatest.Ignore
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import play.api.mvc.Headers
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
@@ -103,7 +103,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       xmlRequestCaptor hasCaptured requestBody
     }
 
-  "return 200 when successful for a message with no attached file" in new Setup {
+    "return 200 when successful for a message with no attached file" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val requestBody: Elem              = readFromFile("ie4n09-v2.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
@@ -288,18 +288,28 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
-    "return 400 when includedBinaryObject element is missing" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-missing-includedBinaryObject-element.xml")
+    "return 400 when includedBinaryObject and uri elements are both present" in new Setup {
+      val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-contains-uri-and-includedBinaryObject-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument includedBinaryObject is not valid base 64 data", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument Message must not contain both includedBinaryObject and URI", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when includedBinaryObject and uri elements are both missing" in new Setup {
+      val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-missing-uri-and-includedBinaryObject-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument Message must contain includedBinaryObject or URI", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
     "return 400 when includedBinaryObject element is blank" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-blank-includedBinaryObject-element.xml")
+      val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-blank-includedBinaryObject-element.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
@@ -309,12 +319,22 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return 400 when includedBinaryObject element is not base 64 data" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-includedBinaryObject-element-not-base64.xml")
+      val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-includedBinaryObject-element-not-base64.xml")
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument includedBinaryObject is not valid base 64 data", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+
+    "return 400 when uri element is too short" in new Setup {
+      val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-too-short-uri-element.xml")
+
+      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument URI is too short", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 

@@ -50,8 +50,8 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
 
   "get messageId" should {
     "return messageId from SOAP message" in new Setup {
-      val xmlBody: Elem = readFromFile("ie4n09-v2.xml")
-      val Some(messageId)     = xmlHelper.getMessageId(xmlBody)
+      val xmlBody: Elem   = readFromFile("ie4n09-v2.xml")
+      val Some(messageId) = xmlHelper.getMessageId(xmlBody)
       messageId shouldBe "dc4f3c40-5fb9-44eb-a327-d431611a9521"
     }
 
@@ -160,24 +160,24 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
   "getBinaryObject" should {
     "return binaryObject element value when one is found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4r02-v2.xml")
-      xmlHelper.getBinaryBase64Object(xmlBody) shouldBe "dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo="
+      xmlHelper.getBinaryBase64Object(xmlBody) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
     }
 
     "return empty string when no binaryObject is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-blank-includedBinaryObject-element.xml")
-      xmlHelper.getBinaryBase64Object(xmlBody) shouldBe ""
+      val xmlBody: NodeSeq = readFromFile("uriAndBinaryObject/ie4r02-v2-blank-includedBinaryObject-element.xml")
+      xmlHelper.getBinaryBase64Object(xmlBody) shouldBe Some("")
     }
 
     "getBinaryUri" should {
-    "return binaryObject URI element value when one is found in SOAP message within binaryAttachment element" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-binaryAttachment-with-uri.xml")
-      xmlHelper.getBinaryUri(xmlBody) shouldBe Some("https://dummyhost.ec.eu")
-    }
+      "return binaryObject URI element value when one is found in SOAP message within binaryAttachment element" in new Setup {
+        val xmlBody: NodeSeq = readFromFile("ie4r02-v2-binaryAttachment-with-uri.xml")
+        xmlHelper.getBinaryUri(xmlBody) shouldBe Some("https://dummyhost.ec.eu")
+      }
 
-    "return empty string when no binaryAttachment URI is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-missing-attachment-uri-element.xml")
-      xmlHelper.getBinaryUri(xmlBody) shouldBe None
+      "return empty string when no binaryAttachment URI is found in SOAP message" in new Setup {
+        val xmlBody: NodeSeq = readFromFile("ie4r02-v2-missing-attachment-uri-element.xml")
+        xmlHelper.getBinaryUri(xmlBody) shouldBe None
+      }
     }
   }
-}
 }

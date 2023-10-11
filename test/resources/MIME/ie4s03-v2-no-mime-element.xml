@@ -135,8 +135,6 @@
                         <urn:binaryFile>
                             <urn:filename>test-filename.txt</urn:filename>
                             <!--Optional:-->
-                            <urn:URI>?</urn:URI>
-                            <!--Optional:-->
                             <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
                             <!--Optional:-->
                             <urn:description>a file made up for unit testing</urn:description>

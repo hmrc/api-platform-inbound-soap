@@ -45,7 +45,7 @@ class XmlHelper {
 
   def getSoapAction(soapMessage: NodeSeq): Option[String] = {
     val action = (soapMessage \\ "Action")
-    if(action.isEmpty) None else Some(action.text)
+    if (action.isEmpty) None else Some(action.text)
   }
 
   def getMessageId(soapMessage: NodeSeq): Option[String] = {
@@ -86,8 +86,9 @@ class XmlHelper {
     (getBinaryElement(soapMessage) \\ "description").text
   }
 
-  def getBinaryBase64Object(soapMessage: NodeSeq): String = {
-    (getBinaryElement(soapMessage) \\ "includedBinaryObject").text
+  def getBinaryBase64Object(soapMessage: NodeSeq): Option[String] = {
+    val includedBinaryObject = (getBinaryElement(soapMessage) \\ "includedBinaryObject")
+    if (includedBinaryObject.isEmpty) None else Some(includedBinaryObject.text)
   }
 
   def getBinaryUri(soapMessage: NodeSeq): Option[String] = {
@@ -95,10 +96,15 @@ class XmlHelper {
     if (binaryElementUri.isEmpty) None else Some(binaryElementUri.text)
   }
 
+  def hasUriForAttachment(soapMessage: NodeSeq): Boolean = {
+    getBinaryUri(soapMessage).isDefined
+  }
+
   def getReferenceNumber(soapMessage: NodeSeq): Option[String] = {
     val mrn = soapMessage \\ "MRN"
     val lrn = soapMessage \\ "LRN"
-    if (mrn.isEmpty && lrn.isEmpty) None else if (mrn.isEmpty) {
+    if (mrn.isEmpty && lrn.isEmpty) None
+    else if (mrn.isEmpty) {
       Some(lrn.text)
     } else {
       Some(mrn.text)

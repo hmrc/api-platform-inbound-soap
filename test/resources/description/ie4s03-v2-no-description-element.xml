@@ -134,8 +134,6 @@
                         <urn:binaryFile>
                             <urn:filename>test-filename.txt</urn:filename>
                             <!--Optional:-->
-                            <urn:URI>?</urn:URI>
-                            <!--Optional:-->
                             <urn:MIME>application/pdf</urn:MIME>
                             <!--Optional:-->
                             <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>

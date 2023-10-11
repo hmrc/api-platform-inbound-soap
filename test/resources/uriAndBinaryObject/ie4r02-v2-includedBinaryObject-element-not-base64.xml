@@ -52,8 +52,6 @@
                <urn:binaryAttachment>
                   <urn:filename>?</urn:filename>
                   <!--Optional:-->
-                  <urn:URI>?</urn:URI>
-                  <!--Optional:-->
                   <urn:MIME>?</urn:MIME>
                   <!--Optional:-->
                   <urn:includedBinaryObject>!£</urn:includedBinaryObject>
