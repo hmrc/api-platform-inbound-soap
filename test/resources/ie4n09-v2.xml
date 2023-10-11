@@ -1,6 +1,7 @@
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v2="http://xmlns.ec.eu/BusinessActivityService/ICS/IENSLifecycleManagementBAS/V2" xmlns:urn="urn:wco:datamodel:eu:ics2:2">
     <soap:Header>
         <soap:Action>CCN2.Service.Customs.EU.ICS.ENSLifecycleManagementBAS/IE4N09notifyControlDecision</soap:Action>
+      <soap:MessageID>ad7f2ad2d4f5-4606-99a0-0dd4e52be116</soap:MessageID>
     </soap:Header>
     <soap:Body>
         <v2:IE4N09notifyControlDecisionReqMsg>

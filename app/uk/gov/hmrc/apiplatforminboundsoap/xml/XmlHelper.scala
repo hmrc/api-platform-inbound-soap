@@ -49,7 +49,7 @@ class XmlHelper {
   }
 
   def getMessageId(soapMessage: NodeSeq): Option[String] = {
-    val messageId = soapMessage \\ "messageId"
+    val messageId = soapMessage \\ "MessageID"
     if (messageId.isEmpty) None else Some(messageId.text)
   }
 
