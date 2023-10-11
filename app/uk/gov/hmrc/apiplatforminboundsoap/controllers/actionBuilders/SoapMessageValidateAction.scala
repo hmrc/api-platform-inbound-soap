@@ -37,23 +37,6 @@ import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: ExecutionContext)
     extends ActionFilter[Request] with HttpErrorFunctions with Logging {
 
-  case class AttachmentValidationResult(
-      validDescription: Boolean,
-      validFilename: Boolean,
-      validMime: Boolean,
-      validIncludedBinaryObject: Boolean,
-      validReferralRequestReference: Boolean
-    )
-
-  case class ValidationRequestResult(
-      attachmentValid: AttachmentValidationResult,
-      actionExists: Boolean,
-      validMessageId: Boolean,
-      validReference: Boolean,
-      validAction: Boolean,
-      validActionLength: Boolean
-    )
-
   val actionMinLength                   = 3
   val descriptionMinLength              = 1
   val filenameMinLength                 = 1
@@ -110,7 +93,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
        |</soap:Envelope>""".stripMargin
   }
 
-  private def verifyElements(soapMessage: NodeSeq): Either[cats.data.NonEmptyList[(String, String)], ValidationRequestResult] = {
+  private def verifyElements(soapMessage: NodeSeq): Either[cats.data.NonEmptyList[(String, String)], Unit] = {
     {
       (
         verifyAttachment(soapMessage),
@@ -120,12 +103,12 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
         verifyAction(soapMessage),
         verifyActionLength(soapMessage)
       )
-    }.mapN((attachmentValid, actionExists, validMessageId, validReference, validAction, validActionLength) => {
-      ValidationRequestResult(attachmentValid, actionExists, validMessageId, validReference, validAction, validActionLength)
+    }.mapN((_, _, _, _, _, _) => {
+      ()
     }).toEither
   }
 
-  private def verifyAttachment(soapMessage: NodeSeq): ValidatedNel[(String, String), AttachmentValidationResult] = {
+  private def verifyAttachment(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     if (xmlHelper.isFileAttached(soapMessage)) {
       {
         (
@@ -135,10 +118,10 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
           verifyDescription(soapMessage),
           verifyReferralRequestReference(soapMessage)
         )
-      }.mapN((validFilename, validMime, validDescription, validBinaryObject, validReferralRequestReference) =>
-        AttachmentValidationResult(validFilename, validMime, validDescription, validBinaryObject, validReferralRequestReference)
+      }.mapN((_, _, _, _, _) =>
+        ()
       )
-    } else Validated.valid(AttachmentValidationResult(true, true, true, true, true))
+    } else Validated.valid(())
   }
 
   private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
