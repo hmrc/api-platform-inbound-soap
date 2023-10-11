@@ -96,7 +96,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
   private def verifyElements(soapMessage: NodeSeq): Either[cats.data.NonEmptyList[(String, String)], Unit] = {
     {
       (
-        verifyAttachment(soapMessage),
+        verifyAttachments(soapMessage),
         verifyActionExists(soapMessage),
         verifyMessageId(soapMessage),
         verifyMRN(soapMessage),
@@ -108,6 +108,18 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
     }).toEither
   }
 
+  private def verifyAttachments(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+
+    val allAttachments = xmlHelper.getBinaryElements(soapMessage)
+
+    val referralRequestReferenceValidation =  if(allAttachments.nonEmpty) verifyReferralRequestReference(soapMessage)
+    else Validated.valid(())
+
+    val validateAttachments =  allAttachments.map(attachment => verifyAttachment(attachment)).combineAll
+
+    Seq(referralRequestReferenceValidation, validateAttachments).combineAll
+  }
+
   private def verifyAttachment(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     if (xmlHelper.isFileAttached(soapMessage)) {
       {
@@ -115,10 +127,9 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
           verifyUriOrBinaryObject(soapMessage),
           verifyFilename(soapMessage),
           verifyMime(soapMessage),
-          verifyDescription(soapMessage),
-          verifyReferralRequestReference(soapMessage)
+          verifyDescription(soapMessage)
         )
-      }.mapN((_, _, _, _, _) =>
+      }.mapN((_, _, _, _) =>
         ()
       )
     } else Validated.valid(())
@@ -193,11 +204,11 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
     }
   }
 
-  private def verifyReferralRequestReference(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+  private def verifyReferralRequestReference(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     val referralRequestReference = xmlHelper.getReferralRequestReference(soapMessage)
     verifyStringLength(Some(referralRequestReference), referralRequestReferenceMinLength, referralRequestReferenceMaxLength) match {
-      case Right(_)      => Validated.valid(true)
-      case Left(problem) => ("referralRequestReference", problem).invalidNel[Boolean]
+      case Right(_)      => Validated.valid(())
+      case Left(problem) => ("referralRequestReference", problem).invalidNel[Unit]
     }
   }
 

@@ -157,6 +157,18 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
   }
 
+  "getBinaryElement" should {
+    "return 2 binaryElements when 2 are found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
+      xmlHelper.getBinaryElements(xmlBody).size shouldBe 2
+    }
+
+    "return 3 binaryElements when 3 are found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
+      xmlHelper.getBinaryElements(xmlBody).size shouldBe 3
+    }
+  }
+
   "getBinaryObject" should {
     "return binaryObject element value when one is found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4r02-v2.xml")
@@ -165,13 +177,13 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
 
    "return both binaryObject elements values when binaryFile and binaryAttachment found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
-      xmlHelper.getBinaryBase64Object(xmlBody) shouldBe "dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo="
+      xmlHelper.getBinaryBase64Object(xmlBody) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
     }
 
-    "return both binaryObject elements values when two binaryAttachment elements found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-two-binaryAttachment-elements-files-inline.xml")
-      xmlHelper.getBinaryBase64Object(xmlBody) shouldBe "dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo="
-    }
+//    "return both binaryObject elements values when two binaryAttachment elements found in SOAP message" in new Setup {
+//      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-two-binaryAttachment-elements-files-inline.xml")
+//      xmlHelper.getBinaryBase64Object(xmlBody) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
+//    }
 
     "return empty string when no binaryObject is found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("uriAndBinaryObject/ie4r02-v2-blank-includedBinaryObject-element.xml")

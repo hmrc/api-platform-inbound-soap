@@ -224,7 +224,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME is too long\nArgument referralRequestReference is too long", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference is too long\nArgument MIME is too long", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
