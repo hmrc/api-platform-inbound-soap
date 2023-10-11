@@ -69,29 +69,29 @@ class XmlHelper {
     getBinaryAttachment(soapMessage) ++ getBinaryFile(soapMessage)
   }
 
-  def getBinaryFilename(soapMessage: NodeSeq): String = {
-    (getBinaryElements(soapMessage) \\ "filename").text
+  def getBinaryFilename(binaryBlock: NodeSeq): String = {
+    (binaryBlock \\ "filename").text
   }
 
-  def getBinaryMimeType(soapMessage: NodeSeq): String = {
-    (getBinaryElements(soapMessage) \\ "MIME").text
+  def getBinaryMimeType(binaryBlock: NodeSeq): String = {
+    (binaryBlock \\ "MIME").text
   }
 
   def getReferralRequestReference(soapMessage: NodeSeq): String = {
     (soapMessage \\ "referralRequestReference").text
   }
 
-  def getBinaryDescription(soapMessage: NodeSeq): String = {
-    (getBinaryElements(soapMessage) \\ "description").text
+  def getBinaryDescription(binaryBlock: NodeSeq): String = {
+    (binaryBlock \\ "description").text
   }
 
-  def getBinaryBase64Object(soapMessage: NodeSeq): Option[String] = {
-    val includedBinaryObject = (getBinaryElements(soapMessage) \\ "includedBinaryObject")
+  def getBinaryBase64Object(binaryBlock: NodeSeq): Option[String] = {
+    val includedBinaryObject = binaryBlock \\ "includedBinaryObject"
     if (includedBinaryObject.isEmpty) None else Some(includedBinaryObject.text)
   }
 
-  def getBinaryUri(soapMessage: NodeSeq): Option[String] = {
-    val binaryElementUri = getBinaryElements(soapMessage) \\ "URI"
+  def getBinaryUri(binaryBlock: NodeSeq): Option[String] = {
+    val binaryElementUri = binaryBlock \\ "URI"
     if (binaryElementUri.isEmpty) None else Some(binaryElementUri.text)
   }
 
