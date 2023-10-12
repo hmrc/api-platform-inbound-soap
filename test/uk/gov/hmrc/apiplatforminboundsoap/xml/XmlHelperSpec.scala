@@ -123,7 +123,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
                          |                            <urn:description>a file made up for unit testing</urn:description>
                          |                        </urn:binaryFile>""".stripMargin
       val xmlBody: NodeSeq = readFromString(binaryFile)
-      xmlHelper.getBinaryFilename(xmlBody) shouldBe "test-filename.txt"
+      xmlHelper.getBinaryFilename(xmlBody) shouldBe Some("test-filename.txt")
     }
 
     "return empty string when no filename is found in SOAP message" in new Setup {
@@ -134,7 +134,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
                                |                  <urn:description>?</urn:description>
                                |               </urn:binaryAttachment>""".stripMargin
       val xmlBody: NodeSeq = readFromString(binaryAttachment)
-      xmlHelper.getBinaryFilename(xmlBody) shouldBe ""
+      xmlHelper.getBinaryFilename(xmlBody) shouldBe Some("")
     }
   }
 
@@ -148,7 +148,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
                          |                            <urn:description>a file made up for unit testing</urn:description>
                          |                        </urn:binaryFile>""".stripMargin
       val xmlBody: NodeSeq = readFromString(binaryFile)
-      xmlHelper.getBinaryMimeType(xmlBody) shouldBe "application/pdf"
+      xmlHelper.getBinaryMimeType(xmlBody) shouldBe Some("application/pdf")
     }
 
     "return empty string when no filename is found in SOAP message" in new Setup {
@@ -158,7 +158,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
                                |                  <urn:description>?</urn:description>
                                |               </urn:binaryAttachment>""".stripMargin
       val xmlBody: NodeSeq = readFromString(binaryAttachment)
-      xmlHelper.getBinaryMimeType(xmlBody) shouldBe ""
+      xmlHelper.getBinaryMimeType(xmlBody) shouldBe None
     }
   }
 
@@ -172,7 +172,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
                          |                            <urn:description>a file made up for unit testing</urn:description>
                          |                        </urn:binaryFile>""".stripMargin
       val xmlBody: NodeSeq = readFromString(binaryFile)
-      xmlHelper.getBinaryDescription(xmlBody) shouldBe "a file made up for unit testing"
+      xmlHelper.getBinaryDescription(xmlBody) shouldBe Some("a file made up for unit testing")
     }
 
     "return empty string when no description is found in SOAP message" in new Setup {
@@ -183,19 +183,19 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
                                 |                  <urn:description></urn:description>
                                 |               </urn:binaryAttachment>""".stripMargin
       val xmlBody: NodeSeq = readFromString(binaryAttachment)
-      xmlHelper.getBinaryDescription(xmlBody) shouldBe ""
+      xmlHelper.getBinaryDescription(xmlBody) shouldBe Some("")
     }
   }
 
   "getReferralRequestReference" should {
     "return referralRequestReference when one is found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4r02-v2.xml")
-      xmlHelper.getReferralRequestReference(xmlBody) shouldBe "d4af29b4-d1d7-4f42-a186-ca5a71fab"
+      xmlHelper.getReferralRequestReference(xmlBody) shouldBe Some("d4af29b4-d1d7-4f42-a186-ca5a71fab")
     }
 
     "return empty string when no referralRequestReference is found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4r02-v2-blank-referralRequestReference-element.xml")
-      xmlHelper.getReferralRequestReference(xmlBody) shouldBe ""
+      xmlHelper.getReferralRequestReference(xmlBody) shouldBe Some("")
     }
   }
 

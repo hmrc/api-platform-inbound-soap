@@ -137,7 +137,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
 
   private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val description = xmlHelper.getBinaryDescription(soapMessage)
-    verifyStringLength(Some(description), descriptionMinLength, descriptionMaxLength) match {
+    verifyStringLength(description, descriptionMinLength, descriptionMaxLength) match {
       case Left(problem) => ("description", problem).invalidNel[Boolean]
       case Right(_)      => Validated.valid(true)
     }
@@ -161,7 +161,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
 
   private def verifyFilename(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val filename = xmlHelper.getBinaryFilename(soapMessage)
-    verifyStringLength(Some(filename), filenameMinLength, filenameMaxLength) match {
+    verifyStringLength(filename, filenameMinLength, filenameMaxLength) match {
       case Left(problem) => ("filename", problem).invalidNel[Boolean]
       case Right(_)      => Validated.valid(true)
     }
@@ -169,7 +169,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
 
   private def verifyMime(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val mime = xmlHelper.getBinaryMimeType(soapMessage)
-    verifyStringLength(Some(mime), mimeMinLength, mimeMaxLength) match {
+    verifyStringLength(mime, mimeMinLength, mimeMaxLength) match {
       case Right(_)      => Validated.valid(true)
       case Left(problem) => ("MIME", problem).invalidNel[Boolean]
     }
@@ -206,7 +206,7 @@ class SoapMessageValidateAction @Inject() (xmlHelper: XmlHelper)(implicit ec: Ex
 
   private def verifyReferralRequestReference(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     val referralRequestReference = xmlHelper.getReferralRequestReference(soapMessage)
-    verifyStringLength(Some(referralRequestReference), referralRequestReferenceMinLength, referralRequestReferenceMaxLength) match {
+    verifyStringLength(referralRequestReference, referralRequestReferenceMinLength, referralRequestReferenceMaxLength) match {
       case Right(_)      => Validated.valid(())
       case Left(problem) => ("referralRequestReference", problem).invalidNel[Unit]
     }

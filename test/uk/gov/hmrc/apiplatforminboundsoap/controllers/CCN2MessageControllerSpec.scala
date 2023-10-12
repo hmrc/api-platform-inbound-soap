@@ -158,7 +158,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument description is too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument description is missing", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -188,7 +188,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename is too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument filename is missing", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -218,7 +218,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME is too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME is missing", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
@@ -258,7 +258,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference is too short", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument referralRequestReference is missing", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
