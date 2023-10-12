@@ -108,7 +108,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
       xmlHelper.getReferenceNumber(xmlBody) shouldBe Some("836478b5-9290-47fa-a549-9d7ca1d1d77d")
     }
 
-    "return empty string when no LRN or MRN is found in SOAP message" in new Setup {
+    "return None when no LRN or MRN is found in SOAP message" in new Setup {
       xmlHelper.getReferenceNumber(xmlBodyForElementNotFoundScenario) shouldBe None
     }
   }
