@@ -133,27 +133,27 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
       )
   }
 
-  private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+  private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     val description = getBinaryDescription(soapMessage)
     verifyAttribute(attributeValue = description, attributeName = "description", minLength = descriptionMinLength, maxLength = descriptionMaxLength)
   }
 
-  private def verifyMRN(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+  private def verifyMRN(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     val referenceNumber = getReferenceNumber(soapMessage)
     verifyAttribute(attributeValue = referenceNumber, attributeName = "MRN/LRN", minLength = referenceMinLength, maxLength = referenceMaxLength)
   }
 
-  private def verifyMessageId(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+  private def verifyMessageId(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     val messageId = getMessageId(soapMessage)
     verifyAttribute(attributeValue = messageId, attributeName = "messageId", minLength = messageIdMinLength, maxLength = messageIdMaxLength)
   }
 
-  private def verifyFilename(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+  private def verifyFilename(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     val filename = getBinaryFilename(soapMessage)
     verifyAttribute(attributeValue = filename, attributeName = "filename", minLength = filenameMinLength, maxLength = filenameMaxLength)
   }
 
-  private def verifyMime(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+  private def verifyMime(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     val mime = getBinaryMimeType(soapMessage)
     verifyAttribute(attributeValue = mime, attributeName = "MIME", minLength = mimeMinLength, maxLength = mimeMaxLength, permitMissing = true)
   }
@@ -161,10 +161,7 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
 
   private def verifyUriOrBinaryObject(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     def verifyUri(uri: String): ValidatedNel[(String, String), Unit] = {
-      verifyStringLength(Some(uri), uriMinLength, uriMaxLength) match {
-        case Right(_)      => Validated.valid()
-        case Left(problem) => ("URI", problem).invalidNel[Unit]
-      }
+      verifyAttribute(attributeValue = Some(uri), attributeName = "URI", minLength = uriMinLength, maxLength = uriMaxLength, permitMissing = true)
     }
     
     def verifyIncludedBinaryObject(includedBinaryObject: String): ValidatedNel[(String, String), Unit] = {
@@ -181,7 +178,7 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
     }
     
     (getBinaryBase64Object(soapMessage), getBinaryUri(soapMessage)) match {
-      case (None, Some(uri))                  => verifyUri(uri)
+      case (None, Some(uri))                        => verifyUri(uri)
       case (Some(includedBinaryObject), None) => verifyIncludedBinaryObject(includedBinaryObject)
       case (None, None)                       => ("Message", "must contain includedBinaryObject or URI").invalidNel[Unit]
       case (Some(_), Some(_))                 => ("Message", "must not contain both includedBinaryObject and URI").invalidNel[Unit]
@@ -190,25 +187,21 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
 
   private def verifyReferralRequestReference(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     val referralRequestReference = getReferralRequestReference(soapMessage)
-    verifyStringLength(referralRequestReference, referralRequestReferenceMinLength, referralRequestReferenceMaxLength) match {
-      case Right(_)      => Validated.valid(())
-      case Left(problem) => ("referralRequestReference", problem).invalidNel[Unit]
-    }
-//    verifyAttribute(attributeValue = referralRequestReference, attributeName = "referralRequestReference", minLength = referralRequestReferenceMinLength, maxLength = referralRequestReferenceMaxLength, permitMissing = true)
+    verifyAttribute(attributeValue = referralRequestReference, attributeName = "referralRequestReference", minLength = referralRequestReferenceMinLength, maxLength = referralRequestReferenceMaxLength)
   }
 
   private def verifyActionExists(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     getSoapAction(soapMessage) match {
-      case Some(_) => Validated.valid(true)
+      case Some(_) => Validated.valid()
       case None    => ("action", "SOAP Header Action missing").invalidNel[Unit]
     }
   }
 
   private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     getSoapAction(soapMessage) match {
-      case None       => Validated.valid(true)
+      case None       => Validated.valid()
       case actionText => verifyStringLength(actionText, actionMinLength, actionMaxLength) match {
-          case Right(_)      => Validated.valid(true)
+          case Right(_)      => Validated.valid()
           case Left(problem) => ("action", problem).invalidNel[Unit]
         }
     }
@@ -216,42 +209,42 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
 
   private def verifyAction(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     getSoapAction(soapMessage) match {
-      case None             => Validated.valid(true)
+      case None             => Validated.valid()
       case Some(actionText) => if (actionText.contains("/")) {
-          Validated.valid(true)
+          Validated.valid()
         } else {
           ("action", "should contain / character but does not").invalidNel[Unit]
         }
     }
   }
 
-  private def verifyAttribute(attributeValue: Option[String], attributeName: String, maxLength: Int, minLength: Int, permitMissing: Boolean=false): ValidatedNel[(String, String), Boolean] = {
+  private def verifyAttribute(attributeValue: Option[String], attributeName: String, maxLength: Int, minLength: Int, permitMissing: Boolean=false): ValidatedNel[(String, String), Unit] = {
     if (permitMissing){
         verifyStringLengthPermitMissing(attributeValue, minLength, maxLength) match {
-          case Right(_) => Validated.valid(true)
-          case Left(problem) => (attributeName, problem).invalidNel[Boolean]
+          case Right(_) => Validated.valid()
+          case Left(problem) => (attributeName, problem).invalidNel[Unit]
         }} else {
         verifyStringLength(attributeValue, minLength, maxLength) match {
-            case Right(_) => Validated.valid(true)
-            case Left(problem) => (attributeName, problem).invalidNel[Boolean]
+            case Right(_) => Validated.valid()
+            case Left(problem) => (attributeName, problem).invalidNel[Unit]
           }
       }
     }
 
-  private def verifyStringLength(maybeString: Option[String], minLength: Int, maxLength: Int): Either[String, Boolean] = {
+  private def verifyStringLength(maybeString: Option[String], minLength: Int, maxLength: Int): Either[String, Unit] = {
     maybeString match {
       case Some(string) if string.trim.length < minLength => Left("is too short")
       case Some(string) if (string.length > maxLength)    => Left("is too long")
       case None                                           => Left("is missing")
-      case _                                              => Right(true)
+      case _                                              => Right(())
     }
   }
 
-  private def verifyStringLengthPermitMissing(maybeString: Option[String], minLength: Int, maxLength: Int): Either[String, Boolean] = {
+  private def verifyStringLengthPermitMissing(maybeString: Option[String], minLength: Int, maxLength: Int): Either[String, Unit] = {
     maybeString match {
       case Some(string) if string.trim.length < minLength => Left("is too short")
       case Some(string) if (string.length > maxLength)    => Left("is too long")
-      case _                                              => Right(true)
+      case _                                              => Right(())
     }
   }
 
