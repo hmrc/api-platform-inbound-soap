@@ -155,38 +155,36 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
 
   private def verifyMime(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val mime = getBinaryMimeType(soapMessage)
-    verifyStringLengthPermitMissing(mime, mimeMinLength, mimeMaxLength) match {
-      case Right(_)      => Validated.valid(true)
-      case Left(problem) => ("MIME", problem).invalidNel[Boolean]
-    }
+    verifyAttribute(attributeValue = mime, attributeName = "MIME", minLength = mimeMinLength, maxLength = mimeMaxLength, permitMissing = true)
   }
 
-  private def verifyUri(uri: String): ValidatedNel[(String, String), Boolean] = {
-    verifyStringLength(Some(uri), uriMinLength, uriMaxLength) match {
-      case Right(_)      => Validated.valid(true)
-      case Left(problem) => ("URI", problem).invalidNel[Boolean]
-    }
-  }
 
-  private def verifyUriOrBinaryObject(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+  private def verifyUriOrBinaryObject(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+    def verifyUri(uri: String): ValidatedNel[(String, String), Unit] = {
+      verifyStringLength(Some(uri), uriMinLength, uriMaxLength) match {
+        case Right(_)      => Validated.valid()
+        case Left(problem) => ("URI", problem).invalidNel[Unit]
+      }
+    }
+    
+    def verifyIncludedBinaryObject(includedBinaryObject: String): ValidatedNel[(String, String), Unit] = {
+      val failLeft = ("includedBinaryObject", "is not valid base 64 data").invalidNel[Unit]
+      try {
+        val decoded = Base64.getDecoder().decode(includedBinaryObject)
+        if (decoded.isEmpty) failLeft else Validated.valid()
+      } catch {
+        case _: Throwable => {
+          logger.warn("Error while trying to decode includedBinaryObject as base 64 data. Perhaps it is not correctly encoded")
+          failLeft
+        }
+      }
+    }
+    
     (getBinaryBase64Object(soapMessage), getBinaryUri(soapMessage)) match {
       case (None, Some(uri))                  => verifyUri(uri)
       case (Some(includedBinaryObject), None) => verifyIncludedBinaryObject(includedBinaryObject)
-      case (None, None)                       => ("Message", "must contain includedBinaryObject or URI").invalidNel[Boolean]
-      case (Some(_), Some(_))                 => ("Message", "must not contain both includedBinaryObject and URI").invalidNel[Boolean]
-    }
-  }
-
-  private def verifyIncludedBinaryObject(includedBinaryObject: String): ValidatedNel[(String, String), Boolean] = {
-    val failLeft = ("includedBinaryObject", "is not valid base 64 data").invalidNel[Boolean]
-    try {
-      val decoded = Base64.getDecoder().decode(includedBinaryObject)
-      if (decoded.isEmpty) failLeft else Validated.valid(true)
-    } catch {
-      case _: Throwable => {
-        logger.warn("Error while trying to decode includedBinaryObject as base 64 data. Perhaps it is not correctly encoded")
-        failLeft
-      }
+      case (None, None)                       => ("Message", "must contain includedBinaryObject or URI").invalidNel[Unit]
+      case (Some(_), Some(_))                 => ("Message", "must not contain both includedBinaryObject and URI").invalidNel[Unit]
     }
   }
 
@@ -196,43 +194,49 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
       case Right(_)      => Validated.valid(())
       case Left(problem) => ("referralRequestReference", problem).invalidNel[Unit]
     }
+//    verifyAttribute(attributeValue = referralRequestReference, attributeName = "referralRequestReference", minLength = referralRequestReferenceMinLength, maxLength = referralRequestReferenceMaxLength, permitMissing = true)
   }
 
-  private def verifyActionExists(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+  private def verifyActionExists(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     getSoapAction(soapMessage) match {
       case Some(_) => Validated.valid(true)
-      case None    => ("action", "SOAP Header Action missing").invalidNel[Boolean]
+      case None    => ("action", "SOAP Header Action missing").invalidNel[Unit]
     }
   }
 
-  private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+  private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     getSoapAction(soapMessage) match {
       case None       => Validated.valid(true)
       case actionText => verifyStringLength(actionText, actionMinLength, actionMaxLength) match {
           case Right(_)      => Validated.valid(true)
-          case Left(problem) => ("action", problem).invalidNel[Boolean]
+          case Left(problem) => ("action", problem).invalidNel[Unit]
         }
     }
   }
 
-  private def verifyAction(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
+  private def verifyAction(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     getSoapAction(soapMessage) match {
       case None             => Validated.valid(true)
       case Some(actionText) => if (actionText.contains("/")) {
           Validated.valid(true)
         } else {
-          ("action", "should contain / character but does not").invalidNel[Boolean]
+          ("action", "should contain / character but does not").invalidNel[Unit]
         }
     }
   }
 
-  private def verifyAttribute(attributeValue: Option[String], attributeName: String, maxLength: Int, minLength: Int): ValidatedNel[(String, String), Boolean] = {
-
-    verifyStringLength(attributeValue, minLength, maxLength) match {
-      case Right(_)      => Validated.valid(true)
-      case Left(problem) => (attributeName, problem).invalidNel[Boolean]
+  private def verifyAttribute(attributeValue: Option[String], attributeName: String, maxLength: Int, minLength: Int, permitMissing: Boolean=false): ValidatedNel[(String, String), Boolean] = {
+    if (permitMissing){
+        verifyStringLengthPermitMissing(attributeValue, minLength, maxLength) match {
+          case Right(_) => Validated.valid(true)
+          case Left(problem) => (attributeName, problem).invalidNel[Boolean]
+        }} else {
+        verifyStringLength(attributeValue, minLength, maxLength) match {
+            case Right(_) => Validated.valid(true)
+            case Left(problem) => (attributeName, problem).invalidNel[Boolean]
+          }
+      }
     }
-  }
 
   private def verifyStringLength(maybeString: Option[String], minLength: Int, maxLength: Int): Either[String, Boolean] = {
     maybeString match {
@@ -255,5 +259,4 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
     val flatListErrors: List[(String, String)] = errorList.toList
     flatListErrors.map(problemDescription => s"$fieldName${problemDescription._1}$problem${problemDescription._2}").mkString("\n")
   }
-
 }
