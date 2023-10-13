@@ -97,10 +97,6 @@ trait XmlHelper {
     if (binaryElementUri.isEmpty) None else Some(binaryElementUri.text)
   }
 
-  def hasUriForAttachment(soapMessage: NodeSeq): Boolean = {
-    getBinaryUri(soapMessage).isDefined
-  }
-
   def getReferenceNumber(soapMessage: NodeSeq): Option[String] = {
     val mrn = soapMessage \\ "MRN"
     val lrn = soapMessage \\ "LRN"

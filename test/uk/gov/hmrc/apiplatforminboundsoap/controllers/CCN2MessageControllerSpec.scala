@@ -212,14 +212,16 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
-    "return 400 when MIME element is missing" in new Setup {
+    "return 200 when MIME element is missing" in new Setup {
+      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val requestBody: Elem = readFromFile("MIME/ie4r02-v2-missing-mime-element.xml")
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
-      status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Argument MIME is missing", xRequestIdHeaderValue)
-      verifyZeroInteractions(incomingMessageServiceMock)
+      status(result) shouldBe OK
+      verify(incomingMessageServiceMock).processInboundMessage(*)
+      xmlRequestCaptor hasCaptured requestBody
     }
 
     "return 400 when MIME element is blank" in new Setup {

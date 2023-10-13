@@ -135,39 +135,27 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
 
   private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val description = getBinaryDescription(soapMessage)
-    verifyStringLength(description, descriptionMinLength, descriptionMaxLength) match {
-      case Left(problem) => ("description", problem).invalidNel[Boolean]
-      case Right(_)      => Validated.valid(true)
-    }
+    verifyAttribute(attributeValue = description, attributeName = "description", minLength = descriptionMinLength, maxLength = descriptionMaxLength)
   }
 
   private def verifyMRN(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val referenceNumber = getReferenceNumber(soapMessage)
-    verifyStringLength(referenceNumber, referenceMinLength, referenceMaxLength) match {
-      case Left(problem) => ("MRN/LRN", problem).invalidNel[Boolean]
-      case Right(_)      => Validated.valid(true)
-    }
+    verifyAttribute(attributeValue = referenceNumber, attributeName = "MRN/LRN", minLength = referenceMinLength, maxLength = referenceMaxLength)
   }
 
   private def verifyMessageId(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val messageId = getMessageId(soapMessage)
-    verifyStringLength(messageId, messageIdMinLength, messageIdMaxLength) match {
-      case Left(problem) => ("messageId", problem).invalidNel[Boolean]
-      case Right(_)      => Validated.valid(true)
-    }
+    verifyAttribute(attributeValue = messageId, attributeName = "messageId", minLength = messageIdMinLength, maxLength = messageIdMaxLength)
   }
 
   private def verifyFilename(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val filename = getBinaryFilename(soapMessage)
-    verifyStringLength(filename, filenameMinLength, filenameMaxLength) match {
-      case Left(problem) => ("filename", problem).invalidNel[Boolean]
-      case Right(_)      => Validated.valid(true)
-    }
+    verifyAttribute(attributeValue = filename, attributeName = "filename", minLength = filenameMinLength, maxLength = filenameMaxLength)
   }
 
   private def verifyMime(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
     val mime = getBinaryMimeType(soapMessage)
-    verifyStringLength(mime, mimeMinLength, mimeMaxLength) match {
+    verifyStringLengthPermitMissing(mime, mimeMinLength, mimeMaxLength) match {
       case Right(_)      => Validated.valid(true)
       case Left(problem) => ("MIME", problem).invalidNel[Boolean]
     }
@@ -251,6 +239,14 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
       case Some(string) if string.trim.length < minLength => Left("is too short")
       case Some(string) if (string.length > maxLength)    => Left("is too long")
       case None                                           => Left("is missing")
+      case _                                              => Right(true)
+    }
+  }
+
+  private def verifyStringLengthPermitMissing(maybeString: Option[String], minLength: Int, maxLength: Int): Either[String, Boolean] = {
+    maybeString match {
+      case Some(string) if string.trim.length < minLength => Left("is too short")
+      case Some(string) if (string.length > maxLength)    => Left("is too long")
       case _                                              => Right(true)
     }
   }

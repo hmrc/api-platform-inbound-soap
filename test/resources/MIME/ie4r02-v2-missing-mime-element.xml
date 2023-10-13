@@ -52,9 +52,7 @@
                <!--0 to 9 repetitions:-->
                <urn:binaryAttachment>
                   <urn:filename>?</urn:filename>
-                  <!--Optional:-->
                   <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
-                  <!--Optional:-->
                   <urn:description>?</urn:description>
                </urn:binaryAttachment>
                <!--Optional:-->
