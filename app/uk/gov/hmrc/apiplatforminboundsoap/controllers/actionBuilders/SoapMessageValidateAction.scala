@@ -121,7 +121,6 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
   }
 
   private def verifyAttachment(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
-    if (isFileAttached(soapMessage)) {
       {
         (
           verifyUriOrBinaryObject(soapMessage),
@@ -132,7 +131,6 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
       }.mapN((_, _, _, _) =>
         ()
       )
-    } else Validated.valid(())
   }
 
   private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Boolean] = {
