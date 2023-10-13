@@ -17,6 +17,7 @@
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import scala.concurrent.Future.successful
+import scala.io.Source
 
 import akka.stream.Materializer
 import org.mockito.captor.ArgCaptor
@@ -30,12 +31,16 @@ import play.api.mvc.Headers
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest, Version1}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 
-class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with XmlHelper {
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
+
+  def readFromFile(fileName: String) = {
+    xml.XML.load(Source.fromResource(fileName).bufferedReader())
+  }
 
   trait Setup {
     val inboundConnectorMock: InboundConnector = mock[InboundConnector]
@@ -44,27 +49,19 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     val xmlHelper: XmlHelper                   = mock[XmlHelper]
 
     val service: InboundMessageService =
-      new InboundMessageService(appConfigMock, xmlHelper, inboundConnectorMock)
-    when(xmlHelper.isFileAttached(*)).thenReturn(true)
-    when(xmlHelper.getMessageId(*)).thenReturn(Some("427b9e3c-d708-4893-b5fa-21b5641231e5"))
-    when(xmlHelper.isFileAttached(*)).thenReturn(true)
-    when(xmlHelper.getMessageVersion(*)).thenReturn(Version1)
-    when(xmlHelper.getSoapAction(*)).thenReturn(Some("CCN2.Service.Customs.EU.ICS.NESReferralBAS/IE4R02provideAdditionalInformation"))
+      new InboundMessageService(appConfigMock, inboundConnectorMock)
+
   }
 
   "processInboundMessage" should {
-    val xmlBody        = xml.XML.loadString("<xml>blah</xml>")
-    val soapAction     = "CCN2.Service.Customs.EU.ICS.NESReferralBAS/IE4R02provideAdditionalInformation"
-    val messageId      = "427b9e3c-d708-4893-b5fa-21b5641231e5"
-    val messageVersion = "V1"
-    val filesIncluded  = "true"
+    val xmlBody = readFromFile("ie4n09-v2.xml")
 
     val forwardedHeaders   = Headers(
-      "x-soap-action"    -> soapAction,
-      "x-correlation-id" -> messageId,
-      "x-message-id"     -> messageId,
-      "x-files-included" -> filesIncluded,
-      "x-version-id"     -> messageVersion
+      "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
+      "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
+      "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
+      "x-files-included" -> isFileAttached(xmlBody).toString,
+      "x-version-id"     -> getMessageVersion(xmlBody).displayName
     )
     val forwardingUrl      = "some url"
     val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)

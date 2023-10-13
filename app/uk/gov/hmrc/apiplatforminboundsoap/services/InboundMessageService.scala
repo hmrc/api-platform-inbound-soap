@@ -28,15 +28,15 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SendResult, SoapRequest}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 
 @Singleton
-class InboundMessageService @Inject() (appConfig: AppConfig, xmlHelper: XmlHelper, inboundConnector: InboundConnector) extends Logging {
+class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: InboundConnector) extends Logging with XmlHelper {
 
   def processInboundMessage(soapRequest: NodeSeq): Future[SendResult] = {
     val newHeaders: Headers = Headers(
-      "x-soap-action"    -> xmlHelper.getSoapAction(soapRequest).getOrElse(""),
-      "x-correlation-id" -> xmlHelper.getMessageId(soapRequest).getOrElse(""),
-      "x-message-id"     -> xmlHelper.getMessageId(soapRequest).getOrElse(""),
-      "x-files-included" -> xmlHelper.isFileAttached(soapRequest).toString,
-      "x-version-id"     -> xmlHelper.getMessageVersion(soapRequest).displayName
+      "x-soap-action"    -> getSoapAction(soapRequest).getOrElse(""),
+      "x-correlation-id" -> getMessageId(soapRequest).getOrElse(""),
+      "x-message-id"     -> getMessageId(soapRequest).getOrElse(""),
+      "x-files-included" -> isFileAttached(soapRequest).toString,
+      "x-version-id"     -> getMessageVersion(soapRequest).displayName
     )
 
     inboundConnector.postMessage(SoapRequest(soapRequest.text, appConfig.forwardMessageUrl), newHeaders)

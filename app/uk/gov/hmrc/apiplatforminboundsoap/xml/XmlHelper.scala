@@ -16,13 +16,11 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
-import javax.inject.Singleton
 import scala.xml.{Node, NodeSeq}
 
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 
-@Singleton
-class XmlHelper {
+trait XmlHelper {
 
   def getMessageVersion(soapMessage: NodeSeq): SoapMessageVersion = {
     def getVersionTwoNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
@@ -71,22 +69,22 @@ class XmlHelper {
 
   def getBinaryFilename(binaryBlock: NodeSeq): Option[String] = {
     val filename = (binaryBlock \\ "filename")
-      if(filename.isEmpty) None else Some(filename.text)
+    if (filename.isEmpty) None else Some(filename.text)
   }
 
   def getBinaryMimeType(binaryBlock: NodeSeq): Option[String] = {
     val mime = (binaryBlock \\ "MIME")
-      if(mime.isEmpty) None else Some(mime.text)
+    if (mime.isEmpty) None else Some(mime.text)
   }
 
   def getReferralRequestReference(soapMessage: NodeSeq): Option[String] = {
     val referralRequestReference = (soapMessage \\ "referralRequestReference")
-    if(referralRequestReference.isEmpty) None else Some(referralRequestReference.text)
+    if (referralRequestReference.isEmpty) None else Some(referralRequestReference.text)
   }
 
   def getBinaryDescription(binaryBlock: NodeSeq): Option[String] = {
     val description = (binaryBlock \\ "description")
-    if(description.isEmpty) None else Some(description.text)
+    if (description.isEmpty) None else Some(description.text)
   }
 
   def getBinaryBase64Object(binaryBlock: NodeSeq): Option[String] = {
