@@ -200,7 +200,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
 
   "getBinaryElement" should {
     "return 2 binaryElements when 2 are found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
+      val xmlBody: NodeSeq = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
       getBinaryElements(xmlBody).size shouldBe 2
     }
 

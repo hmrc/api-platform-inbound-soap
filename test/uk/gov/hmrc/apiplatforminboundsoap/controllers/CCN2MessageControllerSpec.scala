@@ -105,7 +105,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
     "return 200 when successful for a message with binary file and binary attachment" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val requestBody: Elem              = readFromFile("ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
+      val requestBody: Elem              = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
 
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
