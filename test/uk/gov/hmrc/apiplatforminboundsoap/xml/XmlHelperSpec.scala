@@ -193,7 +193,7 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
 
     "return empty string when no referralRequestReference is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-blank-referralRequestReference-element.xml")
+      val xmlBody: NodeSeq = readFromFile("referralRequestReference/ie4r02-v2-blank-referralRequestReference-element.xml")
       getReferralRequestReference(xmlBody) shouldBe Some("")
     }
   }

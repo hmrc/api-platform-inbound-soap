@@ -101,6 +101,180 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
     validationResult shouldBe Right(())
   }
 
+  "return validation error when includedBinaryObject and uri elements are both missing" in new Setup {
+    val validationResult = verifyElements(readFromFile("uriAndBinaryObject/ie4r02-v2-missing-uri-and-includedBinaryObject-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("Message", "must contain includedBinaryObject or URI")
+    }
+  }
+
+  "return validation error when includedBinaryObject and uri elements are both present" in new Setup {
+    val validationResult = verifyElements(readFromFile("uriAndBinaryObject/ie4r02-v2-contains-uri-and-includedBinaryObject-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("Message", "must not contain both includedBinaryObject and URI")
+    }
+  }
+  "return validation error when referralRequestReference element is missing" in new Setup {
+    val validationResult = verifyElements(readFromFile("referralRequestReference/ie4r02-v2-missing-referralRequestReference-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("referralRequestReference", "is missing")
+    }
+  }
+
+  "return validation error when referralRequestReference element is blank" in new Setup {
+    val validationResult = verifyElements(readFromFile("referralRequestReference/ie4r02-v2-blank-referralRequestReference-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("referralRequestReference", "is too short")
+    }
+  }
+
+  "return validation error when referralRequestReference element is too long" in new Setup {
+    val validationResult = verifyElements(readFromFile("referralRequestReference/ie4r02-v2-too-long-referralRequestReference-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("referralRequestReference", "is too long")
+    }
+  }
+ 
+  "return validation error when messageId element is missing" in new Setup {
+    val validationResult = verifyElements(readFromFile("messageId/ie4r02-v2-missing-messageId-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("messageId", "is missing")
+    }
+  }
+
+  "return validation error when messageId element is blank" in new Setup {
+    val validationResult = verifyElements(readFromFile("messageId/ie4r02-v2-blank-messageId-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("messageId", "is too short")
+    }
+  }
+
+  "return validation error when messageId element is too long" in new Setup {
+    val validationResult = verifyElements(readFromFile("messageId/ie4r02-v2-too-long-messageId-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("messageId", "is too long")
+    }
+  }
+
+  "return validation error when filename element is missing" in new Setup {
+    val validationResult = verifyElements(readFromFile("filename/ie4r02-v2-missing-filename-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("filename", "is missing")
+    }
+  }
+
+  "return validation error when filename element is blank" in new Setup {
+    val validationResult = verifyElements(readFromFile("filename/ie4r02-v2-blank-filename-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("filename", "is too short")
+    }
+  }
+
+  "return validation error when filename element is too long" in new Setup {
+    val validationResult = verifyElements(readFromFile("filename/ie4r02-v2-too-long-filename-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("filename", "is too long")
+    }
+  }
+
+  "return validation error when description element is missing" in new Setup {
+    val validationResult = verifyElements(readFromFile("description/ie4r02-v2-missing-description-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("description", "is missing")
+    }
+  }
+
+  "return validation error when description element is blank" in new Setup {
+    val validationResult = verifyElements(readFromFile("description/ie4r02-v2-blank-description-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("description", "is too short")
+    }
+  }
+
+  "return validation error when description element is too long" in new Setup {
+    val validationResult = verifyElements(readFromFile("description/ie4r02-v2-too-long-description-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("description", "is too long")
+    }
+  }
+
+ "return validation error when MRN element is missing" in new Setup {
+    val validationResult = verifyElements(readFromFile("MRN/ie4r02-v2-missing-both-LRN-and-MRN-elements.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("MRN/LRN", "is missing")
+    }
+  }
+
+  "return validation error when MRN element is blank" in new Setup {
+    val validationResult = verifyElements(readFromFile("MRN/ie4r02-v2-blank-MRN-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("MRN/LRN", "is too short")
+    }
+  }
+
+  "return validation error when MRN element is too long" in new Setup {
+    val validationResult = verifyElements(readFromFile("MRN/ie4r02-v2-too-long-MRN-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("MRN/LRN", "is too long")
+    }
+  }
+
+  "return success when MIME element is missing" in new Setup {
+    val validationResult = verifyElements(readFromFile("MIME/ie4r02-v2-missing-mime-element.xml"))
+    validationResult shouldBe Right(())
+  }
+
+  "return validation error when MIME element is blank" in new Setup {
+    val validationResult = verifyElements(readFromFile("MIME/ie4r02-v2-blank-mime-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("MIME", "is too short")
+    }
+  }
+
+  "return validation error when MIME element is too long" in new Setup {
+    val validationResult = verifyElements(readFromFile("MIME/ie4r02-v2-too-long--mime-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("MIME", "is too long")
+    }
+  }
+
+  "return validation error when action element is blank" in new Setup {
+    val validationResult = verifyElements(readFromFile("action/ie4r02-v2-blank-action-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("action", "should contain / character but does not")
+    }
+  }
+
+  "return validation error when action element is a single slash" in new Setup {
+    val validationResult = verifyElements(readFromFile("action/ie4r02-v2-single-slash-action-element.xml"))
+    validationResult match {
+      case Right(_) => fail()
+      case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("action", "is too short")
+    }
+  }
+
+
+ 
 
 
 

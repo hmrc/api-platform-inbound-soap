@@ -118,7 +118,7 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
       val failLeft = ("includedBinaryObject", "is not valid base 64 data").invalidNel[Unit]
       try {
         val decoded = Base64.getDecoder().decode(includedBinaryObject)
-        if (decoded.isEmpty) failLeft else Validated.valid()
+        if (decoded.isEmpty) failLeft else Validated.valid(())
       } catch {
         case _: Throwable => {
           logger.warn("Error while trying to decode includedBinaryObject as base 64 data. Perhaps it is not correctly encoded")
@@ -142,16 +142,16 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
 
   private def verifyActionExists(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     getSoapAction(soapMessage) match {
-      case Some(_) => Validated.valid()
+      case Some(_) => Validated.valid(())
       case None => ("action", "SOAP Header Action missing").invalidNel[Unit]
     }
   }
 
   private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     getSoapAction(soapMessage) match {
-      case None => Validated.valid()
+      case None => Validated.valid(())
       case actionText => verifyStringLength(actionText, actionMinLength, actionMaxLength) match {
-        case Right(_) => Validated.valid()
+        case Right(_) => Validated.valid(())
         case Left(problem) => ("action", problem).invalidNel[Unit]
       }
     }
@@ -159,9 +159,9 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
 
   private def verifyAction(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
     getSoapAction(soapMessage) match {
-      case None => Validated.valid()
+      case None => Validated.valid(())
       case Some(actionText) => if (actionText.contains("/")) {
-        Validated.valid()
+        Validated.valid(())
       } else {
         ("action", "should contain / character but does not").invalidNel[Unit]
       }
@@ -172,12 +172,12 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
   ValidatedNel[(String, String), Unit] = {
     if (permitMissing) {
       verifyStringLengthPermitMissing(attributeValue, minLength, maxLength) match {
-        case Right(_) => Validated.valid()
+        case Right(_) => Validated.valid(())
         case Left(problem) => (attributeName, problem).invalidNel[Unit]
       }
     } else {
       verifyStringLength(attributeValue, minLength, maxLength) match {
-        case Right(_) => Validated.valid()
+        case Right(_) => Validated.valid(())
         case Left(problem) => (attributeName, problem).invalidNel[Unit]
       }
     }
