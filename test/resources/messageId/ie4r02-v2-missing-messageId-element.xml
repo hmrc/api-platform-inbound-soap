@@ -1,13 +1,11 @@
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v2="http://xmlns.ec.eu/BusinessActivityService/ICS/IReferralManagementBAS/V2" xmlns:urn="urn:wco:datamodel:eu:ics2:2">
    <soap:Header>
       <soap:Action>CCN2.Service.Customs.EU.ICS.ReferralManagementBAS/IE4R02provideAdditionalInformation</soap:Action>
-      <soap:MessageID>ad7f2ad2d4f5-4606-99a0-0dd4e52be116</soap:MessageID>
    </soap:Header>
    <soap:Body>
       <v2:IE4R02provideAdditionalInformationReqMsg>
          <urn:IE4R02>
             <urn:MessageHeader>
-               <urn:messageId>?</urn:messageId>
                <!--Optional:-->
                <urn:correlationId>?</urn:correlationId>
                <!--Optional:-->
@@ -21,7 +19,7 @@
             <urn:documentIssueDate>
                <urn:DateTime>?</urn:DateTime>
             </urn:documentIssueDate>
-            <urn:LRN>836478b5-9290-47fa-a549-9d7ca1d1d77d</urn:LRN>
+            <urn:MRN>?</urn:MRN>
             <urn:responsibleMemberState>
                <urn:country>?</urn:country>
             </urn:responsibleMemberState>
@@ -39,7 +37,7 @@
             </urn:declarant>
             <!--1 to 999 repetitions:-->
             <urn:additionalInformationResponse>
-               <urn:referralRequestReference>d4af29b4-d1d7-4f42-a186-ca5a71fabeba</urn:referralRequestReference>
+               <urn:referralRequestReference>d4af29b4-d1d7-4f42-a186-ca5a71fab</urn:referralRequestReference>
                <!--0 to 99 repetitions:-->
                <urn:additionalInformation>
                   <!--Optional:-->
@@ -52,8 +50,6 @@
                <!--0 to 9 repetitions:-->
                <urn:binaryAttachment>
                   <urn:filename>?</urn:filename>
-                  <!--Optional:-->
-                  <urn:URI>?</urn:URI>
                   <!--Optional:-->
                   <urn:MIME>?</urn:MIME>
                   <!--Optional:-->

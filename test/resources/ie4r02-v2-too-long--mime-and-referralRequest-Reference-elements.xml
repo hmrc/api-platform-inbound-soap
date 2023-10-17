@@ -1,6 +1,7 @@
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v2="http://xmlns.ec.eu/BusinessActivityService/ICS/IReferralManagementBAS/V2" xmlns:urn="urn:wco:datamodel:eu:ics2:2">
    <soap:Header>
       <soap:Action>CCN2.Service.Customs.EU.ICS.ReferralManagementBAS/IE4R02provideAdditionalInformation</soap:Action>
+      <soap:MessageID>ad7f2ad2d4f5-4606-99a0-0dd4e52be116</soap:MessageID>
    </soap:Header>
    <soap:Body>
       <v2:IE4R02provideAdditionalInformationReqMsg>
@@ -51,8 +52,6 @@
                <!--0 to 9 repetitions:-->
                <urn:binaryAttachment>
                   <urn:filename>?</urn:filename>
-                  <!--Optional:-->
-                  <urn:URI>?</urn:URI>
                   <!--Optional:-->
                   <urn:MIME>01234567890123456789012345678901234567890123456789012345678901234567890</urn:MIME>
                   <!--Optional:-->

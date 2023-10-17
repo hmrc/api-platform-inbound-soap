@@ -21,7 +21,7 @@
             <urn:documentIssueDate>
                <urn:DateTime>?</urn:DateTime>
             </urn:documentIssueDate>
-            <urn:LRN>836478b5-9290-47fa-a549-9d7ca1d1d77d</urn:LRN>
+            <urn:MRN>?</urn:MRN>
             <urn:responsibleMemberState>
                <urn:country>?</urn:country>
             </urn:responsibleMemberState>
@@ -39,7 +39,7 @@
             </urn:declarant>
             <!--1 to 999 repetitions:-->
             <urn:additionalInformationResponse>
-               <urn:referralRequestReference>d4af29b4-d1d7-4f42-a186-ca5a71fabeba</urn:referralRequestReference>
+               <urn:referralRequestReference>d4af29b4-d1d7-4f42-a186-ca5a71fab</urn:referralRequestReference>
                <!--0 to 99 repetitions:-->
                <urn:additionalInformation>
                   <!--Optional:-->
@@ -53,9 +53,7 @@
                <urn:binaryAttachment>
                   <urn:filename>?</urn:filename>
                   <!--Optional:-->
-                  <urn:URI>?</urn:URI>
-                  <!--Optional:-->
-                  <urn:MIME>?</urn:MIME>
+                  <urn:MIME></urn:MIME>
                   <!--Optional:-->
                   <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
                   <!--Optional:-->
