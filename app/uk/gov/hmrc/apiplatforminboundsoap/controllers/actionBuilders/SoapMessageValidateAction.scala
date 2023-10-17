@@ -16,23 +16,23 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders
 
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.Future.successful
+import scala.concurrent.{ExecutionContext, Future}
+import scala.xml.NodeSeq
+
 import _root_.uk.gov.hmrc.http.HttpErrorFunctions
 import cats.data._
+
 import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import play.api.mvc.Results._
 import play.api.mvc.{ActionFilter, Request, Result}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.RequestValidator
 
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future.successful
-import scala.concurrent.{ExecutionContext, Future}
-import scala.xml.NodeSeq
-
 @Singleton
 class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
-    extends ActionFilter[Request] with HttpErrorFunctions with Logging  with RequestValidator {
-
+    extends ActionFilter[Request] with HttpErrorFunctions with Logging with RequestValidator {
 
   override def executionContext: ExecutionContext = ec
 
