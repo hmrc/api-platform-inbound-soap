@@ -97,7 +97,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("uriAndBinaryObject/ie4r02-v2-missing-uri-and-includedBinaryObject-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("Message", "must contain includedBinaryObject or URI")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("message must contain includedBinaryObject or URI")
       }
     }
 
@@ -105,14 +105,14 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("uriAndBinaryObject/ie4r02-v2-contains-uri-and-includedBinaryObject-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("Message", "must not contain both includedBinaryObject and URI")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("message must not contain both includedBinaryObject and URI")
       }
     }
     "return validation error when referralRequestReference element is missing" in new Setup {
       val validationResult = verifyElements(readFromFile("referralRequestReference/ie4r02-v2-missing-referralRequestReference-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("referralRequestReference", "is missing")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Element referralRequestReference is missing")
       }
     }
 
@@ -120,7 +120,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("referralRequestReference/ie4r02-v2-blank-referralRequestReference-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("referralRequestReference", "is too short")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element referralRequestReference is too short")
       }
     }
 
@@ -128,31 +128,31 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("referralRequestReference/ie4r02-v2-too-long-referralRequestReference-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("referralRequestReference", "is too long")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element referralRequestReference is too long")
       }
     }
 
-    "return validation error when messageId element is missing" in new Setup {
+    "return validation error when MessageID element is missing" in new Setup {
       val validationResult = verifyElements(readFromFile("messageId/ie4r02-v2-missing-messageId-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("messageId", "is missing")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Element SOAP Header MessageID is missing")
       }
     }
 
-    "return validation error when messageId element is blank" in new Setup {
+    "return validation error when MessageID element is blank" in new Setup {
       val validationResult = verifyElements(readFromFile("messageId/ie4r02-v2-blank-messageId-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("messageId", "is too short")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element SOAP Header MessageID is too short")
       }
     }
 
-    "return validation error when messageId element is too long" in new Setup {
+    "return validation error when MessageID element is too long" in new Setup {
       val validationResult = verifyElements(readFromFile("messageId/ie4r02-v2-too-long-messageId-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("messageId", "is too long")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element SOAP Header MessageID is too long")
       }
     }
 
@@ -160,7 +160,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("filename/ie4r02-v2-missing-filename-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("filename", "is missing")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Element filename is missing")
       }
     }
 
@@ -168,7 +168,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("filename/ie4r02-v2-blank-filename-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("filename", "is too short")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element filename is too short")
       }
     }
 
@@ -176,7 +176,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("filename/ie4r02-v2-too-long-filename-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("filename", "is too long")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element filename is too long")
       }
     }
 
@@ -184,7 +184,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("description/ie4r02-v2-missing-description-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("description", "is missing")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Element description is missing")
       }
     }
 
@@ -192,7 +192,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("description/ie4r02-v2-blank-description-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("description", "is too short")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element description is too short")
       }
     }
 
@@ -200,23 +200,20 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("description/ie4r02-v2-too-long-description-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("description", "is too long")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element description is too long")
       }
     }
 
-    "return validation error when both MRN and LRN elements are missing" in new Setup {
+    "return success when both MRN and LRN elements are missing" in new Setup {
       val validationResult = verifyElements(readFromFile("MRN/ie4r02-v2-missing-both-LRN-and-MRN-elements.xml"))
-      validationResult match {
-        case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("MRN/LRN", "is missing")
-      }
+      validationResult shouldBe Right(())
     }
 
     "return validation error when MRN element is blank" in new Setup {
       val validationResult = verifyElements(readFromFile("MRN/ie4r02-v2-blank-MRN-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("MRN/LRN", "is too short")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element MRN is too short")
       }
     }
 
@@ -224,7 +221,15 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("MRN/ie4r02-v2-too-long-MRN-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("MRN/LRN", "is too long")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element MRN is too long")
+      }
+    }
+
+   "return validation error when MRN element is too short" in new Setup {
+      val validationResult = verifyElements(readFromFile("MRN/ie4r02-v2-too-long-MRN-element.xml"))
+      validationResult match {
+        case Right(_)                                  => fail()
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element MRN is too long")
       }
     }
 
@@ -232,7 +237,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("LRN/ie4r02-v2-blank-LRN-element.xml"))
       validationResult match {
         case Right(_) => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe("MRN/LRN", "is too short")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe("Value of element LRN is too short")
       }
     }
 
@@ -240,7 +245,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("LRN/ie4r02-v2-too-long-LRN-element.xml"))
       validationResult match {
         case Right(_) => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe("MRN/LRN", "is too long")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe("Value of element LRN is too long")
       }
     }
 
@@ -253,24 +258,24 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("MIME/ie4r02-v2-blank-mime-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("MIME", "is too short")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element MIME is too short")
       }
     }
 
     "return validation error when MIME element is too long" in new Setup {
-      val validationResult = verifyElements(readFromFile("MIME/ie4r02-v2-too-long--mime-element.xml"))
+      val validationResult = verifyElements(readFromFile("MIME/ie4r02-v2-too-long-mime-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("MIME", "is too long")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element MIME is too long")
       }
     }
 
-    "return missing action error message when all elements are valid" in new Setup {
+    "return missing action error message when action element is missing" in new Setup {
       val validationResult = verifyElements(readFromFile("action/ie4r02-v2-missing-action-element.xml"))
 
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("action", "SOAP Header Action missing")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Element SOAP Header Action is missing")
       }
     }
 
@@ -278,7 +283,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("action/ie4r02-v2-blank-action-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("action", "should contain / character but does not")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("SOAP Header Action should contain / character but does not")
       }
     }
 
@@ -286,7 +291,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val validationResult = verifyElements(readFromFile("action/ie4r02-v2-single-slash-action-element.xml"))
       validationResult match {
         case Right(_)                                  => fail()
-        case Left(nel: NonEmptyList[(String, String)]) => nel.toList.head shouldBe ("action", "is too short")
+        case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe ("Value of element SOAP Header Action is too short")
       }
     }
   }

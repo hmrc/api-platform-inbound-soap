@@ -45,13 +45,13 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
   val uriMinLength                      = 10
   val uriMaxLength                      = 64000
 
-  def verifyElements(soapMessage: NodeSeq): Either[cats.data.NonEmptyList[(String, String)], Unit] = {
+  def verifyElements(soapMessage: NodeSeq): Either[cats.data.NonEmptyList[String], Unit] = {
     {
       (
         verifyAttachments(soapMessage),
         verifyActionExists(soapMessage),
         verifyMessageId(soapMessage),
-        verifyMRN(soapMessage),
+        verifyReferenceNumber(soapMessage),
         verifyAction(soapMessage),
         verifyActionLength(soapMessage)
       )
@@ -60,7 +60,7 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
     }).toEither
   }
 
-  private def verifyAttachments(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+  private def verifyAttachments(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
 
     val allAttachments = getBinaryElements(soapMessage)
 
@@ -72,7 +72,7 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
     Seq(referralRequestReferenceValidation, validateAttachments).combineAll
   }
 
-  private def verifyAttachment(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+  private def verifyAttachment(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
     {
       (
         verifyUriOrBinaryObject(soapMessage),
@@ -85,38 +85,42 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
     )
   }
 
-  private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+  private def verifyDescription(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
     val description = getBinaryDescription(soapMessage)
     verifyAttribute(attributeValue = description, attributeName = "description", minLength = descriptionMinLength, maxLength = descriptionMaxLength)
   }
 
-  private def verifyMRN(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
-    val referenceNumber = getReferenceNumber(soapMessage)
-    verifyAttribute(attributeValue = referenceNumber, attributeName = "MRN/LRN", minLength = referenceMinLength, maxLength = referenceMaxLength)
+  private def verifyReferenceNumber(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
+    (getMRN(soapMessage), getLRN(soapMessage)) match {
+      case (None, lrn)                        => verifyAttribute(lrn, "LRN", referenceMinLength, referenceMaxLength, true)
+      case (mrn, None)                        => verifyAttribute(mrn, "MRN", referenceMinLength, referenceMaxLength, true)
+      case (None, None)                       => Validated.valid(())
+      case (Some(_), Some(_))                 => ("message must not contain both MRN and LRN").invalidNel[Unit]
+    }
   }
 
-  private def verifyMessageId(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+  private def verifyMessageId(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
     val messageId = getMessageId(soapMessage)
-    verifyAttribute(attributeValue = messageId, attributeName = "messageId", minLength = messageIdMinLength, maxLength = messageIdMaxLength)
+    verifyAttribute(attributeValue = messageId, attributeName = "SOAP Header MessageID", minLength = messageIdMinLength, maxLength = messageIdMaxLength)
   }
 
-  private def verifyFilename(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+  private def verifyFilename(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
     val filename = getBinaryFilename(soapMessage)
     verifyAttribute(attributeValue = filename, attributeName = "filename", minLength = filenameMinLength, maxLength = filenameMaxLength)
   }
 
-  private def verifyMime(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+  private def verifyMime(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
     val mime = getBinaryMimeType(soapMessage)
     verifyAttribute(attributeValue = mime, attributeName = "MIME", minLength = mimeMinLength, maxLength = mimeMaxLength, permitMissing = true)
   }
 
-  private def verifyUriOrBinaryObject(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
-    def verifyUri(uri: String): ValidatedNel[(String, String), Unit] = {
+  private def verifyUriOrBinaryObject(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
+    def verifyUri(uri: String): ValidatedNel[String, Unit] = {
       verifyAttribute(attributeValue = Some(uri), attributeName = "URI", minLength = uriMinLength, maxLength = uriMaxLength, permitMissing = true)
     }
 
-    def verifyIncludedBinaryObject(includedBinaryObject: String): ValidatedNel[(String, String), Unit] = {
-      val failLeft = ("includedBinaryObject", "is not valid base 64 data").invalidNel[Unit]
+    def verifyIncludedBinaryObject(includedBinaryObject: String): ValidatedNel[String, Unit] = {
+      val failLeft = "Value of element includedBinaryObject is not valid base 64 data".invalidNel[Unit]
       try {
         val decoded = Base64.getDecoder().decode(includedBinaryObject)
         if (decoded.isEmpty) failLeft else Validated.valid(())
@@ -131,12 +135,12 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
     (getBinaryBase64Object(soapMessage), getBinaryUri(soapMessage)) match {
       case (None, Some(uri))                  => verifyUri(uri)
       case (Some(includedBinaryObject), None) => verifyIncludedBinaryObject(includedBinaryObject)
-      case (None, None)                       => ("Message", "must contain includedBinaryObject or URI").invalidNel[Unit]
-      case (Some(_), Some(_))                 => ("Message", "must not contain both includedBinaryObject and URI").invalidNel[Unit]
+      case (None, None)                       => ("message must contain includedBinaryObject or URI").invalidNel[Unit]
+      case (Some(_), Some(_))                 => ("message must not contain both includedBinaryObject and URI").invalidNel[Unit]
     }
   }
 
-  private def verifyReferralRequestReference(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+  private def verifyReferralRequestReference(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
     val referralRequestReference = getReferralRequestReference(soapMessage)
     verifyAttribute(
       attributeValue = referralRequestReference,
@@ -146,30 +150,30 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
     )
   }
 
-  private def verifyActionExists(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+  private def verifyActionExists(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
     getSoapAction(soapMessage) match {
       case Some(_) => Validated.valid(())
-      case None    => ("action", "SOAP Header Action missing").invalidNel[Unit]
+      case None    => "Element SOAP Header Action is missing".invalidNel[Unit]
     }
   }
 
-  private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+  private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
     getSoapAction(soapMessage) match {
       case None       => Validated.valid(())
-      case actionText => verifyStringLength(actionText, actionMinLength, actionMaxLength) match {
+      case actionText => verifyStringLength(maybeString = actionText, attributeName = "SOAP Header Action", minLength = actionMinLength, maxLength = actionMaxLength) match {
           case Right(_)      => Validated.valid(())
-          case Left(problem) => ("action", problem).invalidNel[Unit]
+          case Left(problem) => problem.invalidNel[Unit]
         }
     }
   }
 
-  private def verifyAction(soapMessage: NodeSeq): ValidatedNel[(String, String), Unit] = {
+  private def verifyAction(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
     getSoapAction(soapMessage) match {
       case None             => Validated.valid(())
       case Some(actionText) => if (actionText.contains("/")) {
           Validated.valid(())
         } else {
-          ("action", "should contain / character but does not").invalidNel[Unit]
+          ("SOAP Header Action should contain / character but does not").invalidNel[Unit]
         }
     }
   }
@@ -177,36 +181,34 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
   private def verifyAttribute(
       attributeValue: Option[String],
       attributeName: String,
-      maxLength: Int,
       minLength: Int,
+      maxLength: Int,
       permitMissing: Boolean = false
-    ): ValidatedNel[(String, String), Unit] = {
-    if (permitMissing) {
-      verifyStringLengthPermitMissing(attributeValue, minLength, maxLength) match {
-        case Right(_)      => Validated.valid(())
-        case Left(problem) => (attributeName, problem).invalidNel[Unit]
-      }
+    ): ValidatedNel[String, Unit] = {
+    val verifyResult = if (permitMissing) {
+      verifyStringLengthPermitMissing(attributeValue, attributeName, minLength, maxLength)
     } else {
-      verifyStringLength(attributeValue, minLength, maxLength) match {
-        case Right(_)      => Validated.valid(())
-        case Left(problem) => (attributeName, problem).invalidNel[Unit]
-      }
+      verifyStringLength(attributeValue, attributeName, minLength, maxLength)
+    }
+    verifyResult match {
+      case Right(_)      => Validated.valid(())
+      case Left(problem) => problem.invalidNel[Unit]
     }
   }
 
-  private def verifyStringLength(maybeString: Option[String], minLength: Int, maxLength: Int): Either[String, Unit] = {
+  private def verifyStringLength(maybeString: Option[String], attributeName: String="", minLength: Int, maxLength: Int): Either[String, Unit] = {
     maybeString match {
-      case Some(string) if string.trim.length < minLength => Left("is too short")
-      case Some(string) if (string.length > maxLength)    => Left("is too long")
-      case None                                           => Left("is missing")
+      case Some(string) if string.trim.length < minLength => Left(s"Value of element $attributeName is too short")
+      case Some(string) if string.length > maxLength      => Left(s"Value of element $attributeName is too long")
+      case None                                           => Left(s"Element $attributeName is missing")
       case _                                              => Right(())
     }
   }
 
-  private def verifyStringLengthPermitMissing(maybeString: Option[String], minLength: Int, maxLength: Int): Either[String, Unit] = {
+  private def verifyStringLengthPermitMissing(maybeString: Option[String], attributeName: String, minLength: Int, maxLength: Int): Either[String, Unit] = {
     maybeString match {
-      case Some(string) if string.trim.length < minLength => Left("is too short")
-      case Some(string) if (string.length > maxLength)    => Left("is too long")
+      case Some(string) if string.trim.length < minLength => Left(s"Value of element $attributeName is too short")
+      case Some(string) if string.length > maxLength      => Left(s"Value of element $attributeName is too long")
       case _                                              => Right(())
     }
   }
