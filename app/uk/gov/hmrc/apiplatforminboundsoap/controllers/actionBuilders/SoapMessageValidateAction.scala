@@ -42,12 +42,12 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
 
     verifyElements(body) match {
       case Right(_) => successful(None)
-      case Left(e)  => {
+      case Left(e:NonEmptyList[(String, String)]) => {
         val statusCode = BAD_REQUEST
         val requestId  = request.headers.get("x-request-id").getOrElse("requestId not known")
         logger.warn(s"RequestID: $requestId")
         logger.warn(mapErrorsToString(e, "Received a request that had a ", " that was rejected for being "))
-        successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(e, "Argument ", " "), requestId))
+        successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(e, "Value of element ", " "), requestId))
           .as("application/soap+xml")))
       }
     }

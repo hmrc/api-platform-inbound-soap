@@ -96,19 +96,25 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     }
   }
 
-  "getReferenceNumber" should {
+  "getMRN" should {
     "return MRN when one is found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4s03-v2.xml")
-      getReferenceNumber(xmlBody) shouldBe Some("7c1aa850-9760-42ab-bebe-709e3a4a888f")
-    }
-
-    "return LRN when one is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4s03-with-LRN-v2.xml")
-      getReferenceNumber(xmlBody) shouldBe Some("836478b5-9290-47fa-a549-9d7ca1d1d77d")
+      getMRN(xmlBody) shouldBe Some("7c1aa850-9760-42ab-bebe-709e3a4a888f")
     }
 
     "return None when no LRN or MRN is found in SOAP message" in new Setup {
-      getReferenceNumber(xmlBodyForElementNotFoundScenario) shouldBe None
+      getMRN(xmlBodyForElementNotFoundScenario) shouldBe None
+    }
+  }
+
+  "getLRN" should {
+    "return LRN when one is found in SOAP message" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("ie4s03-with-LRN-v2.xml")
+      getLRN(xmlBody) shouldBe Some("836478b5-9290-47fa-a549-9d7ca1d1d77d")
+    }
+
+    "return None when no LRN or MRN is found in SOAP message" in new Setup {
+      getLRN(xmlBodyForElementNotFoundScenario) shouldBe None
     }
   }
 
