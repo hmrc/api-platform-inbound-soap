@@ -198,7 +198,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Value of element SOAP Header Action is missing", xRequestIdHeaderValue)
+      contentAsString(result) shouldBe getExpectedSoapFault(400, "Element SOAP Header Action is missing", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
   }

@@ -42,12 +42,12 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
 
     verifyElements(body) match {
       case Right(_) => successful(None)
-      case Left(e:NonEmptyList[(String, String)]) => {
+      case Left(e:NonEmptyList[String]) => {
         val statusCode = BAD_REQUEST
         val requestId  = request.headers.get("x-request-id").getOrElse("requestId not known")
         logger.warn(s"RequestID: $requestId")
         logger.warn(mapErrorsToString(e, "Received a request that had a ", " that was rejected for being "))
-        successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(e, "Value of element ", " "), requestId))
+        successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(e, "", ""), requestId))
           .as("application/soap+xml")))
       }
     }
@@ -73,8 +73,8 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
        |</soap:Envelope>""".stripMargin
   }
 
-  private def mapErrorsToString(errorList: NonEmptyList[(String, String)], fieldName: String, problem: String): String = {
-    val flatListErrors: List[(String, String)] = errorList.toList
-    flatListErrors.map(problemDescription => s"$fieldName${problemDescription._1}$problem${problemDescription._2}").mkString("\n")
+  private def mapErrorsToString(errorList: NonEmptyList[String], fieldName: String, problem: String): String = {
+    val flatListErrors: List[String ] = errorList.toList
+    flatListErrors.map(problemDescription => s"$problemDescription$problem").mkString("\n")
   }
 }
