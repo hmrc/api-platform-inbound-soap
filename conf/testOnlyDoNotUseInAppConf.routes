@@ -10,4 +10,15 @@
 # Failing to follow this rule may result in test routes deployed in production.
 
 # Add all the application routes to the prod.routes file
-->         /                          prod.Routes
+->         /                                          prod.Routes
+POST       /test                                      uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()
+POST       /test/NESControlBAS                        uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()
+POST       /test/NESErrorNotificationBAS              uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()
+POST       /test/NESNotificationBAS                   uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()
+POST       /test/NESReferralBAS                       uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()
+POST       /test/NESRiskAnalyisBAS                    uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()
+POST       /test/NESControlBASV2                      uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()
+POST       /test/NESErrorNotificationBASV2            uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()
+POST       /test/NESNotificationBASV2                 uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()
+POST       /test/NESReferralBASV2                     uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()
+POST       /test/NESRiskAnalyisBASV2                  uk.gov.hmrc.apiplatforminboundsoap.controllers.TestController.message()

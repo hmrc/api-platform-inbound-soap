@@ -72,7 +72,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)).thenReturn(successful(SendSuccess))
       when(appConfigMock.forwardMessageUrl).thenReturn(forwardingUrl)
 
-      val result = await(service.processInboundMessage(xmlBody))
+      val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendSuccess
       verify(inboundConnectorMock).postMessage(inboundSoapMessage, forwardedHeaders)
@@ -86,7 +86,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
       when(appConfigMock.forwardMessageUrl).thenReturn(forwardingUrl)
 
-      val result = await(service.processInboundMessage(xmlBody))
+      val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendFail(IM_A_TEAPOT)
       verify(inboundConnectorMock).postMessage(inboundSoapMessage, forwardedHeaders)
