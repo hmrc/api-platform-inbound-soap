@@ -41,8 +41,8 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
     val body: NodeSeq = request.body.asInstanceOf[xml.NodeSeq]
 
     verifyElements(body) match {
-      case Right(_) => successful(None)
-      case Left(e:NonEmptyList[String]) => {
+      case Right(_)                      => successful(None)
+      case Left(e: NonEmptyList[String]) => {
         val statusCode = BAD_REQUEST
         val requestId  = request.headers.get("x-request-id").getOrElse("requestId not known")
         logger.warn(s"RequestID: $requestId")
@@ -74,7 +74,7 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
   }
 
   private def mapErrorsToString(errorList: NonEmptyList[String], fieldName: String, problem: String): String = {
-    val flatListErrors: List[String ] = errorList.toList
+    val flatListErrors: List[String] = errorList.toList
     flatListErrors.map(problemDescription => s"$problemDescription$problem").mkString("\n")
   }
 }

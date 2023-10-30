@@ -14,11 +14,11 @@ This code is open source software licensed under the [Apache 2.0 License]("http:
 ### Sample cURL requests
 For 200 response (you'll need to alter the path to the XML file in the `-d` argument, according to where you have the project checked out):
 ```
-curl -v localhost:9000/api-platform-inbound-soap/ics2/NESReferralBASV2  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mjc5NjY4ODd9.cSKzno8ytgA8-C5kIg_0NSVF-Ar48fJ9_1jnygbYuGM" -H "Content-Type: application/soap+xml" -d @/<your projects directory>/api-platform-inbound-soap/test/resources/ie4r02-v2.xml
+curl -v localhost:9000/api-platform-inbound-soap/ics2/NESReferralBASV2  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mjc5NjY4ODd9.cSKzno8ytgA8-C5kIg_0NSVF-Ar48fJ9_1jnygbYuGM" -H "Content-Type: application/soap+xml" -d @/Users/anjumabbas/IdeaProjects/api-platform-inbound-soap/test/resources/ie4r02-v2.xml
 ``` 
 One example of a bad request is:
 ```
-curl -v localhost:9000/api-platform-inbound-soap/ics2/NESReferralBASV2  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mjc5NjY4ODd9.cSKzno8ytgA8-C5kIg_0NSVF-Ar48fJ9_1jnygbYuGM" -H "x-request-id: cc901cd5-3348-4713-8a6b-4c803e308dc1" -H "Content-Type: application/soap+xml" -d @/<your projects directory>/api-platform-inbound-soap/test/resources/ie4r02-v2-missing-description-element.xml
+curl -v localhost:9000/api-platform-inbound-soap/ics2/NESReferralBASV2  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mjc5NjY4ODd9.cSKzno8ytgA8-C5kIg_0NSVF-Ar48fJ9_1jnygbYuGM" -H "x-request-id: cc901cd5-3348-4713-8a6b-4c803e308dc1" -H "Content-Type: application/soap+xml" -d @/Users/anjumabbas/IdeaProjects/api-platform-inbound-soap/test/resources/ie4r02-v2-missing-description-element.xml
 ```
 which will result in a response like:
 ```
