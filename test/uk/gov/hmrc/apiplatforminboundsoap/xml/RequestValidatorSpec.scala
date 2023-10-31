@@ -112,7 +112,7 @@ class RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
     "return 400 when includedBinaryObject element is 'invalid'" in new Setup {
       val validationResult = verifyElements(readFromFile("uriAndBinaryObject/ie4r02-v2-includedBinaryObject-element-contains-invalid-string.xml"))
       validationResult match {
-        case Right(_) => fail()
+        case Right(_)                        => fail()
         case Left(nel: NonEmptyList[String]) => nel.toList.head shouldBe "Value of element includedBinaryObject is not valid base 64 data"
       }
     }

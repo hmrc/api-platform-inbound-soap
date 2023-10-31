@@ -124,10 +124,13 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
     def verifyIncludedBinaryObject(includedBinaryObject: String): ValidatedNel[String, Unit] = {
       val failLeft = "Value of element includedBinaryObject is not valid base 64 data".invalidNel[Unit]
       try {
-        if (includedBinaryObject.length % 4 == 0) {
-          val decoded = Base64.getDecoder().decode(includedBinaryObject)
-          if (decoded.isEmpty) failLeft else Validated.valid(())
-        } else failLeft
+        val isValidLength = includedBinaryObject.length % 4 == 0
+        val decoded       = Base64.getDecoder().decode(includedBinaryObject)
+        (isValidLength, decoded.isEmpty) match {
+          case (false, _)    => failLeft
+          case (_, true)     => failLeft
+          case (true, false) => Validated.valid(())
+        }
       } catch {
         case _: Throwable => {
           logger.warn("Error while trying to decode includedBinaryObject as base 64 data. Perhaps it is not correctly encoded")
