@@ -51,7 +51,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     val service: InboundMessageService =
       new InboundMessageService(appConfigMock, inboundConnectorMock)
 
-    val forwardingUrl = "some url"
+    val forwardingUrl     = "some url"
     val testForwardingUrl = "some test url"
     when(appConfigMock.forwardMessageUrl).thenReturn(forwardingUrl)
     when(appConfigMock.testForwardMessageUrl).thenReturn(testForwardingUrl)
@@ -62,15 +62,15 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     val xmlBody = readFromFile("ie4n09-v2.xml")
 
     val forwardedHeaders = Headers(
-      "x-soap-action" -> getSoapAction(xmlBody).getOrElse(""),
+      "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
       "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
-      "x-message-id" -> getMessageId(xmlBody).getOrElse(""),
+      "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
       "x-files-included" -> isFileAttached(xmlBody).toString,
-      "x-version-id" -> getMessageVersion(xmlBody).displayName
+      "x-version-id"     -> getMessageVersion(xmlBody).displayName
     )
 
     "return success when connector returns success" in new Setup {
-      val bodyCaptor = ArgCaptor[SoapRequest]
+      val bodyCaptor   = ArgCaptor[SoapRequest]
       val headerCaptor = ArgCaptor[Headers]
 
       val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)
@@ -88,8 +88,8 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return failure when connector returns failure" in new Setup {
-      val bodyCaptor = ArgCaptor[SoapRequest]
-      val headerCaptor = ArgCaptor[Headers]
+      val bodyCaptor         = ArgCaptor[SoapRequest]
+      val headerCaptor       = ArgCaptor[Headers]
       val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
@@ -107,7 +107,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
   "processInboundMessage for test" should {
     val xmlBody = readFromFile("ie4n09-v2.xml")
 
-    val forwardedHeaders   = Headers(
+    val forwardedHeaders = Headers(
       "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
       "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
       "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
@@ -134,8 +134,8 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return failure when connector returns failure" in new Setup {
-      val bodyCaptor   = ArgCaptor[SoapRequest]
-      val headerCaptor = ArgCaptor[Headers]
+      val bodyCaptor         = ArgCaptor[SoapRequest]
+      val headerCaptor       = ArgCaptor[Headers]
       val inboundSoapMessage = SoapRequest(xmlBody.text, testForwardingUrl)
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)).thenReturn(successful(SendFail(IM_A_TEAPOT)))

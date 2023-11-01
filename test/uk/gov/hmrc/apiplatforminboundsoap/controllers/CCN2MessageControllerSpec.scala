@@ -81,7 +81,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
   "POST CCN2 message endpoint " should {
     "return 200 when successful for a message with embedded attached file" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean] = ArgCaptor[Boolean]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
 
@@ -95,7 +95,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
     "return 200 when successful for a message with attached file as URI" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean] = ArgCaptor[Boolean]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-uri-instead-of-includedBinaryObject-element.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
 
@@ -109,7 +109,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
     "return 200 when successful for a message with binary file and binary attachment" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean] = ArgCaptor[Boolean]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
 
@@ -123,7 +123,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
     "return 200 when successful for a message with a binary file and 2 binary attachments" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean] = ArgCaptor[Boolean]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
 
@@ -137,7 +137,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
     "return 200 when successful for a message with no attached file" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean] = ArgCaptor[Boolean]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4n09-v2.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
 
@@ -151,7 +151,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
     "return response code it received when not successful" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean] = ArgCaptor[Boolean]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
 
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
