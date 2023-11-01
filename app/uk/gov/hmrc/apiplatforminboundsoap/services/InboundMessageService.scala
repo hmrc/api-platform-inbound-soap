@@ -30,7 +30,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 @Singleton
 class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: InboundConnector) extends Logging with XmlHelper {
 
-  def processInboundMessage(soapRequest: NodeSeq, isTest: Boolean): Future[SendResult] = {
+  def processInboundMessage(soapRequest: NodeSeq, isTest: Boolean = false): Future[SendResult] = {
     val newHeaders: Headers = Headers(
       "x-soap-action"    -> getSoapAction(soapRequest).getOrElse(""),
       "x-correlation-id" -> getMessageId(soapRequest).getOrElse(""),

@@ -38,7 +38,7 @@ class CCN2MessageController @Inject() (
 
   def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
     implicit request =>
-      incomingMessageService.processInboundMessage(request.body, isTest = false) flatMap {
+      incomingMessageService.processInboundMessage(request.body) flatMap {
         case SendSuccess      =>
           Future.successful(Ok.as("application/soap+xml"))
         case SendFail(status) =>
