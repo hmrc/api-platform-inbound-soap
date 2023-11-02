@@ -81,81 +81,93 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
   "POST CCN2 message endpoint " should {
     "return 200 when successful for a message with embedded attached file" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)
       xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return 200 when successful for a message with attached file as URI" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-uri-instead-of-includedBinaryObject-element.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)
       xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return 200 when successful for a message with binary file and binary attachment" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)
       xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return 200 when successful for a message with a binary file and 2 binary attachments" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)
       xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return 200 when successful for a message with no attached file" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4n09-v2.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)
       xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return response code it received when not successful" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
+      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
 
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe PRECONDITION_FAILED
-      verify(incomingMessageServiceMock).processInboundMessage(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)
       xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return 400 when MIME element is too long and referralRequestReference is too long" in new Setup {
       val requestBody: Elem = readFromFile("ie4r02-v2-too-long--mime-and-referralRequest-Reference-elements.xml")
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Value of element referralRequestReference is too long\nValue of element MIME is too long", xRequestIdHeaderValue)
@@ -165,7 +177,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return 400 when includedBinaryObject element is blank" in new Setup {
       val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-blank-includedBinaryObject-element.xml")
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Value of element includedBinaryObject is not valid base 64 data", xRequestIdHeaderValue)
@@ -175,7 +187,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return 400 when includedBinaryObject element is not base 64 data" in new Setup {
       val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-includedBinaryObject-element-not-base64.xml")
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Value of element includedBinaryObject is not valid base 64 data", xRequestIdHeaderValue)
@@ -185,7 +197,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return 400 when uri element is too short" in new Setup {
       val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-too-short-uri-element.xml")
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Value of element URI is too short", xRequestIdHeaderValue)
@@ -195,7 +207,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return 400 when action element is missing" in new Setup {
       val requestBody: Elem = readFromFile("action/ie4r02-v2-missing-action-element.xml")
 
-      val result = controller.message("NESControlBASV2")(fakeRequest.withBody(requestBody))
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Element SOAP Header Action is missing", xRequestIdHeaderValue)

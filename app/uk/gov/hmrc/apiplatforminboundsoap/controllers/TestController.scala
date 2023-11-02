@@ -28,7 +28,7 @@ import uk.gov.hmrc.apiplatformoutboundsoap.controllers.actionBuilders.VerifyJwtT
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton()
-class CCN2MessageController @Inject() (
+class TestController @Inject() (
     cc: ControllerComponents,
     verifyJwtTokenAction: VerifyJwtTokenAction,
     soapMessageValidateAction: SoapMessageValidateAction,
@@ -38,7 +38,7 @@ class CCN2MessageController @Inject() (
 
   def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
     implicit request =>
-      incomingMessageService.processInboundMessage(request.body) flatMap {
+      incomingMessageService.processInboundMessage(request.body, isTest = true) flatMap {
         case SendSuccess      =>
           Future.successful(Ok.as("application/soap+xml"))
         case SendFail(status) =>

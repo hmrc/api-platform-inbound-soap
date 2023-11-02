@@ -1,4 +1,14 @@
 # microservice specific routes
 
 POST       /ccn2/acknowledgementV2            uk.gov.hmrc.apiplatforminboundsoap.controllers.ConfirmationController.message
-POST       /ics2/:path                        uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message(path)
+POST       /ics2/NESControlBAS                uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
+POST       /ics2/NESErrorNotificationBAS      uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
+POST       /ics2/NESNotificationBAS           uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
+POST       /ics2/NESReferralBAS               uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
+POST       /ics2/NESRiskAnalysisBAS           uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
+POST       /ics2/NESRiskAnalyisBAS            uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
+POST       /ics2/NESControlBASV2              uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
+POST       /ics2/NESErrorNotificationBASV2    uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
+POST       /ics2/NESNotificationBASV2         uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
+POST       /ics2/NESReferralBASV2             uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
+POST       /ics2/NESRiskAnalyisBASV2          uk.gov.hmrc.apiplatforminboundsoap.controllers.CCN2MessageController.message()
