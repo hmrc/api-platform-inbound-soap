@@ -22,6 +22,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(integrationTestSettings(): _*)
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings: _*)
+  .settings(scalafixConfigSettings(IntegrationTest))
 
 commands ++= Seq(
   Command.command("run-all-tests") { state => "test" :: "IntegrationTest/test" :: state },
