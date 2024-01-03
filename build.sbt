@@ -24,7 +24,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(CodeCoverageSettings.settings: _*)
 
 commands ++= Seq(
-  Command.command("run-all-tests") { state => "test" :: state },
+  Command.command("run-all-tests") { state => "test" :: "IntegrationTest/test" :: state },
 
   Command.command("clean-and-test") { state => "clean" :: "compile" :: "run-all-tests" :: state },
 
