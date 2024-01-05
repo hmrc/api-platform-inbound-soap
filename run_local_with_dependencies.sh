@@ -2,4 +2,4 @@
 
 sm2 --start DATASTREAM API_PLATFORM_TEST API_PLATFORM_OUTBOUND_SOAP
 
-sbt run
+./run_local.sh

@@ -51,13 +51,13 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
     private val verifyJwtTokenAction      = app.injector.instanceOf[VerifyJwtTokenAction]
     private val soapMessageValidateAction = app.injector.instanceOf[SoapMessageValidateAction]
 
-    val controller                        = new TestController(
+    val controller  = new TestController(
       Helpers.stubControllerComponents(),
       verifyJwtTokenAction,
       soapMessageValidateAction,
       incomingMessageServiceMock
     )
-    val fakeRequest                       = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headers)
+    val fakeRequest = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headers)
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())
