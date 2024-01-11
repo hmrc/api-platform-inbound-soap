@@ -1,21 +1,18 @@
 import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
 
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
+lazy val appName = "api-platform-inbound-soap"
 
-inThisBuild(
-  List(
-    scalaVersion := "2.13.8",
-    semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision
-  )
-)
+scalaVersion := "2.13.12"
 
-lazy val microservice = Project("api-platform-inbound-soap", file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
+ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+
+lazy val microservice = Project(appName, file("."))
+  .enablePlugins(PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
     majorVersion        := 0,
-    scalaVersion        := "2.13.8",
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
     // suppress warnings in generated routes files
@@ -25,9 +22,10 @@ lazy val microservice = Project("api-platform-inbound-soap", file("."))
   .settings(integrationTestSettings(): _*)
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings: _*)
+  .settings(scalafixConfigSettings(IntegrationTest))
 
 commands ++= Seq(
-  Command.command("run-all-tests") { state => "test" :: state },
+  Command.command("run-all-tests") { state => "test" :: "IntegrationTest/test" :: state },
 
   Command.command("clean-and-test") { state => "clean" :: "compile" :: "run-all-tests" :: state },
 

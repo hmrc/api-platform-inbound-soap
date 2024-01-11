@@ -39,12 +39,12 @@ object AppDependencies {
   ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ akkaSerializationJacksonOverrides
 
   val test = Seq(
-    "uk.gov.hmrc"             %% "bootstrap-test-play-28"     % bootstrapVersion    ,
-    "org.scalatest"           %% "scalatest"                  % "3.2.12"            ,
-    "org.mockito"             %% "mockito-scala-scalatest"    % "1.17.12"            ,
-    "com.typesafe.play"       %% "play-test"                  % current             ,
-    "com.vladsch.flexmark"    %  "flexmark-all"               % "0.64.0"            ,
-    "org.scalatestplus.play"  %% "scalatestplus-play"         % "5.1.0"             ,
+    "uk.gov.hmrc"             %% "bootstrap-test-play-28"     % bootstrapVersion,
+    "org.scalatest"           %% "scalatest"                  % "3.2.17",
+    "org.mockito"             %% "mockito-scala-scalatest"    % "1.17.29",
+    "com.typesafe.play"       %% "play-test"                  % current,
+    "com.vladsch.flexmark"    %  "flexmark-all"               % "0.64.0",
+    "org.scalatestplus.play"  %% "scalatestplus-play"         % "5.1.0",
     "org.xmlunit"             %  "xmlunit-core"               % "2.9.0"
   ).map(_ % "test, it")
 }

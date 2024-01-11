@@ -204,7 +204,7 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
     }
   }
 
-  private def verifyStringLength(maybeString: Option[String], attributeName: String = "", minLength: Int, maxLength: Int): Either[String, Unit] = {
+  private def verifyStringLength(maybeString: Option[String], attributeName: String, minLength: Int, maxLength: Int): Either[String, Unit] = {
     maybeString match {
       case Some(string) if string.trim.length < minLength => Left(s"Value of element $attributeName is too short")
       case Some(string) if string.length > maxLength      => Left(s"Value of element $attributeName is too long")
