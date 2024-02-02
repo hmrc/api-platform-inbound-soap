@@ -19,7 +19,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 import scala.concurrent.Future.successful
 import scala.io.Source
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
