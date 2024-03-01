@@ -28,6 +28,7 @@ import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import play.api.mvc.Results._
 import play.api.mvc.{ActionFilter, Request, Result}
+
 import uk.gov.hmrc.apiplatforminboundsoap.xml.RequestValidator
 
 @Singleton

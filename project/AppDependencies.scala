@@ -1,8 +1,4 @@
-import play.core.PlayVersion
-import play.core.PlayVersion.current
-import play.sbt.PlayImport._
-import sbt.Keys.libraryDependencies
-import sbt._
+import sbt.*
 
 object AppDependencies {
 
@@ -18,7 +14,7 @@ object AppDependencies {
 
   val test = Seq(
     "uk.gov.hmrc"             %% "bootstrap-test-play-30"     % bootstrapVersion,
-    "org.mockito"             %% "mockito-scala-scalatest"    % "1.17.29",
+    "org.mockito"             %% "mockito-scala-scalatest"    % "1.17.30",
     "org.xmlunit"             %  "xmlunit-core"               % "2.9.0"
-  ).map(_ % "test, it")
+  ).map(_ % "test")
 }

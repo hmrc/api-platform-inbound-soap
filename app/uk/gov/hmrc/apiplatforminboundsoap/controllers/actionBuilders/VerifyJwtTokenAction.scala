@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatformoutboundsoap.controllers.actionBuilders
+package uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
