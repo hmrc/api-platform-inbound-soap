@@ -1,5 +1,5 @@
 import uk.gov.hmrc.DefaultBuildSettings
-import uk.gov.hmrc.DefaultBuildSettings.*
+import uk.gov.hmrc.DefaultBuildSettings._
 
 lazy val appName = "api-platform-inbound-soap"
 
@@ -28,7 +28,7 @@ lazy val it = (project in file("it"))
   .settings(
     name := "integration-tests",
     Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-eT"),
-    headerSettings(Test) ++ automateHeaderSettings(Test),
+    DefaultBuildSettings.itSettings(),
     addTestReportOption(Test, "int-test-reports")
   )
 
