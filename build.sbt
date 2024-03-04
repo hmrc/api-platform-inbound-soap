@@ -3,6 +3,9 @@ import uk.gov.hmrc.DefaultBuildSettings._
 
 lazy val appName = "api-platform-inbound-soap"
 
+Global / bloopAggregateSourceDependencies := true
+Global / bloopExportJarClassifiers := Some(Set("sources"))
+
 ThisBuild / scalaVersion := "2.13.12"
 ThisBuild / majorVersion := 0
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
