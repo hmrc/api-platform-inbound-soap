@@ -20,8 +20,9 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.apiplatformoutboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
 
 @Singleton()
 class ConfirmationController @Inject() (cc: ControllerComponents, verifyJwtTokenAction: VerifyJwtTokenAction)
