@@ -20,19 +20,19 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.Fault
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 
-trait ImportControlInboundSoapStub {
+trait ExternalServiceStub {
 
-  def primeStubForSuccess(body: String, status: Int): StubMapping = {
-    stubFor(post(urlPathEqualTo("/"))
+  def primeStubForSuccess(responseBody: String, responseStatus: Int, path: String = "/"): StubMapping = {
+    stubFor(post(urlPathEqualTo(path))
       .willReturn(
         aResponse()
-          .withBody(body)
-          .withStatus(status)
+          .withBody(responseBody)
+          .withStatus(responseStatus)
       ))
   }
 
-  def primeStubForFault(body: String, fault: Fault): StubMapping = {
-    stubFor(post(urlPathEqualTo("/"))
+  def primeStubForFault(body: String, fault: Fault, path: String = "/"): StubMapping = {
+    stubFor(post(urlPathEqualTo(path))
       .willReturn(
         aResponse()
           .withBody(body)
