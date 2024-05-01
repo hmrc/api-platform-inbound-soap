@@ -23,8 +23,11 @@ import play.api.Configuration
 @Singleton
 class AppConfig @Inject() (config: Configuration) {
 
-  val appName: String               = config.get[String]("appName")
-  val hmacSecret: String            = config.get[String]("hmacSecret")
-  val forwardMessageUrl: String     = config.get[String]("forwardMessageUrl")
-  val testForwardMessageUrl: String = config.get[String]("testForwardMessageUrl")
+  val appName: String                     = config.get[String]("appName")
+  val hmacSecret: String                  = config.get[String]("hmacSecret")
+  val forwardMessageUrl: String           = config.get[String]("forwardMessageUrl")
+  val forwardMessageProtocol: String      = config.get[String]("forwardMessageProtocol")
+  val forwardMessageHost: String          = config.get[String]("forwardMessageHost")
+  val forwardMessagePort: Int             = config.get[Int]("forwardMessagePort")
+  val testForwardMessageUrl: String       = config.get[String]("testForwardMessageUrl")
 }
