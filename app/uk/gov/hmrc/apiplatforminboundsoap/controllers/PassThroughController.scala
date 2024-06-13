@@ -67,8 +67,19 @@ class PassThroughController @Inject() (
       if (path.charAt(0).equals('/')) path else s"/$path"
     }
 
-    httpClientV2.post(new URL(appConfig.forwardMessageProtocol, appConfig.forwardMessageHost, appConfig.forwardMessagePort, addLeadingStrokeWhereMissing(path)))
-      .withBody(nodeSeq)
-      .execute[Either[UpstreamErrorResponse, HttpResponse]]
+    def buildUrl = {
+      new URL(appConfig.forwardMessageProtocol, appConfig.forwardMessageHost, appConfig.forwardMessagePort, addLeadingStrokeWhereMissing(path))
+    }
+
+    if (appConfig.proxyRequired) {
+      httpClientV2.post(buildUrl)
+        .withProxy
+        .withBody(nodeSeq)
+        .execute[Either[UpstreamErrorResponse, HttpResponse]]
+    } else {
+      httpClientV2.post(buildUrl)
+        .withBody(nodeSeq)
+        .execute[Either[UpstreamErrorResponse, HttpResponse]]
+    }
   }
 }
