@@ -40,8 +40,6 @@ class PassThroughController @Inject() (
   ) extends BackendController(cc) with ApplicationLogger {
 
   def message(path: String): Action[AnyContent] = Action.async { implicit request =>
-    implicit val hc: HeaderCarrier = HeaderCarrier()
-
     def sendAndProcessResponse(path: String, nodeSeq: NodeSeq): Future[Status] = {
       postHttpRequestV2(path, nodeSeq).map {
         case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
