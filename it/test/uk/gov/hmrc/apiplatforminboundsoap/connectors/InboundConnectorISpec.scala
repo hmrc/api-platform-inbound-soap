@@ -23,7 +23,6 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.Headers
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
@@ -43,8 +42,8 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       )
 
   trait Setup {
-    val headers                     = Headers("key" -> "value")
-    val underTest: InboundConnector = app.injector.instanceOf[InboundConnector]
+    val headers: Seq[(String, String)] = List("key" -> "value")
+    val underTest: InboundConnector    = app.injector.instanceOf[InboundConnector]
   }
 
   "postMessage" should {
@@ -57,6 +56,8 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result: SendResult = await(underTest.postMessage(message, headers))
 
       result shouldBe SendSuccess
+      verifyRequestBody(message.soapEnvelope)
+      verifyHeader(headers.head._1, headers.head._2)
     }
 
     "return error statuses returned by the internal service" in new Setup {
@@ -66,6 +67,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result: SendResult = await(underTest.postMessage(message, headers))
 
       result shouldBe SendFail(expectedStatus)
+      verifyHeader(headers.head._1, headers.head._2)
     }
 
     "return error status when soap fault is returned by the internal service" in new Setup {
@@ -75,6 +77,7 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
         val result: SendResult = await(underTest.postMessage(message, headers))
 
         result shouldBe SendFail(INTERNAL_SERVER_ERROR)
+        verifyHeader(headers.head._1, headers.head._2)
       }
     }
 

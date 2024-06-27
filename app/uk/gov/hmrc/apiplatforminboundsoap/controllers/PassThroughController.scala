@@ -40,8 +40,10 @@ class PassThroughController @Inject() (
   ) extends BackendController(cc) with ApplicationLogger {
 
   def message(path: String): Action[AnyContent] = Action.async { implicit request =>
-    def sendAndProcessResponse(path: String, nodeSeq: NodeSeq): Future[Status] = {
-      postHttpRequestV2(path, nodeSeq).map {
+    val authToken = request.headers.headers.find(f => f._1.equalsIgnoreCase("Authorization"))
+
+    def sendAndProcessResponse(path: String, nodeSeq: NodeSeq, bearerToken: (String, String)): Future[Status] = {
+      postHttpRequestV2(path, nodeSeq, bearerToken: (String, String)).map {
         case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
           logger.warn(s"Sending message failed with status code $statusCode")
           Status(statusCode)
@@ -54,30 +56,26 @@ class PassThroughController @Inject() (
       }
     }
 
-    request.body.asXml match {
-      case Some(nodeSeq) => sendAndProcessResponse(path, nodeSeq)
-      case None          => Future.successful(BadRequest(s"Expected XML request body but request body was ${request.body.asText.getOrElse("empty")}"))
+    (request.body.asXml, authToken) match {
+      case (Some(nodeSeq), Some(jwt)) => sendAndProcessResponse(path, nodeSeq, jwt)
+      case (None, _)                  => Future.successful(BadRequest(s"Expected XML request body but request body was ${request.body.asText.getOrElse("empty")}"))
+      case (_, None)                  => Future.successful(BadRequest("Authorization header was not supplied"))
     }
   }
 
-  private def postHttpRequestV2(path: String, nodeSeq: NodeSeq)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+  private def postHttpRequestV2(path: String, nodeSeq: NodeSeq, bearerToken: (String, String))(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
     def addLeadingStrokeWhereMissing(path: String): String = {
       if (path.charAt(0).equals('/')) path else s"/$path"
     }
 
-    def buildUrl = {
+    def buildUrl   = {
       new URL(appConfig.forwardMessageProtocol, appConfig.forwardMessageHost, appConfig.forwardMessagePort, addLeadingStrokeWhereMissing(path))
     }
-
+    val httpClient = httpClientV2.post(buildUrl).withBody(nodeSeq).transform(_.withHttpHeaders(bearerToken))
     if (appConfig.proxyRequired) {
-      httpClientV2.post(buildUrl)
-        .withProxy
-        .withBody(nodeSeq)
-        .execute[Either[UpstreamErrorResponse, HttpResponse]]
+      httpClient.withProxy.execute[Either[UpstreamErrorResponse, HttpResponse]]
     } else {
-      httpClientV2.post(buildUrl)
-        .withBody(nodeSeq)
-        .execute[Either[UpstreamErrorResponse, HttpResponse]]
+      httpClient.execute[Either[UpstreamErrorResponse, HttpResponse]]
     }
   }
 }

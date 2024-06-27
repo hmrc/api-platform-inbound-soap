@@ -40,12 +40,12 @@ trait ExternalServiceStub {
       ))
   }
 
-  def verifyRequestBody(expectedRequestBody: String): Unit = {
-    verify(postRequestedFor(urlPathEqualTo("/"))
+  def verifyRequestBody(expectedRequestBody: String, path: String = "/"): Unit = {
+    verify(postRequestedFor(urlPathEqualTo(path))
       .withRequestBody(equalTo(expectedRequestBody)))
   }
 
-  def verifyHeader(headerName: String, headerValue: String): Unit = {
-    verify(postRequestedFor(urlPathEqualTo("/")).withHeader(headerName, equalTo(headerValue)))
+  def verifyHeader(headerName: String, headerValue: String, path: String = "/"): Unit = {
+    verify(postRequestedFor(urlPathEqualTo(path)).withHeader(headerName, equalTo(headerValue)))
   }
 }
