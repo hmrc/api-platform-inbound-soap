@@ -63,7 +63,7 @@ class PassThroughController @Inject() (
     }
   }
 
-  private def postHttpRequestV2(path: String, nodeSeq: NodeSeq, bearerToken: (String, String))(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+  private def postHttpRequestV2(path: String, nodeSeq: NodeSeq, authHeader: (String, String))(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
     def addLeadingStrokeWhereMissing(path: String): String = {
       if (path.charAt(0).equals('/')) path else s"/$path"
     }
@@ -71,7 +71,7 @@ class PassThroughController @Inject() (
     def buildUrl   = {
       new URL(appConfig.forwardMessageProtocol, appConfig.forwardMessageHost, appConfig.forwardMessagePort, addLeadingStrokeWhereMissing(path))
     }
-    val httpClient = httpClientV2.post(buildUrl).withBody(nodeSeq).transform(_.withHttpHeaders(bearerToken))
+    val httpClient = httpClientV2.post(buildUrl).withBody(nodeSeq).transform(_.withHttpHeaders(authHeader))
     if (appConfig.proxyRequired) {
       httpClient.withProxy.execute[Either[UpstreamErrorResponse, HttpResponse]]
     } else {
