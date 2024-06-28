@@ -18,18 +18,16 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import scala.concurrent.Future.successful
 import scala.io.Source
-
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
+import play.api.http.Status
 import play.api.http.Status.IM_A_TEAPOT
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest}
@@ -46,9 +44,10 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
 
   trait Setup {
     val inboundConnectorMock: InboundConnector = mock[InboundConnector]
+    val bodyCaptor = ArgCaptor[SoapRequest]
     val headerCaptor                           = ArgCaptor[Seq[(String, String)]]
 
-    val httpStatus: Int          = 200
+    val httpStatus: Int          = Status.OK
     val appConfigMock: AppConfig = mock[AppConfig]
     val xmlHelper: XmlHelper     = mock[XmlHelper]
 
@@ -74,9 +73,6 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     )
 
     "return success when connector returns success" in new Setup {
-      val bodyCaptor = ArgCaptor[SoapRequest]
-//      val headerCaptor = ArgCaptor[Seq[(String, String)]]
-
       val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess))
@@ -92,8 +88,6 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return failure when connector returns failure" in new Setup {
-      val bodyCaptor         = ArgCaptor[SoapRequest]
-//      val headerCaptor       = ArgCaptor[Headers]
       val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
@@ -120,8 +114,6 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     )
 
     "return success when connector returns success" in new Setup {
-      val bodyCaptor = ArgCaptor[SoapRequest]
-
       val inboundSoapMessage = SoapRequest(xmlBody.text, testForwardingUrl)
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess))
@@ -137,8 +129,6 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return failure when connector returns failure" in new Setup {
-      val bodyCaptor         = ArgCaptor[SoapRequest]
-//      val headerCaptor       = ArgCaptor[Headers]
       val inboundSoapMessage = SoapRequest(xmlBody.text, testForwardingUrl)
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
