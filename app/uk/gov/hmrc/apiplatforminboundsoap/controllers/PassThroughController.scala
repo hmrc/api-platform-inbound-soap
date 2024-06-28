@@ -40,10 +40,10 @@ class PassThroughController @Inject() (
   ) extends BackendController(cc) with ApplicationLogger {
 
   def message(path: String): Action[AnyContent] = Action.async { implicit request =>
-    val authToken = request.headers.headers.find(f => f._1.equalsIgnoreCase("Authorization"))
+    val maybeAuthHeader = request.headers.headers.find(f => f._1.equalsIgnoreCase("Authorization"))
 
-    def sendAndProcessResponse(path: String, nodeSeq: NodeSeq, bearerToken: (String, String)): Future[Status] = {
-      postHttpRequestV2(path, nodeSeq, bearerToken: (String, String)).map {
+    def sendAndProcessResponse(path: String, nodeSeq: NodeSeq, authHeader: (String, String)): Future[Status] = {
+      postHttpRequestV2(path, nodeSeq, authHeader: (String, String)).map {
         case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
           logger.warn(s"Sending message failed with status code $statusCode")
           Status(statusCode)
@@ -56,8 +56,8 @@ class PassThroughController @Inject() (
       }
     }
 
-    (request.body.asXml, authToken) match {
-      case (Some(nodeSeq), Some(jwt)) => sendAndProcessResponse(path, nodeSeq, jwt)
+    (request.body.asXml, maybeAuthHeader) match {
+      case (Some(nodeSeq), Some(authHeader)) => sendAndProcessResponse(path, nodeSeq, authHeader)
       case (None, _)                  => Future.successful(BadRequest(s"Expected XML request body but request body was ${request.body.asText.getOrElse("empty")}"))
       case (_, None)                  => Future.successful(BadRequest("Authorization header was not supplied"))
     }
