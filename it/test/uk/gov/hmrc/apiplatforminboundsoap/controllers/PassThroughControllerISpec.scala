@@ -122,7 +122,7 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Http
         "/ics2/NESRiskAnalysisBASV2"
       )
 
-      val expectedStatus  = ACCEPTED
+      val expectedStatus  = Status.ACCEPTED
       val expectedHeaders = Headers("Authorization" -> "Bearer blah")
 
       forAll(paths) { path: String =>
@@ -138,7 +138,7 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Http
     }
 
     "reject an XML message with the wrong Content-Type header" in {
-      val expectedStatus = 400
+      val expectedStatus = Status.BAD_REQUEST
       primeStubForSuccess("OK", expectedStatus, path)
 
       val payload: Elem = XML.load(Source.fromResource("ie4r02-v2.xml").bufferedReader())
@@ -148,7 +148,7 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Http
     }
 
     "reject a JSON message with application/soap+xml Content-Type header" in {
-      val expectedStatus  = BAD_REQUEST
+      val expectedStatus  = Status.BAD_REQUEST
       val expectedHeaders = Headers("Authorization" -> "Bearer blah", "Content-Type" -> "application/soap+xml")
 
       primeStubForSuccess("OK", expectedStatus, path)
