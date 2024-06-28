@@ -28,7 +28,6 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
 import play.api.http.Status
-import play.api.http.Status.{ACCEPTED, BAD_REQUEST}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.Headers

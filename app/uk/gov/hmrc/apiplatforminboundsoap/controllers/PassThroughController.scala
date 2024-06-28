@@ -58,8 +58,8 @@ class PassThroughController @Inject() (
 
     (request.body.asXml, maybeAuthHeader) match {
       case (Some(nodeSeq), Some(authHeader)) => sendAndProcessResponse(path, nodeSeq, authHeader)
-      case (None, _)                  => Future.successful(BadRequest(s"Expected XML request body but request body was ${request.body.asText.getOrElse("empty")}"))
-      case (_, None)                  => Future.successful(BadRequest("Authorization header was not supplied"))
+      case (None, _)                         => Future.successful(BadRequest(s"Expected XML request body but request body was ${request.body.asText.getOrElse("empty")}"))
+      case (_, None)                         => Future.successful(BadRequest("Authorization header was not supplied"))
     }
   }
 
