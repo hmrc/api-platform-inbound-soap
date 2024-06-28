@@ -27,26 +27,26 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
+import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import play.api.mvc.Headers
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{defaultAwaitTimeout, status}
-import uk.gov.hmrc.http.test.WireMockSupport
+import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
 import uk.gov.hmrc.apiplatforminboundsoap.support.ExternalServiceStub
 
-class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with WireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
-  override implicit lazy val app: Application = appBuilder.build()
-  implicit val mat: Materializer              = app.injector.instanceOf[Materializer]
+class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "metrics.enabled"    -> false,
-        "auditing.enabled"   -> false,
-        "forwardMessageHost" -> wireMockHost,
-        "forwardMessagePort" -> wireMockPort
-      )
+  override implicit lazy val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      "metrics.enabled"    -> false,
+      "auditing.enabled"   -> false,
+      "forwardMessageHost" -> externalWireMockHost,
+      "forwardMessagePort" -> externalWireMockPort
+    ).build()
+  implicit val mat: Materializer              = app.injector.instanceOf[Materializer]
 
   val path        = "/ics2/NESReferralBASV2"
   val fakeRequest = FakeRequest("POST", path)
@@ -54,24 +54,55 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Wire
   val underTest: PassThroughController = app.injector.instanceOf[PassThroughController]
   "message" should {
     "forward an XML message" in {
-      val expectedStatus = 202
+      val expectedStatus  = Status.ACCEPTED
+      val expectedHeaders = Headers("Authorization" -> "Bearer blah")
       primeStubForSuccess("OK", expectedStatus, path)
 
       val payload: Elem = XML.load(Source.fromResource("ie4r02-v2.xml").bufferedReader())
 
-      val result = underTest.message(path)(fakeRequest.withXmlBody(payload))
+      val result = underTest.message(path)(fakeRequest.withXmlBody(payload).withHeaders(expectedHeaders))
       status(result) shouldBe expectedStatus
+
+      verifyRequestBody(payload.toString(), path)
+      expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
+    }
+
+    "forward Authorization header" in {
+      val expectedStatus  = Status.ACCEPTED
+      val expectedHeaders = Headers("Authorization" -> "Bearer blah")
+      primeStubForSuccess("OK", expectedStatus, path)
+
+      val payload: Elem = XML.load(Source.fromResource("ie4r02-v2.xml").bufferedReader())
+
+      val result = underTest.message(path)(fakeRequest.withXmlBody(payload).withHeaders(expectedHeaders))
+      status(result) shouldBe expectedStatus
+
+      expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
+    }
+
+    "reject requests with missing Authorization header" in {
+      val expectedStatus = Status.BAD_REQUEST
+      val requestHeaders = Headers("Foo" -> "Bar")
+      primeStubForSuccess("OK", expectedStatus, path)
+
+      val payload: Elem = XML.load(Source.fromResource("ie4r02-v2.xml").bufferedReader())
+
+      val result = underTest.message(path)(fakeRequest.withXmlBody(payload).withHeaders(requestHeaders))
+      status(result) shouldBe expectedStatus
+
     }
 
     "forward to a valid URL when path is missing a leading stroke (as the Router does it)" in {
       val pathWithoutLeadingStroke = "ics2/NESReferralBASV2"
-      val expectedStatus           = 202
+      val expectedStatus           = Status.ACCEPTED
+      val expectedHeaders          = Headers("Authorization" -> "Bearer blah")
       primeStubForSuccess("OK", expectedStatus, path)
 
       val payload: Elem = XML.load(Source.fromResource("ie4r02-v2.xml").bufferedReader())
 
-      val result = underTest.message(pathWithoutLeadingStroke)(fakeRequest.withXmlBody(payload))
+      val result = underTest.message(pathWithoutLeadingStroke)(fakeRequest.withXmlBody(payload).withHeaders(expectedHeaders))
       status(result) shouldBe expectedStatus
+      expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
     }
 
     "forward an XML message to the right path" in {
@@ -90,7 +121,8 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Wire
         "/ics2/NESRiskAnalysisBASV2"
       )
 
-      val expectedStatus = 202
+      val expectedStatus  = Status.ACCEPTED
+      val expectedHeaders = Headers("Authorization" -> "Bearer blah")
 
       forAll(paths) { path: String =>
         val fakeRequest = FakeRequest("POST", "/")
@@ -98,13 +130,14 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Wire
 
         val payload: Elem = XML.load(Source.fromResource("ie4r02-v2.xml").bufferedReader())
 
-        val result = underTest.message(path)(fakeRequest.withXmlBody(payload))
+        val result = underTest.message(path)(fakeRequest.withXmlBody(payload).withHeaders(expectedHeaders))
         status(result) shouldBe expectedStatus
+        expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
       }
     }
 
     "reject an XML message with the wrong Content-Type header" in {
-      val expectedStatus = 400
+      val expectedStatus = Status.BAD_REQUEST
       primeStubForSuccess("OK", expectedStatus, path)
 
       val payload: Elem = XML.load(Source.fromResource("ie4r02-v2.xml").bufferedReader())
@@ -114,19 +147,34 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Wire
     }
 
     "reject a JSON message with application/soap+xml Content-Type header" in {
-      val expectedStatus = 400
+      val expectedStatus  = Status.BAD_REQUEST
+      val expectedHeaders = Headers("Authorization" -> "Bearer blah", "Content-Type" -> "application/soap+xml")
+
       primeStubForSuccess("OK", expectedStatus, path)
 
       val result = underTest.message(path)(fakeRequest.withJsonBody(Json.toJson(Json.obj("foo" -> "bar")))
-        .withHeaders("Content-Type" -> "application/soap+xml"))
+        .withHeaders(expectedHeaders))
       status(result) shouldBe expectedStatus
     }
-    "handle an error response from the forward-to service " in {
-      val expectedStatus = 500
+
+    "handle an server error response from the forward-to service" in {
+      val expectedStatus  = Status.INTERNAL_SERVER_ERROR
+      val expectedHeaders = Headers("Authorization" -> "Bearer blah")
       primeStubForFault("Something went wrong", Fault.CONNECTION_RESET_BY_PEER, path)
 
       val payload: Elem = XML.load(Source.fromResource("ie4r02-v2.xml").bufferedReader())
-      val result        = underTest.message(path)(fakeRequest.withXmlBody(payload))
+      val result        = underTest.message(path)(fakeRequest.withXmlBody(payload).withHeaders(expectedHeaders))
+
+      status(result) shouldBe expectedStatus
+    }
+
+    "handle an unsuccessful response from the forward-to service" in {
+      val expectedStatus  = Status.UNAUTHORIZED
+      val expectedHeaders = Headers("Authorization" -> "Bearer blah")
+      primeStubForSuccess("Unauthorized", Status.UNAUTHORIZED, path)
+
+      val payload: Elem = XML.load(Source.fromResource("ie4r02-v2.xml").bufferedReader())
+      val result        = underTest.message(path)(fakeRequest.withXmlBody(payload).withHeaders(expectedHeaders))
 
       status(result) shouldBe expectedStatus
     }

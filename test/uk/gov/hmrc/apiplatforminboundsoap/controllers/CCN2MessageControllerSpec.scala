@@ -31,12 +31,14 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc.Headers
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
+import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 
 class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
     val incomingMessageServiceMock = mock[InboundMessageService]
@@ -83,12 +85,12 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured false
     }
@@ -97,12 +99,12 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-uri-instead-of-includedBinaryObject-element.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured false
     }
@@ -111,12 +113,12 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured false
     }
@@ -125,12 +127,12 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured false
     }
@@ -139,12 +141,12 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4n09-v2.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured false
     }
@@ -154,12 +156,12 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
 
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe PRECONDITION_FAILED
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured false
     }
