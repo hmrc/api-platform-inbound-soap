@@ -34,8 +34,6 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSucc
 class InboundConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)(implicit ec: ExecutionContext) extends Logging {
 
   def postMessage(soapRequest: SoapRequest, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
-//    implicit val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders(headers.headers: _*)
-
     postHttpRequest(soapRequest, headers).map {
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode")
