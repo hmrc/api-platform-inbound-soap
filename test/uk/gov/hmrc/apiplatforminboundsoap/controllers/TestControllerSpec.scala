@@ -31,12 +31,14 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc.Headers
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
+import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 
 class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
     val incomingMessageServiceMock = mock[InboundMessageService]
@@ -89,12 +91,12 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendSuccess))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured true
     }
@@ -104,12 +106,12 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
 
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe PRECONDITION_FAILED
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured true
     }
