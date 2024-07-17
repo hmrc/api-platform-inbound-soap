@@ -49,11 +49,9 @@ class InboundConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConf
   }
 
   private def postHttpRequest(soapRequest: SoapRequest, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
-    val httpClient = httpClientV2.post(new URL(soapRequest.destinationUrl)).withBody(soapRequest.soapEnvelope).transform(_.addHttpHeaders(headers: _*))
-    if (appConfig.proxyRequired) {
-      httpClient.withProxy.execute[Either[UpstreamErrorResponse, HttpResponse]]
-    } else {
-      httpClient.execute[Either[UpstreamErrorResponse, HttpResponse]]
-    }
+    httpClientV2.post(new URL(soapRequest.destinationUrl)).withBody(soapRequest.soapEnvelope).transform(_.addHttpHeaders(headers: _*)).execute[Either[
+      UpstreamErrorResponse,
+      HttpResponse
+    ]]
   }
 }
