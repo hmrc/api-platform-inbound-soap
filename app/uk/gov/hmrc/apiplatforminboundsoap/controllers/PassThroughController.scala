@@ -22,7 +22,10 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import org.apache.pekko.util.ByteString
+
+import play.api.http.HttpEntity
+import play.api.mvc.{Action, AnyContent, ControllerComponents, ResponseHeader, Result}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
@@ -42,12 +45,12 @@ class PassThroughController @Inject() (
   def message(path: String): Action[AnyContent] = Action.async { implicit request =>
     val maybeAuthHeader = request.headers.headers.find(f => f._1.equalsIgnoreCase("Authorization"))
 
-    def sendAndProcessResponse(path: String, nodeSeq: NodeSeq, authHeader: (String, String)): Future[Status] = {
+    def sendAndProcessResponse(path: String, nodeSeq: NodeSeq, authHeader: (String, String)): Future[Result] = {
       postHttpRequestV2(path, nodeSeq, authHeader: (String, String)).map {
-        case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
+        case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
           logger.warn(s"Sending message failed with status code $statusCode")
-          Status(statusCode)
-        case Right(HttpResponse(status, _, _))                =>
+          Result(header = ResponseHeader(statusCode, Map.empty), body = HttpEntity.Strict(ByteString(message), Some(XML)))
+        case Right(HttpResponse(status, _, _))                      =>
           Status(status)
       }.recoverWith {
         case NonFatal(e) =>
