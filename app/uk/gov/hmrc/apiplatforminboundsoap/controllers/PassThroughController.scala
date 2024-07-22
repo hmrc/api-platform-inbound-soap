@@ -28,7 +28,7 @@ import play.api.http.HttpEntity
 import play.api.mvc.{Action, AnyContent, ControllerComponents, ResponseHeader, Result}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
@@ -46,12 +46,9 @@ class PassThroughController @Inject() (
     val maybeAuthHeader = request.headers.headers.find(f => f._1.equalsIgnoreCase("Authorization"))
 
     def sendAndProcessResponse(path: String, nodeSeq: NodeSeq, authHeader: (String, String)): Future[Result] = {
-      postHttpRequestV2(path, nodeSeq, authHeader: (String, String)).map {
-        case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
-          logger.warn(s"Sending message failed with status code $statusCode")
-          Result(header = ResponseHeader(statusCode, Map.empty), body = HttpEntity.Strict(ByteString(message), Some(XML)))
-        case Right(HttpResponse(status, _, _))                      =>
-          Status(status)
+      postHttpRequestV2(path, nodeSeq, authHeader: (String, String)).map { httpResponse =>
+        Result(header = ResponseHeader(httpResponse.status, Map.empty), body = HttpEntity.Strict(ByteString(httpResponse.body), Some(XML)))
+
       }.recoverWith {
         case NonFatal(e) =>
           logger.warn(s"Error in sendAndProcessResponse - ${e.getMessage} while trying to forward message", e)
@@ -66,7 +63,7 @@ class PassThroughController @Inject() (
     }
   }
 
-  private def postHttpRequestV2(path: String, nodeSeq: NodeSeq, authHeader: (String, String))(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+  private def postHttpRequestV2(path: String, nodeSeq: NodeSeq, authHeader: (String, String))(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     def addLeadingStrokeWhereMissing(path: String): String = {
       if (path.charAt(0).equals('/')) path else s"/$path"
     }
@@ -76,9 +73,9 @@ class PassThroughController @Inject() (
     }
     val httpClient = httpClientV2.post(buildUrl).withBody(nodeSeq).transform(_.withHttpHeaders(authHeader))
     if (appConfig.proxyRequired) {
-      httpClient.withProxy.execute[Either[UpstreamErrorResponse, HttpResponse]]
+      httpClient.withProxy.execute[HttpResponse]
     } else {
-      httpClient.execute[Either[UpstreamErrorResponse, HttpResponse]]
+      httpClient.execute[HttpResponse]
     }
   }
 }

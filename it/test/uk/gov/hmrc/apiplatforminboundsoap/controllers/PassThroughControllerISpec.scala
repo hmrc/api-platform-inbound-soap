@@ -178,6 +178,7 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Http
 
       status(result) shouldBe expectedStatus
     }
+
     "return the SOAP fault response payload to the caller" in {
       val expectedStatus  = Status.BAD_REQUEST
       val expectedHeaders = Headers("Authorization" -> "Bearer blah")
@@ -187,11 +188,11 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Http
       val result        = underTest.message(path)(fakeRequest.withXmlBody(payload).withHeaders(expectedHeaders))
 
       status(result) shouldBe expectedStatus
-      contentAsString(result) should include(soapFaultResponse)
+      contentAsString(result) shouldBe (soapFaultResponse)
     }
   }
 
-  val soapFaultResponse                = """<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+  val soapFaultResponse = """<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
                             |    <soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
                             |    <soap:Body>
                             |        <soap:Fault>
