@@ -48,6 +48,7 @@ class PassThroughController @Inject() (
     def sendAndProcessResponse(path: String, nodeSeq: NodeSeq, authHeader: (String, String)): Future[Result] = {
       postHttpRequestV2(path, nodeSeq, authHeader: (String, String)).map { httpResponse =>
         Result(header = ResponseHeader(httpResponse.status, Map.empty), body = HttpEntity.Strict(ByteString(httpResponse.body), Some(XML)))
+
       }.recoverWith {
         case NonFatal(e) =>
           logger.warn(s"Error in sendAndProcessResponse - ${e.getMessage} while trying to forward message", e)
