@@ -22,7 +22,10 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import org.apache.pekko.util.ByteString
+
+import play.api.http.HttpEntity
+import play.api.mvc.{Action, AnyContent, ControllerComponents, ResponseHeader, Result}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -42,19 +45,9 @@ class PassThroughController @Inject() (
   def message(path: String): Action[AnyContent] = Action.async { implicit request =>
     val maybeAuthHeader = request.headers.headers.find(f => f._1.equalsIgnoreCase("Authorization"))
 
-<<<<<<< Updated upstream
-    def sendAndProcessResponse(path: String, nodeSeq: NodeSeq, authHeader: (String, String)): Future[Status] = {
-      postHttpRequestV2(path, nodeSeq, authHeader: (String, String)).map {
-        case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
-          logger.warn(s"Sending message failed with status code $statusCode")
-          Status(statusCode)
-        case Right(HttpResponse(status, _, _))                =>
-          Status(status)
-=======
     def sendAndProcessResponse(path: String, nodeSeq: NodeSeq, authHeader: (String, String)): Future[Result] = {
       postHttpRequestV2(path, nodeSeq, authHeader: (String, String)).map { httpResponse =>
         Result(header = ResponseHeader(httpResponse.status, Map.empty), body = HttpEntity.Strict(ByteString(httpResponse.body), Some(XML)))
->>>>>>> Stashed changes
       }.recoverWith {
         case NonFatal(e) =>
           logger.warn(s"Error in sendAndProcessResponse - ${e.getMessage} while trying to forward message", e)

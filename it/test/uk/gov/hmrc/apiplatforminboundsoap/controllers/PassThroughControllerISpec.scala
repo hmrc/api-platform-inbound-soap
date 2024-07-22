@@ -32,7 +32,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.Headers
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{defaultAwaitTimeout, status}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
 import uk.gov.hmrc.apiplatforminboundsoap.support.ExternalServiceStub
@@ -178,9 +178,7 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Http
 
       status(result) shouldBe expectedStatus
     }
-<<<<<<< Updated upstream
-  }
-=======
+
     "return the SOAP fault response payload to the caller" in {
       val expectedStatus  = Status.BAD_REQUEST
       val expectedHeaders = Headers("Authorization" -> "Bearer blah")
@@ -211,5 +209,4 @@ class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with Http
                             |        </soap:Fault>
                             |    </soap:Body>
                             |</soap:Envelope>""".stripMargin
->>>>>>> Stashed changes
 }
