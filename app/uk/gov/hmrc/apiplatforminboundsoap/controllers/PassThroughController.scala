@@ -69,7 +69,7 @@ class PassThroughController @Inject() (
     }
 
     def buildUrl   = {
-      new URL(appConfig.forwardMessageProtocol, appConfig.forwardMessageHost, appConfig.forwardMessagePort, addLeadingStrokeWhereMissing(path))
+      new URL(appConfig.passThroughProtocol, appConfig.passThroughHost, appConfig.passThroughPort, addLeadingStrokeWhereMissing(path))
     }
     val httpClient = httpClientV2.post(buildUrl).withBody(nodeSeq).transform(_.withHttpHeaders(authHeader))
     if (appConfig.proxyRequired) {
