@@ -37,7 +37,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessag
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 
-class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
@@ -52,7 +52,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     )
     private val verifyJwtTokenAction      = app.injector.instanceOf[VerifyJwtTokenAction]
     private val soapMessageValidateAction = app.injector.instanceOf[SoapMessageValidateAction]
-    val controller                        = new CCN2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
+    val controller                        = new ICS2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
     val fakeRequest                       = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headers)
 
     def readFromFile(fileName: String) = {

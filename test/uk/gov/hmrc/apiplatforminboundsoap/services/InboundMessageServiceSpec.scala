@@ -34,9 +34,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest}
-import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
+import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
-class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with XmlHelper {
+class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with Ics2XmlHelper {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
@@ -47,15 +47,16 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
 
   trait Setup {
     val inboundConnectorMock: InboundConnector = mock[InboundConnector]
+    val sdesSdesService: Ics2SdesService       = mock[Ics2SdesService]
     val bodyCaptor                             = ArgCaptor[SoapRequest]
     val headerCaptor                           = ArgCaptor[Seq[(String, String)]]
 
     val httpStatus: Int          = Status.OK
     val appConfigMock: AppConfig = mock[AppConfig]
-    val xmlHelper: XmlHelper     = mock[XmlHelper]
+    val xmlHelper: Ics2XmlHelper = mock[Ics2XmlHelper]
 
     val service: InboundMessageService =
-      new InboundMessageService(appConfigMock, inboundConnectorMock)
+      new InboundMessageService(appConfigMock, inboundConnectorMock, sdesSdesService)
 
     val forwardingUrl     = "some url"
     val testForwardingUrl = "some test url"

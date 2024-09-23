@@ -59,6 +59,15 @@
                   <!--Optional:-->
                   <urn:description>?</urn:description>
                </urn:binaryAttachment>
+               <urn:binaryAttachment>
+                  <urn:filename>?</urn:filename>
+                  <!--Optional:-->
+                  <urn:MIME>?</urn:MIME>
+                  <!--Optional:-->
+                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                  <!--Optional:-->
+                  <urn:description>?</urn:description>
+               </urn:binaryAttachment>
                <!--Optional:-->
                <urn:transportDocumentHouseLevel>
                   <urn:documentNumber>?</urn:documentNumber>

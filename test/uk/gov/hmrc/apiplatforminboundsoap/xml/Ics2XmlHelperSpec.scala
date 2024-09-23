@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
-class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with XmlHelper {
+class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with Ics2XmlHelper {
 
   trait Setup {
     val xmlBodyForElementNotFoundScenario: NodeSeq = xml.XML.loadString("<xml>blah</xml>")
@@ -213,6 +213,13 @@ class XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     "return 3 binaryElements when 3 are found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
       getBinaryElements(xmlBody).size shouldBe 3
+    }
+  }
+
+  "getBinaryElementsWithEmbeddedData" should {
+    "ignore binaryFile element with URI" in new Setup {
+      val xmlBody: NodeSeq = readFromFile("uriAndBinaryObject/ie4r02-v2-binaryAttachment-with-included-and-binaryAttachment-with-uri-elements.xml")
+      getBinaryElementsWithEmbeddedData(xmlBody).size shouldBe 1
     }
   }
 

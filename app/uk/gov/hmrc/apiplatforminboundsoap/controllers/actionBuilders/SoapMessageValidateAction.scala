@@ -24,16 +24,15 @@ import scala.xml.NodeSeq
 import _root_.uk.gov.hmrc.http.HttpErrorFunctions
 import cats.data._
 
-import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import play.api.mvc.Results._
 import play.api.mvc.{ActionFilter, Request, Result}
 
-import uk.gov.hmrc.apiplatforminboundsoap.xml.RequestValidator
+import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2RequestValidator
 
 @Singleton
 class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
-    extends ActionFilter[Request] with HttpErrorFunctions with Logging with RequestValidator {
+    extends ActionFilter[Request] with HttpErrorFunctions with Ics2RequestValidator {
 
   override def executionContext: ExecutionContext = ec
 

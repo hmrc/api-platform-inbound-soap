@@ -16,11 +16,16 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
+import java.util.Base64
 import scala.xml.{Node, NodeSeq}
 
-import uk.gov.hmrc.apiplatforminboundsoap.models._
+import cats.data.{Validated, ValidatedNel}
+import cats.implicits.catsSyntaxValidatedId
 
-trait XmlHelper {
+import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
+
+trait Ics2XmlHelper extends ApplicationLogger {
 
   def getMessageVersion(soapMessage: NodeSeq): SoapMessageVersion = {
     def getVersionTwoNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
@@ -67,6 +72,13 @@ trait XmlHelper {
     getBinaryAttachment(soapMessage) ++ getBinaryFile(soapMessage)
   }
 
+  def getBinaryElementsWithEmbeddedData(soapMessage: NodeSeq): NodeSeq = {
+    def notContainsUrl(nodeSeq: NodeSeq) = {
+      (nodeSeq \\ "URI").isEmpty
+    }
+    getBinaryElements(soapMessage) takeWhile (notContainsUrl(_))
+  }
+
   def getBinaryFilename(binaryBlock: NodeSeq): Option[String] = {
     val filename = (binaryBlock \\ "filename")
     if (filename.isEmpty) None else Some(filename.text)
@@ -105,5 +117,22 @@ trait XmlHelper {
   def getLRN(soapMessage: NodeSeq): Option[String] = {
     val lrn = soapMessage \\ "LRN"
     if (lrn.isEmpty) None else Some(lrn.text)
+  }
+
+  def verifyIncludedBinaryObject(includedBinaryObject: String): ValidatedNel[String, Unit] = {
+    val failLeft = "Value of element includedBinaryObject is not valid base 64 data".invalidNel[Unit]
+    try {
+      val isValidLength = includedBinaryObject.length % 4 == 0
+      val decoded       = Base64.getDecoder().decode(includedBinaryObject)
+      (isValidLength, decoded.isEmpty) match {
+        case (false, _)    => failLeft
+        case (_, true)     => failLeft
+        case (true, false) => Validated.valid(())
+      }
+    } catch {
+      case _: Throwable =>
+        logger.warn("Error while trying to decode includedBinaryObject as base 64 data. Perhaps it is not correctly encoded")
+        failLeft
+    }
   }
 }

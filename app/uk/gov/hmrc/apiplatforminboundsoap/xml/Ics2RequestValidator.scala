@@ -23,10 +23,9 @@ import cats.data.Validated._
 import cats.data._
 import cats.implicits._
 
-import play.api.Logging
 import uk.gov.hmrc.http.HttpErrorFunctions
 
-trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
+trait Ics2RequestValidator extends Ics2XmlHelper with HttpErrorFunctions {
 
   val actionMinLength                   = 3
   val descriptionMinLength              = 1
@@ -132,10 +131,9 @@ trait RequestValidator extends XmlHelper with HttpErrorFunctions with Logging {
           case (true, false) => Validated.valid(())
         }
       } catch {
-        case _: Throwable => {
+        case _: Throwable =>
           logger.warn("Error while trying to decode includedBinaryObject as base 64 data. Perhaps it is not correctly encoded")
           failLeft
-        }
       }
     }
 

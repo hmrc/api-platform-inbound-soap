@@ -17,7 +17,14 @@
 package uk.gov.hmrc.apiplatforminboundsoap.models
 
 sealed trait SendResult
+case class SdesResult(uuid: String, forFilename: Option[String])
 
-case object SendSuccess                  extends SendResult
-case class SdesSendSuccess(uuid: String) extends SendResult
-case class SendFail(status: Int)         extends SendResult
+case object SendSuccess                                  extends SendResult
+case class SdesSendSuccess(uuid: String)                 extends SendResult
+case class SdesSendSuccessResult(sdesResult: SdesResult) extends SendResult
+case class SendFail(status: Int)                         extends SendResult
+case class SendNotAttempted(reason: String)              extends SendResult
+
+sealed trait ParseResult
+
+case class InvalidFormatResult(reason: String) extends ParseResult

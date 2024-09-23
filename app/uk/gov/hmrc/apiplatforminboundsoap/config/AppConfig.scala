@@ -25,6 +25,10 @@ class AppConfig @Inject() (config: Configuration) {
 
   val appName: String               = config.get[String]("appName")
   val hmacSecret: String            = config.get[String]("hmacSecret")
+  val ics2SdesSrn: String           = config.get[String]("ics2SdesSrn")
+  val ics2SdesInfoType: String      = config.get[String]("ics2SdesInfoType")
+  val crdlSdesSrn: String           = config.get[String]("crdlSdesSrn")
+  val crdlSdesInfoType: String      = config.get[String]("crdlSdesInfoType")
   val forwardMessageUrl: String     = config.get[String]("forwardMessageUrl")
   val sdesUrl: String               = config.get[String]("sdesUrl")
   val passThroughProtocol: String   = config.get[String]("passThroughProtocol")

@@ -28,7 +28,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 
 @Singleton()
-class CCN2MessageController @Inject() (
+class ICS2MessageController @Inject() (
     cc: ControllerComponents,
     verifyJwtTokenAction: VerifyJwtTokenAction,
     soapMessageValidateAction: SoapMessageValidateAction,

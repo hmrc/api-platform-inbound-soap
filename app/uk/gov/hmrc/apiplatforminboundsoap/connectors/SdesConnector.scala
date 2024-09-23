@@ -19,6 +19,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.connectors
 import java.net.URL
 import javax.inject.{Inject, Singleton}
 import scala.collection.immutable.List
+import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
@@ -37,7 +38,6 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)
   val requiredHeaders: Seq[(String, String)] = Seq("Content-Type" -> "application/octet-stream", "User-Agent" -> "public-soap-proxy")
 
   def postMessage(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val metadata = constructMetadataHeader(sdesRequest.metadata)
     postHttpRequest(sdesRequest).map {
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode")
@@ -48,18 +48,15 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)
       .recoverWith {
         case NonFatal(e) =>
           logger.warn(s"NonFatal error ${e.getMessage} while forwarding message", e)
-          Future.successful(SendFail(Status.INTERNAL_SERVER_ERROR))
+          successful(SendFail(Status.INTERNAL_SERVER_ERROR))
       }
   }
 
   private def postHttpRequest(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
     val combinedHeaders = sdesRequest.headers ++ List("Metadata" -> constructMetadataHeader(sdesRequest.metadata))
-    println(s"******************\n${requiredHeaders} <- required")
-    println(s"******************\n${sdesRequest.headers} <- supplied")
     httpClientV2.post(new URL(appConfig.sdesUrl)).setHeader(requiredHeaders: _*)
       .withBody(sdesRequest.body)
       .transform(_.addHttpHeaders(combinedHeaders: _*))
-//      .transform(_.addHttpHeaders("Metadata"->constructMetadataHeader(sdesRequest.metadata)))
       .execute[Either[UpstreamErrorResponse, HttpResponse]]
   }
 
