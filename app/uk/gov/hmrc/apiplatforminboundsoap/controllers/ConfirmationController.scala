@@ -16,19 +16,31 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future
-
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, ControllerComponents}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.OutboundConnector
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.xml.NodeSeq
 
 @Singleton()
-class ConfirmationController @Inject() (cc: ControllerComponents, verifyJwtTokenAction: VerifyJwtTokenAction)
-    extends BackendController(cc) {
+class ConfirmationController @Inject() (
+    outboundConnector: OutboundConnector,
+    cc: ControllerComponents,
+    verifyJwtTokenAction: VerifyJwtTokenAction
+  )(implicit ec: ExecutionContext
+  ) extends BackendController(cc) {
 
-  def message(): Action[AnyContent] = (Action andThen verifyJwtTokenAction).async { implicit request =>
-    Future.successful(Ok)
+  def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction).async(parse.xml) { implicit request =>
+
+    outboundConnector.postMessage(request.body) flatMap {
+      case SendSuccess      =>
+        Future.successful(Ok.as("application/soap+xml"))
+      case SendFail(status) =>
+        Future.successful(new Status(status).as("application/soap+xml"))
+    }
   }
 }
