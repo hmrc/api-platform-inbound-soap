@@ -83,16 +83,16 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
   "isFileAttached" should {
     "return true when binaryFile found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4s03-v2.xml")
-      isFileAttached(xmlBody) shouldBe true
+      isFileIncluded(xmlBody) shouldBe true
     }
 
     "return true when binaryAttachment found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4r02-v2.xml")
-      isFileAttached(xmlBody) shouldBe true
+      isFileIncluded(xmlBody) shouldBe true
     }
 
     "return false when no binaryAttachment or binaryFile found in SOAP message" in new Setup {
-      isFileAttached(xmlBodyForElementNotFoundScenario) shouldBe false
+      isFileIncluded(xmlBodyForElementNotFoundScenario) shouldBe false
     }
   }
 

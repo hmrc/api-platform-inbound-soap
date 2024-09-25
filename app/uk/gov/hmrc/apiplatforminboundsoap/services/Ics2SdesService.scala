@@ -31,10 +31,11 @@ import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 @Singleton
 class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnector)(implicit executionContext: ExecutionContext) extends Ics2XmlHelper {
 
-  def processMessage(soapRequest: NodeSeq)(implicit hc: HeaderCarrier): Future[Seq[SendResult]] = {
-    val allAttachments = getBinaryElementsWithEmbeddedData(soapRequest)
+  def processMessage(binaryElements: NodeSeq)(implicit hc: HeaderCarrier): Future[Seq[SendResult]] = {
+    val allAttachments = getBinaryElementsWithEmbeddedData(binaryElements)
+    println(s"allAttachments is $allAttachments")
     sequence(allAttachments.map(attachmentElement => {
-      buildSdesRequest(soapRequest, attachmentElement) match {
+      buildSdesRequest(binaryElements, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
             case s: SdesSendSuccess =>
               successful(SdesSendSuccessResult(SdesResult(uuid = s.uuid, forFilename = getBinaryFilename(attachmentElement))))

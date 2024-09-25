@@ -42,7 +42,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
   trait Setup {
     val incomingMessageServiceMock = mock[InboundMessageService]
-    val xRequestIdHeaderValue      = randomUUID.toString()
+    val xRequestIdHeaderValue      = randomUUID.toString
 
     val headers                           = Headers(
       "Host"          -> "localhost",

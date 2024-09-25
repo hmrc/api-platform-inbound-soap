@@ -51,7 +51,6 @@
                </urn:additionalInformation>
                <!--0 to 9 repetitions:-->
                <urn:binaryAttachment>
-                  <urn:filename>?</urn:filename>
                   <!--Optional:-->
                   <urn:URI>https://dummyhost.ec.eu</urn:URI>
                   <!--Optional:-->

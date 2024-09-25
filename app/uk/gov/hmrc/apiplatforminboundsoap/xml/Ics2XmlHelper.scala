@@ -56,8 +56,9 @@ trait Ics2XmlHelper extends ApplicationLogger {
     if (messageId.isEmpty) None else Some(messageId.text)
   }
 
-  def isFileAttached(soapMessage: NodeSeq): Boolean = {
+  def isFileIncluded(soapMessage: NodeSeq): Boolean = {
     getBinaryAttachment(soapMessage).nonEmpty || getBinaryFile(soapMessage).nonEmpty
+
   }
 
   private def getBinaryAttachment(soapMessage: NodeSeq): NodeSeq = {

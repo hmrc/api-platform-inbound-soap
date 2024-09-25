@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 
@@ -27,13 +28,13 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.http.Status
-import play.api.http.Status.IM_A_TEAPOT
+import play.api.http.Status.{IM_A_TEAPOT, SERVICE_UNAVAILABLE}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesSendSuccess, SendFail, SendSuccess, SoapRequest}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with Ics2XmlHelper {
@@ -47,7 +48,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
 
   trait Setup {
     val inboundConnectorMock: InboundConnector = mock[InboundConnector]
-    val sdesSdesService: Ics2SdesService       = mock[Ics2SdesService]
+    val ics2SdesService: Ics2SdesService       = mock[Ics2SdesService]
     val bodyCaptor                             = ArgCaptor[SoapRequest]
     val headerCaptor                           = ArgCaptor[Seq[(String, String)]]
 
@@ -56,7 +57,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     val xmlHelper: Ics2XmlHelper = mock[Ics2XmlHelper]
 
     val service: InboundMessageService =
-      new InboundMessageService(appConfigMock, inboundConnectorMock, sdesSdesService)
+      new InboundMessageService(appConfigMock, inboundConnectorMock, ics2SdesService)
 
     val forwardingUrl     = "some url"
     val testForwardingUrl = "some test url"
@@ -66,18 +67,18 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
   }
 
   "processInboundMessage for production" should {
-    val xmlBody = readFromFile("ie4n09-v2.xml")
-
-    val forwardedHeaders = Seq[(String, String)](
-      "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
-      "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
-      "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
-      "x-files-included" -> isFileAttached(xmlBody).toString,
-      "x-version-id"     -> getMessageVersion(xmlBody).displayName
-    )
 
     "return success when connector returns success" in new Setup {
-      val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)
+      val xmlBody = readFromFile("ie4n09-v2.xml")
+
+      val forwardedHeaders   = Seq[(String, String)](
+        "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
+        "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
+        "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
+        "x-files-included" -> isFileIncluded(xmlBody).toString,
+        "x-version-id"     -> getMessageVersion(xmlBody).displayName
+      )
+      val inboundSoapMessage = SoapRequest(xmlBody.toString, forwardingUrl)
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess))
 
@@ -88,11 +89,78 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       verify(appConfigMock, times(0)).testForwardMessageUrl
       verify(appConfigMock).forwardMessageUrl
       bodyCaptor hasCaptured inboundSoapMessage
+    }
 
+    "invoke SDESConnector when message contains embedded file attachment" in new Setup {
+      val xmlBody = readFromFile("ie4s03-v2.xml")
+
+      val forwardedHeaders   = Seq[(String, String)](
+        "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
+        "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
+        "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
+        "x-files-included" -> isFileIncluded(xmlBody).toString,
+        "x-version-id"     -> getMessageVersion(xmlBody).displayName
+      )
+      val inboundSoapMessage = SoapRequest(xmlBody.toString(), forwardingUrl)
+
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess))
+      when(ics2SdesService.processMessage(*)(*)).thenReturn(successful(List()))
+
+      val result = await(service.processInboundMessage(xmlBody))
+
+      result shouldBe SendSuccess
+      bodyCaptor hasCaptured inboundSoapMessage
+      verify(inboundConnectorMock).postMessage(inboundSoapMessage, forwardedHeaders)
+      verify(ics2SdesService).processMessage(getBinaryElementsWithEmbeddedData(xmlBody))
+    }
+
+    "not invoke SDESConnector when message contains binary file with URI" in new Setup {
+      val xmlBody = readFromFile("ie4r02-v2-binaryAttachment-with-uri.xml")
+
+      val forwardedHeaders   = Seq[(String, String)](
+        "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
+        "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
+        "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
+        "x-files-included" -> isFileIncluded(xmlBody).toString,
+        "x-version-id"     -> getMessageVersion(xmlBody).displayName
+      )
+      val inboundSoapMessage = SoapRequest(xmlBody.toString, forwardingUrl)
+
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess))
+
+      val result = await(service.processInboundMessage(xmlBody))
+
+      result shouldBe SendSuccess
+      bodyCaptor hasCaptured inboundSoapMessage
+      verify(inboundConnectorMock).postMessage(inboundSoapMessage, forwardedHeaders)
+      verifyZeroInteractions(ics2SdesService)
+    }
+
+    "return fail status to caller and not forward message if any call to SDES fails when processing a message with 2 embedded files" in new Setup {
+      val xmlBody = readFromFile("uriAndBinaryObject/ie4r02-v2-two-binaryAttachments-with-included-elements.xml")
+
+      when(ics2SdesService.processMessage(refEq(getBinaryElementsWithEmbeddedData(xmlBody)))(*)).thenReturn(successful(List(
+        SdesSendSuccess("sdes-uuid"),
+        SendFail(SERVICE_UNAVAILABLE)
+      )))
+
+      val result = await(service.processInboundMessage(xmlBody))
+
+      result shouldBe SendFail(SERVICE_UNAVAILABLE)
+      verifyZeroInteractions(inboundConnectorMock)
     }
 
     "return failure when connector returns failure" in new Setup {
-      val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)
+      val xmlBody = readFromFile("ie4n09-v2.xml")
+
+      val forwardedHeaders   = Seq[(String, String)](
+        "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
+        "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
+        "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
+        "x-files-included" -> isFileIncluded(xmlBody).toString,
+        "x-version-id"     -> getMessageVersion(xmlBody).displayName
+      )
+      val inboundSoapMessage = SoapRequest(xmlBody.toString, forwardingUrl)
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
 
@@ -113,12 +181,12 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
       "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
       "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
-      "x-files-included" -> isFileAttached(xmlBody).toString,
+      "x-files-included" -> isFileIncluded(xmlBody).toString,
       "x-version-id"     -> getMessageVersion(xmlBody).displayName
     )
 
     "return success when connector returns success" in new Setup {
-      val inboundSoapMessage = SoapRequest(xmlBody.text, testForwardingUrl)
+      val inboundSoapMessage = SoapRequest(xmlBody.toString, testForwardingUrl)
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess))
 
@@ -133,7 +201,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return failure when connector returns failure" in new Setup {
-      val inboundSoapMessage = SoapRequest(xmlBody.text, testForwardingUrl)
+      val inboundSoapMessage = SoapRequest(xmlBody.toString, testForwardingUrl)
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
 
