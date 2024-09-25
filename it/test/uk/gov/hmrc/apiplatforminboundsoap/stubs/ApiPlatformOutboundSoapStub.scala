@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.stubs
 
+import scala.xml.Elem
+
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.Fault
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
-
-import scala.xml.Elem
 
 trait ApiPlatformOutboundSoapStub {
 
@@ -48,6 +48,10 @@ trait ApiPlatformOutboundSoapStub {
   def verifyRequestBody(body: Elem, path: String = "/"): Unit = {
     verify(postRequestedFor(urlPathEqualTo(path))
       .withRequestBody(equalToXml(body.mkString)))
+  }
+
+  def verifyHeader(headerName: String, headerValue: String, path: String = "/"): Unit = {
+    verify(postRequestedFor(urlPathEqualTo(path)).withHeader(headerName, equalTo(headerValue)))
   }
 
 }

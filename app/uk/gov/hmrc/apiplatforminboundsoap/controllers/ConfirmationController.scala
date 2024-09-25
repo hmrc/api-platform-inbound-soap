@@ -16,15 +16,16 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
-import play.api.mvc.{Action, ControllerComponents}
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.OutboundConnector
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
+
+import play.api.mvc.{Action, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.OutboundConnector
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
 
 @Singleton()
 class ConfirmationController @Inject() (
@@ -35,7 +36,6 @@ class ConfirmationController @Inject() (
   ) extends BackendController(cc) {
 
   def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction).async(parse.xml) { implicit request =>
-
     outboundConnector.postMessage(request.body) flatMap {
       case SendSuccess      =>
         Future.successful(Ok.as("application/soap+xml"))

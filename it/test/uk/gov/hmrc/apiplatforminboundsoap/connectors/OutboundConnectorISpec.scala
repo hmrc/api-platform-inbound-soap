@@ -16,22 +16,26 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
+import scala.io.Source
+import scala.xml.{Elem, XML}
+
 import com.github.tomakehurst.wiremock.http.Fault
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.stubs.ApiPlatformOutboundSoapStub
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.ExternalWireMockSupport
 
-import scala.io.Source
-import scala.xml.{Elem, XML}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.stubs.ApiPlatformOutboundSoapStub
+import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 
-class OutboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ExternalWireMockSupport with ApiPlatformOutboundSoapStub {
+class OutboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite
+    with ExternalWireMockSupport with ApiPlatformOutboundSoapStub with XmlHelper {
   override implicit lazy val app: Application = appBuilder.build()
   implicit val hc: HeaderCarrier              = HeaderCarrier()
 
@@ -45,28 +49,20 @@ class OutboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppP
       )
 
   trait Setup {
-    val headers: Seq[(String, String)] = List("Authorization" -> "Bearer value")
-    val underTest: OutboundConnector   = app.injector.instanceOf[OutboundConnector]
+    val underTest: OutboundConnector = app.injector.instanceOf[OutboundConnector]
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())
     }
 
     val codRequestBody: Elem = readFromFile("acknowledgement-requests/cod_request.xml")
-    val coeRequestBody: Elem = readFromFile("acknowledgement-requests/coe_request.xml")
+
+    def forwardedHeaders(xmlBody: Elem) = Seq[(String, String)]("x-soap-action" -> getSoapAction(xmlBody).getOrElse(""))
+    val expectedHeaders                 = forwardedHeaders(codRequestBody)
 
   }
 
   "postMessage" should {
-
-    "return success status (for COE) when returned by the outbound soap service" in new Setup {
-      primeStubForSuccess(coeRequestBody, OK)
-
-      val result: SendResult = await(underTest.postMessage(coeRequestBody))
-
-      result shouldBe SendSuccess
-      verifyRequestBody(coeRequestBody)
-    }
 
     "return success status (for COD) when returned by the outbound soap service" in new Setup {
       primeStubForSuccess(codRequestBody, OK)
@@ -75,9 +71,8 @@ class OutboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppP
 
       result shouldBe SendSuccess
       verifyRequestBody(codRequestBody)
+      verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2)
     }
-
-
 
     "return error status returned by the outbound soap service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
@@ -86,6 +81,7 @@ class OutboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppP
       val result: SendResult = await(underTest.postMessage(codRequestBody))
 
       result shouldBe SendFail(expectedStatus)
+      verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2)
     }
 
     "return error status when soap fault is returned by the outbound soap service" in new Setup {

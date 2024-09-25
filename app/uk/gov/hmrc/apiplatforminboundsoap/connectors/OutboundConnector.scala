@@ -16,28 +16,34 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
-import play.api.Logging
-import play.api.http.Status
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess}
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
-
 import java.net.URL
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 
+import play.api.Logging
+import play.api.http.Status
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
+
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
+
 object OutboundConnector {
   case class Config(baseUrl: String)
 }
 
 @Singleton
-class OutboundConnector @Inject() (httpClientV2: HttpClientV2, appConfig: OutboundConnector.Config)(implicit ec: ExecutionContext) extends Logging {
+class OutboundConnector @Inject() (httpClientV2: HttpClientV2, appConfig: OutboundConnector.Config)(implicit ec: ExecutionContext)
+    extends Logging with XmlHelper {
 
   def postMessage(soapRequest: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    postHttpRequest(soapRequest, appConfig.baseUrl).map {
+
+    val newHeaders: Seq[(String, String)] = List("x-soap-action" -> getSoapAction(soapRequest).getOrElse(""))
+
+    postHttpRequest(soapRequest, appConfig.baseUrl, newHeaders).map {
       case Right(_)                                         => SendSuccess
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode")
@@ -50,10 +56,11 @@ class OutboundConnector @Inject() (httpClientV2: HttpClientV2, appConfig: Outbou
       }
   }
 
-  private def postHttpRequest(soapEnvelope: NodeSeq, baseUrl: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
-    httpClientV2.post(new URL(baseUrl)).withBody(soapEnvelope).execute[Either[
-      UpstreamErrorResponse,
-      HttpResponse
-    ]]
+  private def postHttpRequest(soapEnvelope: NodeSeq, baseUrl: String, headers: Seq[(String, String)])
+                             (implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+    httpClientV2.post(new URL(baseUrl))
+      .withBody(soapEnvelope)
+      .transform(_.addHttpHeaders(headers: _*))
+      .execute[Either[UpstreamErrorResponse, HttpResponse]]
   }
 }

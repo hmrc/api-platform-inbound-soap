@@ -50,7 +50,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
 
     val xRequestIdHeaderValue = randomUUID.toString()
 
-    val headers               = Headers(
+    val headers = Headers(
       "Host"         -> "localhost",
       "x-request-id" -> xRequestIdHeaderValue,
       "Content-Type" -> "text/xml"
