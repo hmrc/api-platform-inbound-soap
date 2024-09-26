@@ -35,7 +35,7 @@ import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.OutboundConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
 
@@ -45,7 +45,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
 
   trait Setup {
     private val verifyJwtTokenAction = app.injector.instanceOf[VerifyJwtTokenAction]
-    val mockOutboundConnector        = mock[OutboundConnector]
+    val mockOutboundConnector        = mock[ApiPlatformOutboundSoapConnector]
     val controller                   = new ConfirmationController(mockOutboundConnector, Helpers.stubControllerComponents(), verifyJwtTokenAction)
 
     val xRequestIdHeaderValue = randomUUID.toString()

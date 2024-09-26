@@ -34,7 +34,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSucc
 import uk.gov.hmrc.apiplatforminboundsoap.stubs.ApiPlatformOutboundSoapStub
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 
-class OutboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite
+class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite
     with ExternalWireMockSupport with ApiPlatformOutboundSoapStub with XmlHelper {
   override implicit lazy val app: Application = appBuilder.build()
   implicit val hc: HeaderCarrier              = HeaderCarrier()
@@ -49,7 +49,7 @@ class OutboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppP
       )
 
   trait Setup {
-    val underTest: OutboundConnector = app.injector.instanceOf[OutboundConnector]
+    val underTest: ApiPlatformOutboundSoapConnector = app.injector.instanceOf[ApiPlatformOutboundSoapConnector]
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())

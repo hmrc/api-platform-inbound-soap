@@ -22,25 +22,25 @@ import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.OutboundConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
 
 class ConfigurationModule extends Module {
 
   override def bindings(environment: Environment, configuration: Configuration): List[Binding[_]] = {
 
     List(
-      bind[OutboundConnector.Config].toProvider[OutboundConnectorConfigProvider]
+      bind[ApiPlatformOutboundSoapConnector.Config].toProvider[ApiPlatformOutboundSoapConnectorConfigProvider]
     )
   }
 }
 
 @Singleton
-class OutboundConnectorConfigProvider @Inject() (val configuration: Configuration)
+class ApiPlatformOutboundSoapConnectorConfigProvider @Inject() (val configuration: Configuration)
     extends ServicesConfig(configuration)
-    with Provider[OutboundConnector.Config] {
+    with Provider[ApiPlatformOutboundSoapConnector.Config] {
 
-  override def get(): OutboundConnector.Config = {
+  override def get(): ApiPlatformOutboundSoapConnector.Config = {
     val url = baseUrl("api-platform-outbound-soap")
-    OutboundConnector.Config(url)
+    ApiPlatformOutboundSoapConnector.Config(url)
   }
 }
