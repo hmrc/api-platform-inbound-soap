@@ -24,12 +24,13 @@ import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.ImportControlInboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendResult, SoapRequest}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 
 @Singleton
-class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: InboundConnector) extends Logging with XmlHelper {
+class InboundMessageService @Inject() (appConfig: AppConfig, importControlInboundSoapConnector: ImportControlInboundSoapConnector)
+    extends Logging with XmlHelper {
 
   def processInboundMessage(soapRequest: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val newHeaders: Seq[(String, String)] = List(
@@ -41,6 +42,6 @@ class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: I
     )
     val forwardUrl                        = if (isTest) appConfig.testForwardMessageUrl else appConfig.forwardMessageUrl
 
-    inboundConnector.postMessage(SoapRequest(soapRequest.text, forwardUrl), newHeaders)
+    importControlInboundSoapConnector.postMessage(SoapRequest(soapRequest.text, forwardUrl), newHeaders)
   }
 }
