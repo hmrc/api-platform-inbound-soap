@@ -18,6 +18,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import scala.concurrent.Future.successful
 import scala.io.Source
+import scala.xml.NodeSeq
 
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
@@ -31,9 +32,8 @@ import play.api.http.Status.IM_A_TEAPOT
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ImportControlInboundSoapConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess, SoapRequest}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 
 class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with XmlHelper {
@@ -47,20 +47,15 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
 
   trait Setup {
     val inboundConnectorMock: ImportControlInboundSoapConnector = mock[ImportControlInboundSoapConnector]
-    val bodyCaptor                                              = ArgCaptor[SoapRequest]
+    val bodyCaptor                                              = ArgCaptor[NodeSeq]
     val headerCaptor                                            = ArgCaptor[Seq[(String, String)]]
+    val isTestCaptor                                            = ArgCaptor[Boolean]
 
-    val httpStatus: Int          = Status.OK
-    val appConfigMock: AppConfig = mock[AppConfig]
-    val xmlHelper: XmlHelper     = mock[XmlHelper]
+    val httpStatus: Int      = Status.OK
+    val xmlHelper: XmlHelper = mock[XmlHelper]
 
     val service: InboundMessageService =
-      new InboundMessageService(appConfigMock, inboundConnectorMock)
-
-    val forwardingUrl     = "some url"
-    val testForwardingUrl = "some test url"
-    when(appConfigMock.forwardMessageUrl).thenReturn(forwardingUrl)
-    when(appConfigMock.testForwardMessageUrl).thenReturn(testForwardingUrl)
+      new InboundMessageService(inboundConnectorMock)
 
   }
 
@@ -76,32 +71,24 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     )
 
     "return success when connector returns success" in new Setup {
-      val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
 
-      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess))
-
-      val result = await(service.processInboundMessage(xmlBody))
+      val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendSuccess
-      verify(inboundConnectorMock).postMessage(inboundSoapMessage, forwardedHeaders)
-      verify(appConfigMock, times(0)).testForwardMessageUrl
-      verify(appConfigMock).forwardMessageUrl
-      bodyCaptor hasCaptured inboundSoapMessage
+      verify(inboundConnectorMock).postMessage(xmlBody, forwardedHeaders, true)
+      bodyCaptor hasCaptured xmlBody
 
     }
 
     "return failure when connector returns failure" in new Setup {
-      val inboundSoapMessage = SoapRequest(xmlBody.text, forwardingUrl)
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
 
-      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
-
-      val result = await(service.processInboundMessage(xmlBody))
+      val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendFail(IM_A_TEAPOT)
-      verify(inboundConnectorMock).postMessage(inboundSoapMessage, forwardedHeaders)
-      verify(appConfigMock, times(0)).testForwardMessageUrl
-      verify(appConfigMock).forwardMessageUrl
-      bodyCaptor hasCaptured inboundSoapMessage
+      verify(inboundConnectorMock).postMessage(xmlBody, forwardedHeaders, true)
+      bodyCaptor hasCaptured xmlBody
     }
   }
 
@@ -117,32 +104,24 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     )
 
     "return success when connector returns success" in new Setup {
-      val inboundSoapMessage = SoapRequest(xmlBody.text, testForwardingUrl)
-
-      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess))
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
 
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendSuccess
-      verify(inboundConnectorMock).postMessage(inboundSoapMessage, forwardedHeaders)
-      verify(appConfigMock, times(0)).forwardMessageUrl
-      verify(appConfigMock).testForwardMessageUrl
-      bodyCaptor hasCaptured inboundSoapMessage
+      verify(inboundConnectorMock).postMessage(xmlBody, forwardedHeaders, true)
+      bodyCaptor hasCaptured xmlBody
 
     }
 
     "return failure when connector returns failure" in new Setup {
-      val inboundSoapMessage = SoapRequest(xmlBody.text, testForwardingUrl)
-
-      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor)(*)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendFail(IM_A_TEAPOT)))
 
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendFail(IM_A_TEAPOT)
-      verify(inboundConnectorMock).postMessage(inboundSoapMessage, forwardedHeaders)
-      verify(appConfigMock, times(0)).forwardMessageUrl
-      verify(appConfigMock).testForwardMessageUrl
-      bodyCaptor hasCaptured inboundSoapMessage
+      verify(inboundConnectorMock).postMessage(xmlBody, forwardedHeaders, true)
+      bodyCaptor hasCaptured xmlBody
     }
   }
 }
