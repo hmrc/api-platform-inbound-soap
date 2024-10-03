@@ -22,11 +22,12 @@ import scala.xml.NodeSeq
 
 import org.apache.pekko.http.scaladsl.util.FastFuture.successful
 
+import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesSendSuccessResult, SendFail, SendResult, SoapRequest}
+import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 @Singleton
@@ -38,7 +39,6 @@ class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: I
     val newHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
     val allAttachments                    = getBinaryElementsWithEmbeddedData(wholeMessage)
     if (isFileIncluded(wholeMessage) && allAttachments.nonEmpty) {
-
       sendToSdes(wholeMessage, allAttachments, forwardUrl)
     } else {
       forwardMessageOnwards(SoapRequest(wholeMessage.toString, forwardUrl), newHeaders)
@@ -53,38 +53,29 @@ class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: I
       "x-files-included" -> isFileIncluded(soapRequest).toString,
       "x-version-id"     -> getMessageVersion(soapRequest).displayName
     )
-
   }
 
   private def sendToSdes(wholeMessage: NodeSeq, binaryElements: NodeSeq, forwardUrl: String)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    logger.info("found embedded file")
     sdesService.processMessage(binaryElements) flatMap {
       sendResults: Seq[SendResult] =>
-        println(s"sendResults is $sendResults")
-        val sendFail = sendResults.find(r => r.isInstanceOf[SendFail])
-        if (sendFail.nonEmpty) {
-          logger.warn("one failed")
-          successful(sendFail.get)
-        } else {
-//          for {
-//            updatedXml <- processSdesResults(sendResults.asInstanceOf[Seq[SdesSendSuccessResult]], binaryElements, forwardUrl)
-//           res <- forwardMessageOnwards (SoapRequest(updatedXml.toString(), forwardUrl), buildHeadersToAppend(binaryElements))
-//          } yield res
-          val updatedXml = processSdesResults(sendResults.asInstanceOf[Seq[SdesSendSuccessResult]], binaryElements, forwardUrl)
-          forwardMessageOnwards(SoapRequest(wholeMessage.toString(), forwardUrl), buildHeadersToAppend(binaryElements))
+        sendResults.find(r => r.isInstanceOf[SendFail]) match {
+          case Some(value) => successful(value)
+          case None        => processSdesResults(sendResults.asInstanceOf[Seq[SdesSuccessResult]], wholeMessage) match {
+              case Right(xml) => forwardMessageOnwards(SoapRequest(xml.toString(), forwardUrl), buildHeadersToAppend(wholeMessage))
+              case Left(f)    =>
+                logger.warn(s"Failed to replace all embedded attachments for files $f")
+                successful(SendFailExternal(UNPROCESSABLE_ENTITY))
+            }
         }
     }
   }
 
-  //  private def processSdesResults(sdesResults: Seq[SdesSendSuccessResult]): SendResult = {
-  private def processSdesResults(sdesResults: Seq[SdesSendSuccessResult], nodeSeq: NodeSeq, forwardUrl: String): NodeSeq = {
-    sdesResults.map(println(_))
-    nodeSeq
-    //    forwardMessageOnwards(SoapRequest(nodeSeq.toString(), forwardUrl), buildHeadersToAppend(nodeSeq))
-    //   SendSuccess
+  private def processSdesResults(sdesResults: Seq[SdesSuccessResult], wholeMessage: NodeSeq): Either[Set[String], NodeSeq] = {
+    val replacements = sdesResults.map(sr => (sr.sdesReference.forFilename, sr.sdesReference.uuid))
+    replaceEmbeddedAttachments(replacements.toMap[String, String], wholeMessage)
   }
 
-  private def forwardMessageOnwards(soapRequest: SoapRequest, newHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier) = {
+  private def forwardMessageOnwards(soapRequest: SoapRequest, newHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     inboundConnector.postMessage(soapRequest, newHeaders)
   }
 }

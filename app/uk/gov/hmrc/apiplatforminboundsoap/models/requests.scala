@@ -18,4 +18,4 @@ package uk.gov.hmrc.apiplatforminboundsoap.models
 
 case class SoapRequest(soapEnvelope: String, destinationUrl: String)
 
-case class SdesRequest(headers: Seq[(String, String)], metadata: Map[String, String], body: String, destinationUrl: String)
+case class SdesRequest(headers: Seq[(String, String)], metadata: Map[String, String], body: String)

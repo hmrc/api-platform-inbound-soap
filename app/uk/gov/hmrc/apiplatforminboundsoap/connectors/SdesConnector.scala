@@ -31,7 +31,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SdesSendSuccess, SendFail, SendResult}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SdesSuccess, SendFailExternal, SendResult}
 
 @Singleton
 class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)(implicit ec: ExecutionContext) extends Logging {
@@ -41,14 +41,14 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)
     postHttpRequest(sdesRequest).map {
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode")
-        SendFail(statusCode)
+        SendFailExternal(statusCode)
       case Right(response: HttpResponse)                    =>
-        SdesSendSuccess(response.body)
+        SdesSuccess(response.body)
     }
       .recoverWith {
         case NonFatal(e) =>
           logger.warn(s"NonFatal error ${e.getMessage} while forwarding message", e)
-          successful(SendFail(Status.INTERNAL_SERVER_ERROR))
+          successful(SendFailExternal(Status.INTERNAL_SERVER_ERROR))
       }
   }
 

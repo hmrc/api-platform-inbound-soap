@@ -27,24 +27,23 @@ import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 
-import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess, SoapRequest}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess, SoapRequest}
 
 @Singleton
-class InboundConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)(implicit ec: ExecutionContext) extends Logging {
+class InboundConnector @Inject() (httpClientV2: HttpClientV2)(implicit ec: ExecutionContext) extends Logging {
 
   def postMessage(soapRequest: SoapRequest, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     postHttpRequest(soapRequest, headers).map {
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode")
-        SendFail(statusCode)
-      case Right(response: HttpResponse)                    =>
+        SendFailExternal(statusCode)
+      case Right(_: HttpResponse)                           =>
         SendSuccess
     }
       .recoverWith {
         case NonFatal(e) =>
           logger.warn(s"NonFatal error ${e.getMessage} while forwarding message", e)
-          Future.successful(SendFail(Status.INTERNAL_SERVER_ERROR))
+          Future.successful(SendFailExternal(Status.INTERNAL_SERVER_ERROR))
       }
   }
 

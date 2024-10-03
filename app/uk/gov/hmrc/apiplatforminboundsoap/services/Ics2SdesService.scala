@@ -33,15 +33,16 @@ class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnec
 
   def processMessage(binaryElements: NodeSeq)(implicit hc: HeaderCarrier): Future[Seq[SendResult]] = {
     val allAttachments = getBinaryElementsWithEmbeddedData(binaryElements)
-    println(s"allAttachments is $allAttachments")
     sequence(allAttachments.map(attachmentElement => {
       buildSdesRequest(binaryElements, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
-            case s: SdesSendSuccess =>
-              successful(SdesSendSuccessResult(SdesResult(uuid = s.uuid, forFilename = getBinaryFilename(attachmentElement))))
-            case f: SendFail        =>
+            case s: SdesSuccess      => getBinaryFilename(attachmentElement) match {
+                case Some(filename) =>
+                  successful(SdesSuccessResult(SdesReference(uuid = s.uuid, forFilename = filename)))
+              }
+            case f: SendFailExternal =>
               logger.warn(s"${f.status} returned from SDES call")
-              successful(SendFail(f.status))
+              successful(SendFailExternal(f.status))
           }
         case Left(e: InvalidFormatResult) =>
           logger.warn(s"${e.reason}")
@@ -52,9 +53,11 @@ class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnec
 
   private def buildSdesRequest(soapRequest: NodeSeq, attachmentElement: NodeSeq) = {
     def getAttachment(soapRequest: NodeSeq)                                                  = {
-      getBinaryBase64Object(soapRequest) match {
-        case Some(binaryAttachment) => Right(binaryAttachment)
-        case _                      => Left(InvalidFormatResult("Argument includedBinaryObject is not valid base 64 data"))
+      (getBinaryFilename(attachmentElement), getBinaryBase64Object(soapRequest)) match {
+        case (Some(filename), Some(_)) if filename.isEmpty => Left(InvalidFormatResult("Argument filename found in XML but is empty"))
+        case (Some(_), Some(binaryAttachment))             => Right(binaryAttachment)
+        case (None, Some(_))                               => Left(InvalidFormatResult("Argument filename was not found in XML"))
+        case (_, None)                                     => Left(InvalidFormatResult("Argument includedBinaryObject was not found in XML"))
       }
     }
     def buildMetadata(soapRequest: NodeSeq, attachmentElement: NodeSeq): Map[String, String] = {
@@ -64,6 +67,10 @@ class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnec
       val referralRequestReference = getReferralRequestReference(soapRequest)
       val mrn                      = getMRN(soapRequest)
       val lrn                      = getLRN(soapRequest)
+
+      val filterEmpty: PartialFunction[(String, Option[String]), (String, String)] = {
+        case v if v._2.nonEmpty => (v._1, v._2.get)
+      }
       Map(
         "srn"                      -> Some(appConfig.ics2SdesSrn),
         "informationType"          -> Some(appConfig.ics2SdesInfoType),
@@ -73,14 +80,12 @@ class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnec
         "MRN"                      -> mrn,
         "LRN"                      -> lrn,
         "referralRequestReference" -> referralRequestReference
-      )
-        .filterNot(elem => elem._2.isEmpty)
-        .map(k => (k._1, k._2.get))
+      ).collect(filterEmpty)
     }
 
     getAttachment(attachmentElement) match {
       case Right(attachment) =>
-        Right(SdesRequest(body = attachment, headers = Seq.empty, metadata = buildMetadata(soapRequest, attachmentElement), destinationUrl = appConfig.sdesUrl))
+        Right(SdesRequest(body = attachment, headers = Seq.empty, metadata = buildMetadata(soapRequest, attachmentElement)))
       case Left(result)      => Left(result)
     }
   }

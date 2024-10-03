@@ -29,7 +29,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.ExternalWireMockSupport
 
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SdesSendSuccess, SendFail, SendResult}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SdesSuccess, SendFailExternal, SendResult}
 import uk.gov.hmrc.apiplatforminboundsoap.support.ExternalServiceStub
 
 class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ExternalWireMockSupport with ExternalServiceStub {
@@ -49,7 +49,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
     val underTest: SdesConnector              = app.injector.instanceOf[SdesConnector]
     val base64EncodedString: String           = Base64.getEncoder.encodeToString(Array[Byte]('a', 'b', 'c'))
     val responseBody: String                  = UUID.randomUUID().toString
-    val simpleSdesRequest                     = SdesRequest(headers = List(), metadata = Map(), body = base64EncodedString, destinationUrl = externalWireMockUrl)
+    val simpleSdesRequest                     = SdesRequest(headers = List(), metadata = Map(), body = base64EncodedString)
 
   }
 
@@ -61,20 +61,20 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
       val result: SendResult = await(underTest.postMessage(simpleSdesRequest))
 
-      result shouldBe SdesSendSuccess(responseBody)
+      result shouldBe SdesSuccess(responseBody)
       verifyRequestBody(simpleSdesRequest.body)
       verifyHeadersOnRequest(defaultHeaders)
     }
 
     "send any additional headers" in new Setup {
       val additionalHeaders   = List("x-request-id" -> "abcdefgh1234567890", "any-old-header-name" -> "any-old-header-value")
-      val sdesRequest         = SdesRequest(headers = additionalHeaders, metadata = Map(), body = base64EncodedString, destinationUrl = externalWireMockUrl)
+      val sdesRequest         = SdesRequest(headers = additionalHeaders, metadata = Map(), body = base64EncodedString)
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus)
 
       val result: SendResult = await(underTest.postMessage(sdesRequest))
 
-      result shouldBe SdesSendSuccess(responseBody)
+      result shouldBe SdesSuccess(responseBody)
       verifyRequestBody(simpleSdesRequest.body)
       verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders)
     }
@@ -82,13 +82,13 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
     "send the metadata header" in new Setup {
       val additionalHeaders   = List("x-request-id" -> "abcdefgh1234567890", "any-old-header-name" -> "any-old-header-value")
       val sdesRequest         =
-        SdesRequest(headers = additionalHeaders, metadata = Map("foo" -> "bar", "humpty" -> "dumpty"), body = base64EncodedString, destinationUrl = externalWireMockUrl)
+        SdesRequest(headers = additionalHeaders, metadata = Map("foo" -> "bar", "humpty" -> "dumpty"), body = base64EncodedString)
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus)
 
       val result: SendResult = await(underTest.postMessage(sdesRequest))
 
-      result shouldBe SdesSendSuccess(responseBody)
+      result shouldBe SdesSuccess(responseBody)
       verifyRequestBody(simpleSdesRequest.body)
 
       verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders ++ List("Metadata" -> """{"metadata":{"foo":"bar","humpty":"dumpty"}}"""))
@@ -100,7 +100,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
       val result: SendResult = await(underTest.postMessage(simpleSdesRequest))
 
-      result shouldBe SendFail(expectedStatus)
+      result shouldBe SendFailExternal(expectedStatus)
       verifyHeadersOnRequest(defaultHeaders)
     }
 
@@ -110,7 +110,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
         val result: SendResult = await(underTest.postMessage(simpleSdesRequest))
 
-        result shouldBe SendFail(INTERNAL_SERVER_ERROR)
+        result shouldBe SendFailExternal(INTERNAL_SERVER_ERROR)
         verifyHeadersOnRequest(defaultHeaders)
       }
     }

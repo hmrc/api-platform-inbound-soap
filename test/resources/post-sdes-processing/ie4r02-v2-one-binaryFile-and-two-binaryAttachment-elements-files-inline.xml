@@ -55,7 +55,7 @@
                   <!--Optional:-->
                   <urn:MIME>application/pdf</urn:MIME>
                   <!--Optional:-->
-                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                  <urn:includedBinaryObject>some-uuid-like-string</urn:includedBinaryObject>
                   <!--Optional:-->
                   <urn:description>A PDFy sort of file</urn:description>
                </urn:binaryAttachment>
@@ -64,7 +64,7 @@
                   <!--Optional:-->
                   <urn:MIME>application/pdf</urn:MIME>
                   <!--Optional:-->
-                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                  <urn:includedBinaryObject>some-different-uuid-like-string</urn:includedBinaryObject>
                   <!--Optional:-->
                   <urn:description>A PDFy sort of file</urn:description>
                </urn:binaryAttachment>
@@ -73,7 +73,7 @@
                   <!--Optional:-->
                   <urn:MIME>text/plain</urn:MIME>
                   <!--Optional:-->
-                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                  <urn:includedBinaryObject>yet-another-uuid-like-string</urn:includedBinaryObject>
                   <!--Optional:-->
                   <urn:description>A texty sort of file</urn:description>
                </urn:binaryFile>

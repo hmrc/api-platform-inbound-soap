@@ -30,6 +30,7 @@ class AppConfig @Inject() (config: Configuration) {
   val crdlSdesSrn: String           = config.get[String]("crdlSdesSrn")
   val crdlSdesInfoType: String      = config.get[String]("crdlSdesInfoType")
   val forwardMessageUrl: String     = config.get[String]("forwardMessageUrl")
+  // TODO put something resembling proper data in here
   val sdesUrl: String               = config.get[String]("sdesUrl")
   val passThroughProtocol: String   = config.get[String]("passThroughProtocol")
   val passThroughHost: String       = config.get[String]("passThroughHost")

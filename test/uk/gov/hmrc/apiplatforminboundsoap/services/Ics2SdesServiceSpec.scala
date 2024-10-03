@@ -82,24 +82,23 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
         "MRN"             -> "7c1aa850-9760-42ab-bebe-709e3a4a888f"
       )
       val expectedBody          = "cid:1177341525550"
-      val expectedSdesRequest   = SdesRequest(Seq.empty, expectedMetadata, expectedBody, sdesUrl)
-      val expectedServiceResult = SdesSendSuccessResult(SdesResult(uuid = expectedSdesUuid, forFilename = Some("test-filename.txt")))
+      val expectedSdesRequest   = SdesRequest(Seq.empty, expectedMetadata, expectedBody)
+      val expectedServiceResult = SdesSuccessResult(SdesReference(uuid = expectedSdesUuid, forFilename = "test-filename.txt"))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSendSuccess(expectedSdesUuid)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
 
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      verify(appConfigMock).sdesUrl
       bodyCaptor hasCaptured expectedSdesRequest
     }
 
     "make two requests to SDES when XML message contains two binaryAttachment elements" in new Setup {
       val expectedSdesUuidForFirstCall  = UUID.randomUUID().toString
-      val expectedFilenameForFirstCall  = Some("filename1.pdf")
+      val expectedFilenameForFirstCall  = "filename1.pdf"
       val expectedSdesUuidForSecondCall = UUID.randomUUID().toString
-      val expectedFilenameForSecondCall = Some("filename2.txt")
+      val expectedFilenameForSecondCall = "filename2.txt"
       val xmlBody: Elem                 = readFromFile("uriAndBinaryObject/ie4r02-v2-two-binaryAttachments-with-included-elements.xml")
       val expectedFirstRequestMetadata  = Map(
         "description"              -> "A PDFy sort of file",
@@ -120,41 +119,60 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
         "MRN"                      -> "7c1aa850-9760-42ab"
       )
       val expectedBody                  = "dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo="
-      val expectedFirstSdesRequest      = SdesRequest(Seq.empty, expectedFirstRequestMetadata, expectedBody, sdesUrl)
-      val expectedSecondSdesRequest     = SdesRequest(Seq.empty, expectedSecondRequestMetadata, expectedBody, sdesUrl)
+      val expectedFirstSdesRequest      = SdesRequest(Seq.empty, expectedFirstRequestMetadata, expectedBody)
+      val expectedSecondSdesRequest     = SdesRequest(Seq.empty, expectedSecondRequestMetadata, expectedBody)
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSendSuccess(expectedSdesUuidForFirstCall)))
-        .andThen(successful(SdesSendSuccess(expectedSdesUuidForSecondCall)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuidForFirstCall)))
+        .andThen(successful(SdesSuccess(expectedSdesUuidForSecondCall)))
 
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(
-        SdesSendSuccessResult(SdesResult(expectedSdesUuidForFirstCall, expectedFilenameForFirstCall)),
-        SdesSendSuccessResult(SdesResult(expectedSdesUuidForSecondCall, expectedFilenameForSecondCall))
+        SdesSuccessResult(SdesReference(expectedFilenameForFirstCall, expectedSdesUuidForFirstCall)),
+        SdesSuccessResult(SdesReference(expectedFilenameForSecondCall, expectedSdesUuidForSecondCall))
       )
       verify(sdesConnectorMock, times(2)).postMessage(*)(*)
-      verify(appConfigMock, times(2)).sdesUrl
 
       bodyCaptor.hasCaptured(expectedFirstSdesRequest, expectedSecondSdesRequest)
     }
 
-    // this should never happen as validation in the ActionFilter associated with CCN2MessageController would block
     "return invalid response when message does not contain includedBinaryObject" in new Setup {
       val xmlBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-missing-uri-and-includedBinaryObject-element.xml")
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(SendNotAttempted("Argument includedBinaryObject is not valid base 64 data"))
+      result shouldBe List(SendNotAttempted("Argument includedBinaryObject was not found in XML"))
       verifyZeroInteractions(appConfigMock)
       verifyZeroInteractions(sdesConnectorMock)
     }
-    "return upstream response when message sending fails" in new Setup {
-      val xmlBody: Elem = readFromFile("ie4s03-v2.xml")
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SendFail(INTERNAL_SERVER_ERROR)))
+
+    "return invalid response when message's binaryFile block does not contain filename" in new Setup {
+      val xmlBody: Elem = readFromFile("filename/ie4r02-v2-missing-filename-element.xml")
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(SendFail(INTERNAL_SERVER_ERROR))
+      result shouldBe List(SendNotAttempted("Argument filename was not found in XML"))
+      verifyZeroInteractions(appConfigMock)
+      verifyZeroInteractions(sdesConnectorMock)
+    }
+
+    "return invalid response when message's binaryFile block contains empty filename" in new Setup {
+      val xmlBody: Elem = readFromFile("filename/ie4r02-v2-blank-filename-element.xml")
+
+      val result = await(service.processMessage(xmlBody))
+
+      result shouldBe List(SendNotAttempted("Argument filename found in XML but is empty"))
+      verifyZeroInteractions(appConfigMock)
+      verifyZeroInteractions(sdesConnectorMock)
+    }
+
+    "return upstream response when message sending fails" in new Setup {
+      val xmlBody: Elem = readFromFile("ie4s03-v2.xml")
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SendFailExternal(INTERNAL_SERVER_ERROR)))
+
+      val result = await(service.processMessage(xmlBody))
+
+      result shouldBe List(SendFailExternal(INTERNAL_SERVER_ERROR))
     }
   }
 }

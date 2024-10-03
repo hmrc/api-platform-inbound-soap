@@ -34,7 +34,7 @@ import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 
 class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
@@ -84,7 +84,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return 200 when successful for a message with embedded attached file" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
+      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
@@ -154,9 +154,9 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return response code it received when not successful" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
+      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
 
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal(PRECONDITION_FAILED)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 

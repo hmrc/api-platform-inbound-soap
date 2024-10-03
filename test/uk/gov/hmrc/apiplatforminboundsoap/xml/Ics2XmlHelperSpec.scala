@@ -27,14 +27,10 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with Ics2XmlHelper {
 
   trait Setup {
-    val xmlBodyForElementNotFoundScenario: NodeSeq = xml.XML.loadString("<xml>blah</xml>")
+    val xmlBodyForElementNotFoundScenario: NodeSeq = <xml>blah</xml>
 
     def readFromFile(fileName: String) = {
       xml.XML.load(Source.fromResource(fileName).bufferedReader())
-    }
-
-    def readFromString(xmlString: String) = {
-      xml.XML.loadString(xmlString)
     }
   }
 
@@ -87,7 +83,7 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
     }
 
     "return true when binaryAttachment found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2.xml")
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-one-binary-attachment.xml")
       isFileIncluded(xmlBody) shouldBe true
     }
 
@@ -120,81 +116,75 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
 
   "getFilename" should {
     "return filename when one is found in SOAP message within binaryAttachment or binaryFile" in new Setup {
-      val binaryFile       = """<urn:binaryFile>
-                         |                            <urn:filename>test-filename.txt</urn:filename>
-                         |                            <urn:URI>?</urn:URI>
-                         |                            <urn:MIME>application/pdf</urn:MIME>
-                         |                            <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
-                         |                            <urn:description>a file made up for unit testing</urn:description>
-                         |                        </urn:binaryFile>""".stripMargin
-      val xmlBody: NodeSeq = readFromString(binaryFile)
-      getBinaryFilename(xmlBody) shouldBe Some("test-filename.txt")
+      val binaryFile = <urn:binaryFile>
+                         <urn:filename>test-filename.txt</urn:filename>
+                         <urn:URI>?</urn:URI>
+                         <urn:MIME>application/pdf</urn:MIME>
+                         <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
+                         <urn:description>a file made up for unit testing</urn:description>
+                       </urn:binaryFile>
+      getBinaryFilename(binaryFile) shouldBe Some("test-filename.txt")
     }
 
     "return empty string when no filename is found in SOAP message" in new Setup {
-      val binaryAttachment = """<urn:binaryAttachment>
-                               |                  <urn:filename></urn:filename>
-                               |                  <urn:MIME>?</urn:MIME>
-                               |                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
-                               |                  <urn:description>?</urn:description>
-                               |               </urn:binaryAttachment>""".stripMargin
-      val xmlBody: NodeSeq = readFromString(binaryAttachment)
-      getBinaryFilename(xmlBody) shouldBe Some("")
+      val binaryAttachment = <urn:binaryAttachment>
+                               <urn:filename></urn:filename>
+                               <urn:MIME>?</urn:MIME>
+                               <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                               <urn:description>?</urn:description>
+                             </urn:binaryAttachment>
+      getBinaryFilename(binaryAttachment) shouldBe Some("")
     }
   }
 
   "getMimeType" should {
     "return MIME when one is found in SOAP message within binaryAttachment or binaryFile" in new Setup {
-      val binaryFile       = """<urn:binaryFile>
-                         |                            <urn:filename>test-filename.txt</urn:filename>
-                         |                            <urn:URI>?</urn:URI>
-                         |                            <urn:MIME>application/pdf</urn:MIME>
-                         |                            <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
-                         |                            <urn:description>a file made up for unit testing</urn:description>
-                         |                        </urn:binaryFile>""".stripMargin
-      val xmlBody: NodeSeq = readFromString(binaryFile)
-      getBinaryMimeType(xmlBody) shouldBe Some("application/pdf")
+      val binaryFile = <urn:binaryFile>
+                                                     <urn:filename>test-filename.txt</urn:filename>
+                                                     <urn:URI>?</urn:URI>
+                                                     <urn:MIME>application/pdf</urn:MIME>
+                                                     <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
+                                                     <urn:description>a file made up for unit testing</urn:description>
+                                                 </urn:binaryFile>
+      getBinaryMimeType(binaryFile) shouldBe Some("application/pdf")
     }
 
     "return empty string when no filename is found in SOAP message" in new Setup {
-      val binaryAttachment = """<urn:binaryAttachment>
-                               |                  <urn:filename>?</urn:filename>
-                               |                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
-                               |                  <urn:description>?</urn:description>
-                               |               </urn:binaryAttachment>""".stripMargin
-      val xmlBody: NodeSeq = readFromString(binaryAttachment)
-      getBinaryMimeType(xmlBody) shouldBe None
+      val binaryAttachment = <urn:binaryAttachment>
+                                                 <urn:filename>?</urn:filename>
+                                                 <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                                                 <urn:description>?</urn:description>
+                                              </urn:binaryAttachment>
+      getBinaryMimeType(binaryAttachment) shouldBe None
     }
   }
 
   "getDescription" should {
     "return description when one is found in SOAP message within binaryAttachment or binaryFile" in new Setup {
-      val binaryFile       = """<urn:binaryFile>
-                         |                            <urn:filename>test-filename.txt</urn:filename>
-                         |                            <urn:URI>?</urn:URI>
-                         |                            <urn:MIME>application/pdf</urn:MIME>
-                         |                            <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
-                         |                            <urn:description>a file made up for unit testing</urn:description>
-                         |                        </urn:binaryFile>""".stripMargin
-      val xmlBody: NodeSeq = readFromString(binaryFile)
-      getBinaryDescription(xmlBody) shouldBe Some("a file made up for unit testing")
+      val binaryFile = <urn:binaryFile>
+                                                     <urn:filename>test-filename.txt</urn:filename>
+                                                     <urn:URI>?</urn:URI>
+                                                     <urn:MIME>application/pdf</urn:MIME>
+                                                     <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
+                                                     <urn:description>a file made up for unit testing</urn:description>
+                                                 </urn:binaryFile>
+      getBinaryDescription(binaryFile) shouldBe Some("a file made up for unit testing")
     }
 
     "return empty string when no description is found in SOAP message" in new Setup {
-      val binaryAttachment = """<urn:binaryAttachment>
-                               |                  <urn:filename>?</urn:filename>
-                               |                  <urn:MIME>?</urn:MIME>
-                               |                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
-                               |                  <urn:description></urn:description>
-                               |               </urn:binaryAttachment>""".stripMargin
-      val xmlBody: NodeSeq = readFromString(binaryAttachment)
-      getBinaryDescription(xmlBody) shouldBe Some("")
+      val binaryAttachment = <urn:binaryAttachment>
+                                                 <urn:filename>?</urn:filename>
+                                                 <urn:MIME>?</urn:MIME>
+                                                 <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                                                 <urn:description></urn:description>
+                                              </urn:binaryAttachment>
+      getBinaryDescription(binaryAttachment) shouldBe Some("")
     }
   }
 
   "getReferralRequestReference" should {
     "return referralRequestReference when one is found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4r02-v2.xml")
+      val xmlBody: NodeSeq = readFromFile("ie4r02-v2-one-binary-attachment.xml")
       getReferralRequestReference(xmlBody) shouldBe Some("d4af29b4-d1d7-4f42-a186-ca5a71fab")
     }
 
@@ -222,62 +212,103 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
       getBinaryElementsWithEmbeddedData(xmlBody).size shouldBe 1
     }
   }
+  "replaceEmbeddedAttachments" should {
+    "replace includedBinaryObject element in a message containing one binaryFile element" in new Setup {
+      val xmlBody                    = readFromFile("ie4s03-v2.xml")
+      val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4s03-v2.xml")
+      val replacement                = Map("test-filename.txt" -> "some-uuid-like-string")
+      val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
+      result shouldBe Right(xmlBodyAfterTransformation)
+    }
 
-  "getBinaryObject" should {
+    "replace includedBinaryObject element in a message containing one binaryAttachment element" in new Setup {
+      val xmlBody                    = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4r02-v2-one-binary-attachment.xml")
+      val replacement                = Map("test-filename.txt" -> "some-uuid-like-string")
+      val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
+      result shouldBe Right(xmlBodyAfterTransformation)
+    }
+
+    "replace a includedBinaryObject block in a message containing two binaryAttachment elements" in new Setup {
+      val xmlBody                    = readFromFile("ie4r02-v2-two-binary-attachments.xml")
+      val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4r02-v2-two-binary-attachments.xml")
+      val replacement                = Map("test-filename.txt" -> "some-uuid-like-string", "test-filename2.txt" -> "some-different-uuid-like-string")
+      val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
+      result shouldBe Right(xmlBodyAfterTransformation)
+    }
+
+    "replace a includedBinaryObject block in a message containing one each of binaryFile and binaryAttachment elements" in new Setup {
+      val xmlBody                    = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
+      val xmlBodyAfterTransformation = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline-after-sdes.xml")
+      val replacement                = Map("filename1.pdf" -> "some-uuid-like-string", "filename2.txt" -> "some-different-uuid-like-string")
+      val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
+      result shouldBe Right(xmlBodyAfterTransformation)
+    }
+    "replace a includedBinaryObject block in a message containing one binaryFile and two binaryAttachment elements" in new Setup {
+      val xmlBody                    = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
+      val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
+      val replacement                = Map("filename1.pdf" -> "some-uuid-like-string", "filename2.txt" -> "some-different-uuid-like-string", "filename3.docx" -> "yet-another-uuid-like-string")
+      val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
+      result shouldBe Right(xmlBodyAfterTransformation)
+    }
+    "return a Left when given a UUID for an unknown filename" in new Setup {
+      val xmlBody     = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val replacement = Map("wrong-filename.pdf" -> "some-uuid-like-string")
+      val result      = replaceEmbeddedAttachments(replacement, xmlBody)
+      result shouldBe Left(Set("wrong-filename.pdf"))
+    }
+  }
+
+  "getBinaryBase64Object" should {
     "return binaryObject element value from binaryAttachment element" in new Setup {
-      val binaryAttachment = """<urn:binaryAttachment>
-                               |                  <urn:filename>?</urn:filename>
-                               |                  <urn:MIME>?</urn:MIME>
-                               |                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
-                               |                  <urn:description>?</urn:description>
-                               |               </urn:binaryAttachment>""".stripMargin
-      val xmlBody: NodeSeq = readFromString(binaryAttachment)
-      getBinaryBase64Object(xmlBody) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
+      val binaryAttachment = <urn:binaryAttachment>
+                              <urn:filename>?</urn:filename>
+                              <urn:MIME>?</urn:MIME>
+      <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                              <urn:description>?</urn:description>
+                             </urn:binaryAttachment>
+      getBinaryBase64Object(binaryAttachment) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
     }
 
     "return binaryObject element value from binaryFile element" in new Setup {
-      val binaryFile       = """<urn:binaryFile>
-                         |                  <urn:filename>filename2.txt</urn:filename>
-                         |                  <urn:MIME>text/plain</urn:MIME>
-                         |                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
-                         |                  <urn:description>A texty sort of file</urn:description>
-                         |               </urn:binaryFile>""".stripMargin
-      val xmlBody: NodeSeq = readFromString(binaryFile)
-      getBinaryBase64Object(xmlBody) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
+      val binaryFile = <urn:binaryFile>
+                                           <urn:filename>filename2.txt</urn:filename>
+                                          <urn:MIME>text/plain</urn:MIME>
+        <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                                          <urn:description>A texty sort of file</urn:description>
+                                      </urn:binaryFile>
+      getBinaryBase64Object(binaryFile) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
     }
 
     "return empty string when no binaryObject is found in SOAP message" in new Setup {
-      val binaryAttachment = """<urn:binaryAttachment>
-                               |                  <urn:filename>?</urn:filename>
-                               |                  <urn:MIME>?</urn:MIME>
-                               |                  <urn:includedBinaryObject></urn:includedBinaryObject>
-                               |                  <urn:description>?</urn:description>
-                               |               </urn:binaryAttachment>""".stripMargin
-      val xmlBody: NodeSeq = readFromString(binaryAttachment)
-      getBinaryBase64Object(xmlBody) shouldBe Some("")
+      val binaryAttachment = <urn:binaryAttachment>
+                                                 <urn:filename>?</urn:filename>
+                                                 <urn:MIME>?</urn:MIME>
+                                                 <urn:includedBinaryObject></urn:includedBinaryObject>
+                                                 <urn:description>?</urn:description>
+                                              </urn:binaryAttachment>
+      getBinaryBase64Object(binaryAttachment) shouldBe Some("")
     }
 
     "getBinaryUri" should {
       "return binaryObject URI element value when one is found in SOAP message within binaryAttachment element" in new Setup {
-        val binaryAttachment = """<urn:binaryAttachment>
-                                 |                  <urn:filename>?</urn:filename>
-                                 |                  <urn:URI>https://dummyhost.ec.eu</urn:URI>
-                                 |                  <urn:MIME>?</urn:MIME>
-                                 |                  <urn:description>?</urn:description>
-                                 |               </urn:binaryAttachment>""".stripMargin
-        val xmlBody: NodeSeq = readFromString(binaryAttachment)
-        getBinaryUri(xmlBody) shouldBe Some("https://dummyhost.ec.eu")
+        val binaryAttachment = <urn:binaryAttachment>
+                                                   <urn:filename>?</urn:filename>
+                                                   <urn:URI>https://dummyhost.ec.eu</urn:URI>
+                                                   <urn:MIME>?</urn:MIME>
+                                                   <urn:description>?</urn:description>
+                                                </urn:binaryAttachment>
+        getBinaryUri(binaryAttachment) shouldBe Some("https://dummyhost.ec.eu")
       }
 
       "return empty string when no binaryAttachment URI element is found in SOAP message" in new Setup {
-        val binaryAttachment = """<urn:binaryAttachment>
-                                 |                  <urn:filename>?</urn:filename>
-                                 |                  <urn:MIME>?</urn:MIME>
-                                 |                  <urn:includedBinaryObject></urn:includedBinaryObject>
-                                 |                  <urn:description>?</urn:description>
-                                 |               </urn:binaryAttachment>""".stripMargin
-        val xmlBody: NodeSeq = readFromString(binaryAttachment)
-        getBinaryUri(xmlBody) shouldBe None
+        val binaryAttachment = <urn:binaryAttachment>
+                                                   <urn:filename>?</urn:filename>
+                                                   <urn:MIME>?</urn:MIME>
+                                                   <urn:includedBinaryObject></urn:includedBinaryObject>
+                                                   <urn:description>?</urn:description>
+                                                </urn:binaryAttachment>
+        getBinaryUri(binaryAttachment) shouldBe None
       }
     }
   }
