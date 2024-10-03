@@ -30,7 +30,7 @@ import uk.gov.hmrc.http.test.ExternalWireMockSupport
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess, SoapRequest}
 import uk.gov.hmrc.apiplatforminboundsoap.support.ExternalServiceStub
 
-class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ExternalWireMockSupport with ExternalServiceStub {
+class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ExternalWireMockSupport with ExternalServiceStub {
   override implicit lazy val app: Application = appBuilder.build()
   implicit val hc: HeaderCarrier              = HeaderCarrier()
 
@@ -42,8 +42,8 @@ class InboundConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       )
 
   trait Setup {
-    val headers: Seq[(String, String)] = List("Authorization" -> "Bearer value")
-    val underTest: InboundConnector    = app.injector.instanceOf[InboundConnector]
+    val headers: Seq[(String, String)]               = List("Authorization" -> "Bearer value")
+    val underTest: ImportControlInboundSoapConnector = app.injector.instanceOf[ImportControlInboundSoapConnector]
   }
 
   "postMessage" should {

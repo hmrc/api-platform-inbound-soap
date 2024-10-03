@@ -33,7 +33,7 @@ import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.ImportControlInboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
@@ -47,10 +47,10 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
   }
 
   trait Setup {
-    val inboundConnectorMock: InboundConnector = mock[InboundConnector]
-    val ics2SdesServiceMock: Ics2SdesService   = mock[Ics2SdesService]
-    val bodyCaptor                             = ArgCaptor[SoapRequest]
-    val headerCaptor                           = ArgCaptor[Seq[(String, String)]]
+    val ics2SdesServiceMock: Ics2SdesService                    = mock[Ics2SdesService]
+    val inboundConnectorMock: ImportControlInboundSoapConnector = mock[ImportControlInboundSoapConnector]
+    val bodyCaptor                                              = ArgCaptor[SoapRequest]
+    val headerCaptor                                            = ArgCaptor[Seq[(String, String)]]
 
     val httpStatus: Int          = Status.OK
     val appConfigMock: AppConfig = mock[AppConfig]

@@ -26,22 +26,41 @@ import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.InboundConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.ImportControlInboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 @Singleton
-class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: InboundConnector, sdesService: Ics2SdesService)(implicit ec: ExecutionContext)
-    extends Ics2XmlHelper {
+class InboundMessageService @Inject() (
+    appConfig: AppConfig,
+    importControlInboundSoapConnector: ImportControlInboundSoapConnector,
+    sdesService: Ics2SdesService
+  )(implicit ec: ExecutionContext
+  ) extends ApplicationLogger with Ics2XmlHelper {
 
   def processInboundMessage(wholeMessage: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val forwardUrl                        = if (isTest) appConfig.testForwardMessageUrl else appConfig.forwardMessageUrl
     val newHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
     val allAttachments                    = getBinaryElementsWithEmbeddedData(wholeMessage)
     if (isFileIncluded(wholeMessage) && allAttachments.nonEmpty) {
-      sendToSdes(wholeMessage, allAttachments, forwardUrl)
+      sendToSdes(wholeMessage, allAttachments, isTest)
     } else {
-      forwardMessageOnwards(SoapRequest(wholeMessage.toString, forwardUrl), newHeaders)
+      forwardMessageOnwards(wholeMessage, newHeaders, isTest)
+    }
+  }
+
+  private def sendToSdes(wholeMessage: NodeSeq, binaryElements: NodeSeq, isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
+    sdesService.processMessage(binaryElements) flatMap {
+      sendResults: Seq[SendResult] =>
+        sendResults.find(r => r.isInstanceOf[SendFail]) match {
+          case Some(value) => successful(value)
+          case None        => processSdesResults(sendResults.asInstanceOf[Seq[SdesSuccessResult]], wholeMessage) match {
+              case Right(xml) => forwardMessageOnwards(xml, buildHeadersToAppend(wholeMessage), isTest)
+              case Left(f)    =>
+                logger.warn(s"Failed to replace all embedded attachments for files $f")
+                successful(SendFailExternal(UNPROCESSABLE_ENTITY))
+            }
+        }
     }
   }
 
@@ -55,27 +74,13 @@ class InboundMessageService @Inject() (appConfig: AppConfig, inboundConnector: I
     )
   }
 
-  private def sendToSdes(wholeMessage: NodeSeq, binaryElements: NodeSeq, forwardUrl: String)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    sdesService.processMessage(binaryElements) flatMap {
-      sendResults: Seq[SendResult] =>
-        sendResults.find(r => r.isInstanceOf[SendFail]) match {
-          case Some(value) => successful(value)
-          case None        => processSdesResults(sendResults.asInstanceOf[Seq[SdesSuccessResult]], wholeMessage) match {
-              case Right(xml) => forwardMessageOnwards(SoapRequest(xml.toString(), forwardUrl), buildHeadersToAppend(wholeMessage))
-              case Left(f)    =>
-                logger.warn(s"Failed to replace all embedded attachments for files $f")
-                successful(SendFailExternal(UNPROCESSABLE_ENTITY))
-            }
-        }
-    }
-  }
-
   private def processSdesResults(sdesResults: Seq[SdesSuccessResult], wholeMessage: NodeSeq): Either[Set[String], NodeSeq] = {
     val replacements = sdesResults.map(sr => (sr.sdesReference.forFilename, sr.sdesReference.uuid))
     replaceEmbeddedAttachments(replacements.toMap[String, String], wholeMessage)
   }
 
-  private def forwardMessageOnwards(soapRequest: SoapRequest, newHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
-    inboundConnector.postMessage(soapRequest, newHeaders)
+  private def forwardMessageOnwards(soapRequest: NodeSeq, newHeaders: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
+    val forwardUrl = if (isTest) appConfig.testForwardMessageUrl else appConfig.forwardMessageUrl
+    importControlInboundSoapConnector.postMessage(SoapRequest(soapRequest.toString(), forwardUrl), newHeaders)
   }
 }

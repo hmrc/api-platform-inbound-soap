@@ -37,7 +37,8 @@ import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
 import uk.gov.hmrc.apiplatforminboundsoap.support.ExternalServiceStub
 
-class PassThroughControllerISpec extends AnyWordSpecLike with Matchers with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
+class PassThroughControllerISpec extends AnyWordSpecLike with Matchers
+    with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
