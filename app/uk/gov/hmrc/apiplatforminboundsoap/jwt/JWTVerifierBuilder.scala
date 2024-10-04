@@ -18,9 +18,9 @@ package uk.gov.hmrc.apiplatforminboundsoap.jwt
 
 import javax.inject.{Inject, Singleton}
 
+import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
-import com.auth0.jwt.{JWT, RegisteredClaims}
 
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 
@@ -30,7 +30,7 @@ class JWTVerifierBuilder @Inject() (appConfig: AppConfig) {
   def build(): JWTVerifier = {
     JWT
       .require(Algorithm.HMAC256(appConfig.hmacSecret))
-      .withClaimPresence(RegisteredClaims.EXPIRES_AT)
+      .withIssuer(appConfig.jwtIssuer)
       .build()
   }
 }

@@ -25,6 +25,7 @@ class AppConfig @Inject() (config: Configuration) {
 
   val appName: String                = config.get[String]("appName")
   val hmacSecret: String             = config.get[String]("hmacSecret")
+  val jwtIssuer: String              = config.get[String]("jwtIssuer")
   val forwardMessageUrl: String      = config.get[String]("forwardMessageUrl")
   val forwardMessageProtocol: String = config.get[String]("forwardMessageProtocol")
   val forwardMessageHost: String     = config.get[String]("forwardMessageHost")

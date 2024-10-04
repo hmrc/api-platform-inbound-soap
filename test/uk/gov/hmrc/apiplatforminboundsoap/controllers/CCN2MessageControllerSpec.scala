@@ -44,16 +44,27 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     val incomingMessageServiceMock = mock[InboundMessageService]
     val xRequestIdHeaderValue      = randomUUID.toString()
 
-    val headers                           = Headers(
-      "Host"          -> "localhost",
-      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDc5NzcwNzd9.bgdyMvTvicf5FvAlQXN-311k0WTZg0-72wqR4hb66dQ",
-      "x-request-id"  -> xRequestIdHeaderValue,
-      "Content-Type"  -> "text/xml"
+    val commonHeaders                       = Headers(
+      "Host"         -> "localhost",
+      "x-request-id" -> xRequestIdHeaderValue,
+      "Content-Type" -> "text/xml"
     )
-    private val verifyJwtTokenAction      = app.injector.instanceOf[VerifyJwtTokenAction]
-    private val soapMessageValidateAction = app.injector.instanceOf[SoapMessageValidateAction]
-    val controller                        = new CCN2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
-    val fakeRequest                       = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headers)
+
+    val headersWithValidBearerToken         = commonHeaders.add(
+      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU"
+    )
+
+    val headersWithExpiredBearerToken       = commonHeaders.add(
+      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0MTI0MTgwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.VJSs1FfegklhoX_2d2s-uFMYhx2FpzX8pnSvQ1NpdLU"
+    )
+
+    val headersWithInvalidIssuerBearerToken = commonHeaders.add(
+      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImFueSBvbGQgY3JhcCJ9.ANiEhrg1ZDCXA5axh4G2RXpyZwGuX7_AU1V3FJdX5DU"
+    )
+    private val verifyJwtTokenAction        = app.injector.instanceOf[VerifyJwtTokenAction]
+    private val soapMessageValidateAction   = app.injector.instanceOf[SoapMessageValidateAction]
+    val controller                          = new CCN2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
+    val fakeRequest                         = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headersWithValidBearerToken)
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())
@@ -213,6 +224,22 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Element SOAP Header Action is missing", xRequestIdHeaderValue)
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+    "return 401 when bearer token is for wrong issuer" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2.xml")
+
+      val result = controller.message()(FakeRequest().withBody(requestBody).withHeaders(headersWithInvalidIssuerBearerToken))
+
+      status(result) shouldBe UNAUTHORIZED
+      verifyZeroInteractions(incomingMessageServiceMock)
+    }
+    "return 401 when bearer token is expired" in new Setup {
+      val requestBody: Elem = readFromFile("ie4r02-v2.xml")
+
+      val result = controller.message()(FakeRequest().withBody(requestBody).withHeaders(headersWithExpiredBearerToken))
+
+      status(result) shouldBe UNAUTHORIZED
       verifyZeroInteractions(incomingMessageServiceMock)
     }
   }

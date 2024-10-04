@@ -50,11 +50,14 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
 
     val xRequestIdHeaderValue = randomUUID.toString()
 
-    val headers = Headers(
+    val headers          = Headers(
       "Host"         -> "localhost",
       "x-request-id" -> xRequestIdHeaderValue,
       "Content-Type" -> "text/xml"
     )
+
+    val validBearerToken =
+      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU"
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())
@@ -114,9 +117,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
   "POST acknowledgement endpoint with valid authorisation header and COD request body" should {
     "return 200" in new Setup {
       val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(
-          "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDc5NzcwNzd9.bgdyMvTvicf5FvAlQXN-311k0WTZg0-72wqR4hb66dQ"
-        ))
+        .withHeaders(headers.add(validBearerToken))
         .withBody(codRequestBody)
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess))
@@ -131,9 +132,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
   "POST acknowledgement endpoint with valid authorisation header and COE request body" should {
     "return 200" in new Setup {
       val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(
-          "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDc5NzcwNzd9.bgdyMvTvicf5FvAlQXN-311k0WTZg0-72wqR4hb66dQ"
-        ))
+        .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess))
@@ -148,9 +147,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
   "POST acknowledgement endpoint with valid authorisation header and COE request body but outbound connector returns 500" should {
     "return 200" in new Setup {
       val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(
-          "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDc5NzcwNzd9.bgdyMvTvicf5FvAlQXN-311k0WTZg0-72wqR4hb66dQ"
-        ))
+        .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendFail(INTERNAL_SERVER_ERROR)))
