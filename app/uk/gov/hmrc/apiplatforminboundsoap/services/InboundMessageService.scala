@@ -43,19 +43,19 @@ class InboundMessageService @Inject() (
     val newHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
     val allAttachments                    = getBinaryElementsWithEmbeddedData(wholeMessage)
     if (isFileIncluded(wholeMessage) && allAttachments.nonEmpty) {
-      sendToSdes(wholeMessage, allAttachments, isTest)
+      sendToSdesThenForwardMessage(wholeMessage, allAttachments, isTest)
     } else {
-      forwardMessageOnwards(wholeMessage, newHeaders, isTest)
+      forwardMessage(wholeMessage, newHeaders, isTest)
     }
   }
 
-  private def sendToSdes(wholeMessage: NodeSeq, binaryElements: NodeSeq, isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
+  private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, binaryElements: NodeSeq, isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(binaryElements) flatMap {
       sendResults: Seq[SendResult] =>
         sendResults.find(r => r.isInstanceOf[SendFail]) match {
           case Some(value) => successful(value)
           case None        => processSdesResults(sendResults.asInstanceOf[Seq[SdesSuccessResult]], wholeMessage) match {
-              case Right(xml) => forwardMessageOnwards(xml, buildHeadersToAppend(wholeMessage), isTest)
+              case Right(xml) => forwardMessage(xml, buildHeadersToAppend(wholeMessage), isTest)
               case Left(f)    =>
                 logger.warn(s"Failed to replace all embedded attachments for files $f")
                 successful(SendFailExternal(UNPROCESSABLE_ENTITY))
@@ -79,7 +79,7 @@ class InboundMessageService @Inject() (
     replaceEmbeddedAttachments(replacements.toMap[String, String], wholeMessage)
   }
 
-  private def forwardMessageOnwards(soapRequest: NodeSeq, newHeaders: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
+  private def forwardMessage(soapRequest: NodeSeq, newHeaders: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val forwardUrl = if (isTest) appConfig.testForwardMessageUrl else appConfig.forwardMessageUrl
     importControlInboundSoapConnector.postMessage(SoapRequest(soapRequest.toString(), forwardUrl), newHeaders)
   }
