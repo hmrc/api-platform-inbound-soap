@@ -21,7 +21,7 @@
             <urn:documentIssueDate>
                <urn:DateTime>?</urn:DateTime>
             </urn:documentIssueDate>
-            <urn:MRN>?</urn:MRN>
+            <urn:MRN>7c1aa850-9760-42ab</urn:MRN>
             <urn:responsibleMemberState>
                <urn:country>?</urn:country>
             </urn:responsibleMemberState>
@@ -58,8 +58,8 @@
                </urn:binaryAttachment>
                <urn:binaryAttachment>
                   <urn:filename>filename2.txt</urn:filename>
-                  <urn:URI>http://dummy.ec.eu</urn:URI>
                   <urn:MIME>text/plain</urn:MIME>
+                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
                   <urn:description>A texty sort of file</urn:description>
                </urn:binaryAttachment>
                <!--Optional:-->

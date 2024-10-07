@@ -30,12 +30,12 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.ExternalWireMockSupport
 
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.stubs.ApiPlatformOutboundSoapStub
-import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
+import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite
-    with ExternalWireMockSupport with ApiPlatformOutboundSoapStub with XmlHelper {
+    with ExternalWireMockSupport with ApiPlatformOutboundSoapStub with Ics2XmlHelper {
   override implicit lazy val app: Application = appBuilder.build()
   implicit val hc: HeaderCarrier              = HeaderCarrier()
 
@@ -50,15 +50,14 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
 
   trait Setup {
     val underTest: ApiPlatformOutboundSoapConnector = app.injector.instanceOf[ApiPlatformOutboundSoapConnector]
+    val codRequestBody: Elem                        = readFromFile("acknowledgement-requests/cod_request.xml")
+    val expectedHeaders                             = forwardedHeaders(codRequestBody)
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())
     }
 
-    val codRequestBody: Elem = readFromFile("acknowledgement-requests/cod_request.xml")
-
     def forwardedHeaders(xmlBody: Elem) = Seq[(String, String)]("x-soap-action" -> getSoapAction(xmlBody).getOrElse(""))
-    val expectedHeaders                 = forwardedHeaders(codRequestBody)
 
   }
 
@@ -80,7 +79,7 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
 
       val result: SendResult = await(underTest.postMessage(codRequestBody))
 
-      result shouldBe SendFail(expectedStatus)
+      result shouldBe SendFailExternal(expectedStatus)
       verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2)
     }
 
@@ -91,7 +90,7 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
 
         val result: SendResult = await(underTest.postMessage(codRequestBody))
 
-        result shouldBe SendFail(INTERNAL_SERVER_ERROR)
+        result shouldBe SendFailExternal(INTERNAL_SERVER_ERROR)
       }
     }
   }

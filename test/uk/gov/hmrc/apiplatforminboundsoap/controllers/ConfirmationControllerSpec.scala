@@ -37,7 +37,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 
 class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -153,7 +153,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
         ))
         .withBody(coeRequestBody)
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendFail(INTERNAL_SERVER_ERROR)))
+      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendFailExternal(INTERNAL_SERVER_ERROR)))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR

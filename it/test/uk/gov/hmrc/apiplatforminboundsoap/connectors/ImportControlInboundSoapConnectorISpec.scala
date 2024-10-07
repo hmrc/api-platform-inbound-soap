@@ -31,7 +31,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.ExternalWireMockSupport
 
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.stubs.ApiPlatformOutboundSoapStub
 
 class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
@@ -106,7 +106,7 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
 
       val result: SendResult = await(underTest.postMessage(requestBody, headers, true))
 
-      result shouldBe SendFail(expectedStatus)
+      result shouldBe SendFailExternal(expectedStatus)
       verifyHeader(headers.head._1, headers.head._2)
     }
 
@@ -116,7 +116,7 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
 
         val result: SendResult = await(underTest.postMessage(requestBody, headers, true))
 
-        result shouldBe SendFail(INTERNAL_SERVER_ERROR)
+        result shouldBe SendFailExternal(INTERNAL_SERVER_ERROR)
         verifyHeader(headers.head._1, headers.head._2)
       }
     }

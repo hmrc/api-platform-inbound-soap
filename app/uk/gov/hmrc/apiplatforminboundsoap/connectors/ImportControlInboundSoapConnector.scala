@@ -27,7 +27,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
 
 @Singleton
 class ImportControlInboundSoapConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)(implicit ec: ExecutionContext) extends BaseConnector(httpClientV2) with Logging {
@@ -38,14 +38,14 @@ class ImportControlInboundSoapConnector @Inject() (httpClientV2: HttpClientV2, a
     postHttpRequest(soapRequest, headers, forwardUrl).map {
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode")
-        SendFail(statusCode)
-      case Right(response: HttpResponse)                    =>
+        SendFailExternal(statusCode)
+      case Right(_: HttpResponse)                           =>
         SendSuccess
     }
       .recoverWith {
         case NonFatal(e) =>
           logger.warn(s"NonFatal error ${e.getMessage} while forwarding message", e)
-          Future.successful(SendFail(Status.INTERNAL_SERVER_ERROR))
+          Future.successful(SendFailExternal(Status.INTERNAL_SERVER_ERROR))
       }
   }
 }

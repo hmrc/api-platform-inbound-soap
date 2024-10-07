@@ -61,7 +61,6 @@
                </urn:binaryAttachment>
                <urn:binaryFile>
                   <urn:URI>http://dummy.ec.eu</urn:URI>
-                  <urn:filename>filename2.txt</urn:filename>
                   <!--Optional:-->
                   <urn:MIME>text/plain</urn:MIME>
                   <!--Optional:-->

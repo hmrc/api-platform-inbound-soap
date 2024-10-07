@@ -51,14 +51,14 @@
                </urn:additionalInformation>
                <!--0 to 9 repetitions:-->
                <urn:binaryAttachment>
-                  <!--Optional:-->
-                  <urn:URI>https://dummyhost.ec.eu</urn:URI>
+                  <urn:filename>test-filename.txt</urn:filename>
                   <!--Optional:-->
                   <urn:MIME>?</urn:MIME>
                   <!--Optional:-->
+                  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                  <!--Optional:-->
                   <urn:description>?</urn:description>
                </urn:binaryAttachment>
-               <!--Optional:-->
                <urn:transportDocumentHouseLevel>
                   <urn:documentNumber>?</urn:documentNumber>
                   <urn:type>?</urn:type>

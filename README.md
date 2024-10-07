@@ -7,7 +7,8 @@ Messages can be broadly split into 3 types:
  - With embedded file: these have the embedded file removed and sent to SDES for virus scanning before forwarding to  ```import-control-inbound-proxy```
  - Everything else: forwarded on to  ```import-control-inbound-proxy```
 
-### License
+XML request bodies received at the CCN2 controller are validated by a filter to ensure that various parts of the body are present and meet expected criteria mainly related to length. 
+### Licence
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
 

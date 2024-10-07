@@ -21,13 +21,13 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 
-import play.api.Logging
 import play.api.http.Status
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
+import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 object ApiPlatformOutboundSoapConnector {
   case class Config(baseUrl: String)
@@ -35,7 +35,7 @@ object ApiPlatformOutboundSoapConnector {
 
 @Singleton
 class ApiPlatformOutboundSoapConnector @Inject() (httpClientV2: HttpClientV2, appConfig: ApiPlatformOutboundSoapConnector.Config)(implicit ec: ExecutionContext)
-    extends BaseConnector(httpClientV2) with Logging with XmlHelper {
+    extends BaseConnector(httpClientV2) with ApplicationLogger with Ics2XmlHelper {
 
   def postMessage(soapRequest: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
 
@@ -45,12 +45,12 @@ class ApiPlatformOutboundSoapConnector @Inject() (httpClientV2: HttpClientV2, ap
       case Right(_)                                         => SendSuccess
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode")
-        SendFail(statusCode)
+        SendFailExternal(statusCode)
     }
       .recoverWith {
         case NonFatal(e) =>
           logger.warn(s"NonFatal error ${e.getMessage} while forwarding message", e)
-          Future.successful(SendFail(Status.INTERNAL_SERVER_ERROR))
+          Future.successful(SendFailExternal(Status.INTERNAL_SERVER_ERROR))
       }
   }
 }
