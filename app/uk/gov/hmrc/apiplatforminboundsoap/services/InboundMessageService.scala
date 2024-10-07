@@ -25,18 +25,16 @@ import org.apache.pekko.http.scaladsl.util.FastFuture.successful
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ImportControlInboundSoapConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesSuccessResult, SendFail, SendFailExternal, SendResult}
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 @Singleton
 class InboundMessageService @Inject() (
-    appConfig: AppConfig,
     importControlInboundSoapConnector: ImportControlInboundSoapConnector,
     sdesService: Ics2SdesService
-  )(implicit ec: ExecutionContext
+  )(implicit executionContext: ExecutionContext
   ) extends ApplicationLogger with Ics2XmlHelper {
 
   def processInboundMessage(wholeMessage: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
@@ -80,7 +78,6 @@ class InboundMessageService @Inject() (
   }
 
   private def forwardMessage(soapRequest: NodeSeq, newHeaders: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val forwardUrl = if (isTest) appConfig.testForwardMessageUrl else appConfig.forwardMessageUrl
-    importControlInboundSoapConnector.postMessage(SoapRequest(soapRequest.toString(), forwardUrl), newHeaders)
+    importControlInboundSoapConnector.postMessage(soapRequest, newHeaders, isTest)
   }
 }
