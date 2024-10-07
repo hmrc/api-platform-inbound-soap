@@ -23,13 +23,12 @@ import scala.xml.NodeSeq
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ImportControlInboundSoapConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendResult, SoapRequest}
+import uk.gov.hmrc.apiplatforminboundsoap.models.SendResult
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlHelper
 
 @Singleton
-class InboundMessageService @Inject() (appConfig: AppConfig, importControlInboundSoapConnector: ImportControlInboundSoapConnector)
+class InboundMessageService @Inject() (importControlInboundSoapConnector: ImportControlInboundSoapConnector)
     extends Logging with XmlHelper {
 
   def processInboundMessage(soapRequest: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
@@ -40,8 +39,6 @@ class InboundMessageService @Inject() (appConfig: AppConfig, importControlInboun
       "x-files-included" -> isFileAttached(soapRequest).toString,
       "x-version-id"     -> getMessageVersion(soapRequest).displayName
     )
-    val forwardUrl                        = if (isTest) appConfig.testForwardMessageUrl else appConfig.forwardMessageUrl
-
-    importControlInboundSoapConnector.postMessage(SoapRequest(soapRequest.text, forwardUrl), newHeaders)
+    importControlInboundSoapConnector.postMessage(soapRequest, newHeaders, isTest)
   }
 }
