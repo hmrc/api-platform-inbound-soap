@@ -23,13 +23,18 @@ import play.api.Configuration
 @Singleton
 class AppConfig @Inject() (config: Configuration) {
 
-  val appName: String                = config.get[String]("appName")
-  val hmacSecret: String             = config.get[String]("hmacSecret")
-  val jwtIssuer: String              = config.get[String]("jwtIssuer")
-  val forwardMessageUrl: String      = config.get[String]("forwardMessageUrl")
-  val forwardMessageProtocol: String = config.get[String]("forwardMessageProtocol")
-  val forwardMessageHost: String     = config.get[String]("forwardMessageHost")
-  val forwardMessagePort: Int        = config.get[Int]("forwardMessagePort")
-  val testForwardMessageUrl: String  = config.get[String]("testForwardMessageUrl")
-  val proxyRequired: Boolean         = config.get[Boolean]("http-verbs.proxy.enabled")
+  val appName: String               = config.get[String]("appName")
+  val hmacSecret: String            = config.get[String]("hmacSecret")
+  val ics2SdesSrn: String           = config.get[String]("ics2SdesSrn")
+  val ics2SdesInfoType: String      = config.get[String]("ics2SdesInfoType")
+  val crdlSdesSrn: String           = config.get[String]("crdlSdesSrn")
+  val crdlSdesInfoType: String      = config.get[String]("crdlSdesInfoType")
+  val forwardMessageUrl: String     = config.get[String]("forwardMessageUrl")
+  val sdesUrl: String               = config.get[String]("sdesUrl")
+  val passThroughProtocol: String   = config.get[String]("passThroughProtocol")
+  val passThroughHost: String       = config.get[String]("passThroughHost")
+  val passThroughPort: Int          = config.get[Int]("passThroughPort")
+  val jwtIssuer: String             = config.get[String]("jwtIssuer")
+  val testForwardMessageUrl: String = config.get[String]("testForwardMessageUrl")
+  val proxyRequired: Boolean        = config.get[Boolean]("http-verbs.proxy.enabled")
 }

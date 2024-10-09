@@ -16,6 +16,10 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
+import java.util.UUID.randomUUID
+import scala.io.Source
+import scala.xml.{Elem, XML}
+
 import com.github.tomakehurst.wiremock.http.Fault
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -27,66 +31,102 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.ExternalWireMockSupport
 
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendResult, SendSuccess, SoapRequest}
-import uk.gov.hmrc.apiplatforminboundsoap.support.ExternalServiceStub
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.stubs.ApiPlatformOutboundSoapStub
 
-class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ExternalWireMockSupport with ExternalServiceStub {
+class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
+    with GuiceOneAppPerSuite with ExternalWireMockSupport with ApiPlatformOutboundSoapStub {
   override implicit lazy val app: Application = appBuilder.build()
   implicit val hc: HeaderCarrier              = HeaderCarrier()
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "metrics.enabled"  -> false,
-        "auditing.enabled" -> false
+        "metrics.enabled"       -> false,
+        "auditing.enabled"      -> false,
+        "forwardMessageUrl"     -> externalWireMockUrl,
+        "testForwardMessageUrl" -> externalWireMockUrl
       )
 
   trait Setup {
     val headers: Seq[(String, String)]               = List("Authorization" -> "Bearer value")
     val underTest: ImportControlInboundSoapConnector = app.injector.instanceOf[ImportControlInboundSoapConnector]
+
+    def readFromFile(fileName: String) = {
+      XML.load(Source.fromResource(fileName).bufferedReader())
+    }
+
+    private def getExpectedSoapFault(statusCode: Int, reason: String, requestId: String) = {
+      s"""<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+         |    <soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
+         |    <soap:Body>
+         |        <soap:Fault>
+         |            <soap:Code>
+         |                <soap:Value>soap:$statusCode</soap:Value>
+         |            </soap:Code>
+         |            <soap:Reason>
+         |                <soap:Text xml:lang="en">$reason</soap:Text>
+         |            </soap:Reason>
+         |            <soap:Node>public-soap-proxy</soap:Node>
+         |            <soap:Detail>
+         |                <RequestId>$requestId</RequestId>
+         |            </soap:Detail>
+         |        </soap:Fault>
+         |    </soap:Body>
+         |</soap:Envelope>""".stripMargin
+    }
+
+    val requestBody: Elem     = readFromFile("ie4r02-v2.xml")
+    val xRequestIdHeaderValue = randomUUID.toString()
+
+    val faultResponse = getExpectedSoapFault(
+      400,
+      "Value of element referralRequestReference is too long\nValue of element MIME is too long",
+      xRequestIdHeaderValue
+    )
+
   }
 
   "postMessage" should {
-    val message = SoapRequest("<Envelope><Body>foobar</Body></Envelope>", externalWireMockUrl)
 
     "return successful statuses returned by the internal service" in new Setup {
       val expectedStatus: Int = OK
-      primeStubForSuccess(message.soapEnvelope, expectedStatus)
+      primeStubForSuccess(requestBody, expectedStatus)
 
-      val result: SendResult = await(underTest.postMessage(message, headers))
+      val result: SendResult = await(underTest.postMessage(requestBody, headers, true))
 
       result shouldBe SendSuccess
-      verifyRequestBody(message.soapEnvelope)
+      verifyRequestBody(requestBody)
       verifyHeader(headers.head._1, headers.head._2)
     }
 
     "return error statuses returned by the internal service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
-      primeStubForSuccess(message.soapEnvelope, expectedStatus)
+      primeStubForSuccess(requestBody, expectedStatus)
 
-      val result: SendResult = await(underTest.postMessage(message, headers))
+      val result: SendResult = await(underTest.postMessage(requestBody, headers, true))
 
-      result shouldBe SendFail(expectedStatus)
+      result shouldBe SendFailExternal(expectedStatus)
       verifyHeader(headers.head._1, headers.head._2)
     }
 
     "return error status when soap fault is returned by the internal service" in new Setup {
       Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
-        primeStubForFault(message.soapEnvelope, fault)
+        primeStubForFault(requestBody, faultResponse, fault)
 
-        val result: SendResult = await(underTest.postMessage(message, headers))
+        val result: SendResult = await(underTest.postMessage(requestBody, headers, true))
 
-        result shouldBe SendFail(INTERNAL_SERVER_ERROR)
+        result shouldBe SendFailExternal(INTERNAL_SERVER_ERROR)
         verifyHeader(headers.head._1, headers.head._2)
       }
     }
 
     "send the given message to the internal service" in new Setup {
-      primeStubForSuccess(message.soapEnvelope, OK)
+      primeStubForSuccess(requestBody, OK)
 
-      await(underTest.postMessage(message, headers))
+      await(underTest.postMessage(requestBody, headers, true))
 
-      verifyRequestBody(message.soapEnvelope)
+      verifyRequestBody(requestBody)
       verifyHeader(headers.head._1, headers.head._2)
     }
   }

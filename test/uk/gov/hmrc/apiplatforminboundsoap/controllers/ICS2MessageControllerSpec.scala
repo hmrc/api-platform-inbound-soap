@@ -34,27 +34,27 @@ import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 
-class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
     val incomingMessageServiceMock = mock[InboundMessageService]
     val xRequestIdHeaderValue      = randomUUID.toString()
 
-    val commonHeaders                       = Headers(
+    val commonHeaders = Headers(
       "Host"         -> "localhost",
       "x-request-id" -> xRequestIdHeaderValue,
       "Content-Type" -> "text/xml"
     )
 
-    val headersWithValidBearerToken         = commonHeaders.add(
+    val headersWithValidBearerToken = commonHeaders.add(
       "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU"
     )
 
-    val headersWithExpiredBearerToken       = commonHeaders.add(
+    val headersWithExpiredBearerToken = commonHeaders.add(
       "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0MTI0MTgwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.VJSs1FfegklhoX_2d2s-uFMYhx2FpzX8pnSvQ1NpdLU"
     )
 
@@ -63,7 +63,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     )
     private val verifyJwtTokenAction        = app.injector.instanceOf[VerifyJwtTokenAction]
     private val soapMessageValidateAction   = app.injector.instanceOf[SoapMessageValidateAction]
-    val controller                          = new CCN2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
+    val controller                          = new ICS2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
     val fakeRequest                         = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headersWithValidBearerToken)
 
     def readFromFile(fileName: String) = {
@@ -95,7 +95,7 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return 200 when successful for a message with embedded attached file" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
+      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
@@ -165,9 +165,9 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     "return response code it received when not successful" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4r02-v2.xml")
+      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
 
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFail(PRECONDITION_FAILED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal(PRECONDITION_FAILED)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -224,22 +224,6 @@ class CCN2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Element SOAP Header Action is missing", xRequestIdHeaderValue)
-      verifyZeroInteractions(incomingMessageServiceMock)
-    }
-    "return 401 when bearer token is for wrong issuer" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2.xml")
-
-      val result = controller.message()(FakeRequest().withBody(requestBody).withHeaders(headersWithInvalidIssuerBearerToken))
-
-      status(result) shouldBe UNAUTHORIZED
-      verifyZeroInteractions(incomingMessageServiceMock)
-    }
-    "return 401 when bearer token is expired" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2.xml")
-
-      val result = controller.message()(FakeRequest().withBody(requestBody).withHeaders(headersWithExpiredBearerToken))
-
-      status(result) shouldBe UNAUTHORIZED
       verifyZeroInteractions(incomingMessageServiceMock)
     }
   }

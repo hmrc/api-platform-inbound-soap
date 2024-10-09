@@ -16,11 +16,13 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
-import scala.xml.{Node, NodeSeq}
+import scala.xml.transform.{RewriteRule, RuleTransformer}
+import scala.xml.{Elem, Node, NodeSeq, Text}
 
 import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
-trait XmlHelper {
+trait Ics2XmlHelper extends ApplicationLogger {
 
   def getMessageVersion(soapMessage: NodeSeq): SoapMessageVersion = {
     def getVersionTwoNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
@@ -51,8 +53,19 @@ trait XmlHelper {
     if (messageId.isEmpty) None else Some(messageId.text)
   }
 
-  def isFileAttached(soapMessage: NodeSeq): Boolean = {
+  def isFileIncluded(soapMessage: NodeSeq): Boolean = {
     getBinaryAttachment(soapMessage).nonEmpty || getBinaryFile(soapMessage).nonEmpty
+  }
+
+  def getBinaryElementsWithEmbeddedData(soapMessage: NodeSeq): NodeSeq = {
+    def notContainsUrl(nodeSeq: NodeSeq) = {
+      (nodeSeq \\ "URI").isEmpty
+    }
+    getBinaryElements(soapMessage) takeWhile (notContainsUrl(_))
+  }
+
+  def getBinaryElements(soapMessage: NodeSeq): NodeSeq = {
+    getBinaryAttachment(soapMessage) ++ getBinaryFile(soapMessage)
   }
 
   private def getBinaryAttachment(soapMessage: NodeSeq): NodeSeq = {
@@ -63,12 +76,8 @@ trait XmlHelper {
     soapMessage \\ "binaryFile"
   }
 
-  def getBinaryElements(soapMessage: NodeSeq): NodeSeq = {
-    getBinaryAttachment(soapMessage) ++ getBinaryFile(soapMessage)
-  }
-
   def getBinaryFilename(binaryBlock: NodeSeq): Option[String] = {
-    val filename = (binaryBlock \\ "filename")
+    val filename = binaryBlock \\ "filename"
     if (filename.isEmpty) None else Some(filename.text)
   }
 
@@ -90,6 +99,41 @@ trait XmlHelper {
   def getBinaryBase64Object(binaryBlock: NodeSeq): Option[String] = {
     val includedBinaryObject = binaryBlock \\ "includedBinaryObject"
     if (includedBinaryObject.isEmpty) None else Some(includedBinaryObject.text)
+  }
+
+  def replaceEmbeddedAttachments(replacement: Map[String, String], completeXML: NodeSeq): Either[Set[String], NodeSeq] = {
+    object replaceIncludedBinaryObject extends RewriteRule {
+      override def transform(n: Node): Seq[Node] =
+        n match {
+          case e: Elem if e.label == "binaryFile" || e.label == "binaryAttachment" =>
+            val filename = (n \\ "filename").text
+            replacement.get(filename) match {
+              case Some(uuid) => replaceBinaryBase64Object(n, uuid)
+              case None       =>
+                logger.warn(s"Found a filename [$filename] for which we have no UUID to replace its body")
+                n
+            }
+          case _                                                                   =>
+            n
+        }
+    }
+    object transform                   extends RuleTransformer(replaceIncludedBinaryObject)
+    val transformed = transform(completeXML.asInstanceOf[Elem])
+    if (transformed == completeXML) Left(replacement.keySet) else Right(transformed)
+  }
+
+  private def replaceBinaryBase64Object(binaryBlock: NodeSeq, replacement: String): NodeSeq = {
+    object replaceIncludedBinaryObject extends RewriteRule {
+      override def transform(n: Node): Seq[Node] =
+        n match {
+          case Elem(_, "includedBinaryObject", _, _, _*) =>
+            n.asInstanceOf[Elem].copy(child = List(Text(replacement)))
+          case _                                         =>
+            n
+        }
+    }
+    object transform                   extends RuleTransformer(replaceIncludedBinaryObject)
+    transform(binaryBlock.asInstanceOf[Node])
   }
 
   def getBinaryUri(binaryBlock: NodeSeq): Option[String] = {
