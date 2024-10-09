@@ -34,6 +34,7 @@ class AppConfig @Inject() (config: Configuration) {
   val passThroughProtocol: String   = config.get[String]("passThroughProtocol")
   val passThroughHost: String       = config.get[String]("passThroughHost")
   val passThroughPort: Int          = config.get[Int]("passThroughPort")
+  val jwtIssuer: String             = config.get[String]("jwtIssuer")
   val testForwardMessageUrl: String = config.get[String]("testForwardMessageUrl")
   val proxyRequired: Boolean        = config.get[Boolean]("http-verbs.proxy.enabled")
 }
