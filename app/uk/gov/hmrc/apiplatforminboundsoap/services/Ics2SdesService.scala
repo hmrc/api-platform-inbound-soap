@@ -60,32 +60,46 @@ class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnec
         case (_, None)                                     => Left(InvalidFormatResult("Argument includedBinaryObject was not found in XML"))
       }
     }
+    val filterEmpty: PartialFunction[(String, Option[String]), (String, String)]             = {
+      case v if v._2.nonEmpty => (v._1, v._2.get)
+    }
     def buildMetadata(soapRequest: NodeSeq, attachmentElement: NodeSeq): Map[String, String] = {
+      val fileName = getBinaryFilename(attachmentElement)
+
+      Map(
+        "srn"             -> Some(appConfig.ics2SdesSrn),
+        "informationType" -> Some(appConfig.ics2SdesInfoType),
+        "filename"        -> fileName
+      ).collect(filterEmpty)
+    }
+
+    def buildMetadataProperties(soapRequest: NodeSeq, attachmentElement: NodeSeq): Map[String, String] = {
+
       val description              = getBinaryDescription(attachmentElement)
       val mimeType                 = getBinaryMimeType(attachmentElement)
-      val fileName                 = getBinaryFilename(attachmentElement)
+      val messageId                = getMessageId(soapRequest)
       val referralRequestReference = getReferralRequestReference(soapRequest)
       val mrn                      = getMRN(soapRequest)
       val lrn                      = getLRN(soapRequest)
 
-      val filterEmpty: PartialFunction[(String, Option[String]), (String, String)] = {
-        case v if v._2.nonEmpty => (v._1, v._2.get)
-      }
       Map(
-        "srn"                      -> Some(appConfig.ics2SdesSrn),
-        "informationType"          -> Some(appConfig.ics2SdesInfoType),
-        "filename"                 -> fileName,
+        "referralRequestReference" -> referralRequestReference,
+        "messageId"                -> messageId,
         "description"              -> description,
         "fileMIME"                 -> mimeType,
         "MRN"                      -> mrn,
-        "LRN"                      -> lrn,
-        "referralRequestReference" -> referralRequestReference
+        "LRN"                      -> lrn
       ).collect(filterEmpty)
     }
 
     getAttachment(attachmentElement) match {
       case Right(attachment) =>
-        Right(SdesRequest(body = attachment, headers = Seq.empty, metadata = buildMetadata(soapRequest, attachmentElement)))
+        Right(SdesRequest(
+          body = attachment,
+          headers = Seq.empty,
+          metadata = buildMetadata(soapRequest, attachmentElement),
+          metadataProperties = buildMetadataProperties(soapRequest, attachmentElement)
+        ))
       case Left(result)      => Left(result)
     }
   }
