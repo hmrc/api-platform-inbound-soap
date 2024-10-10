@@ -34,7 +34,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 class InboundMessageService @Inject() (
     importControlInboundSoapConnector: ImportControlInboundSoapConnector,
     sdesService: Ics2SdesService
-  )(implicit executionContext: ExecutionContext
+  )(implicit ec: ExecutionContext
   ) extends ApplicationLogger with Ics2XmlHelper {
 
   def processInboundMessage(wholeMessage: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
