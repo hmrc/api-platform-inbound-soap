@@ -45,12 +45,11 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       )
 
   trait Setup {
-    val defaultHeaders: Seq[(String, String)] = Seq("Content-Type" -> "application/octet-stream", "User-Agent" -> "public-soap-proxy")
     val underTest: SdesConnector              = app.injector.instanceOf[SdesConnector]
+    val defaultHeaders: Seq[(String, String)] = underTest.requiredHeaders
     val base64EncodedString: String           = Base64.getEncoder.encodeToString(Array[Byte]('a', 'b', 'c'))
     val responseBody: String                  = UUID.randomUUID().toString
-    val simpleSdesRequest                     = SdesRequest(headers = List(), metadata = Map(), body = base64EncodedString)
-
+    val simpleSdesRequest                     = SdesRequest(headers = List(), metadata = Map.empty, body = base64EncodedString, metadataProperties = Map.empty)
   }
 
   "postMessage" should {
@@ -68,7 +67,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
     "send any additional headers" in new Setup {
       val additionalHeaders   = List("x-request-id" -> "abcdefgh1234567890", "any-old-header-name" -> "any-old-header-value")
-      val sdesRequest         = SdesRequest(headers = additionalHeaders, metadata = Map(), body = base64EncodedString)
+      val sdesRequest         = SdesRequest(headers = additionalHeaders, metadata = Map.empty, body = base64EncodedString, metadataProperties = Map.empty)
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus)
 
@@ -82,7 +81,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
     "send the metadata header" in new Setup {
       val additionalHeaders   = List("x-request-id" -> "abcdefgh1234567890", "any-old-header-name" -> "any-old-header-value")
       val sdesRequest         =
-        SdesRequest(headers = additionalHeaders, metadata = Map("foo" -> "bar", "humpty" -> "dumpty"), body = base64EncodedString)
+        SdesRequest(headers = additionalHeaders, metadata = Map("foo" -> "bar", "humpty" -> "dumpty"), body = base64EncodedString, metadataProperties = Map.empty)
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus)
 
@@ -92,6 +91,27 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       verifyRequestBody(simpleSdesRequest.body)
 
       verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders ++ List("Metadata" -> """{"metadata":{"foo":"bar","humpty":"dumpty"}}"""))
+    }
+
+    "send the metadata header with properties" in new Setup {
+      val additionalHeaders          = List("x-request-id" -> "abcdefgh1234567890", "any-old-header-name" -> "any-old-header-value")
+      val expectedMetadataProperties = Map(
+        "prop1" -> "value1",
+        "prop2" -> "value2"
+      )
+      val sdesRequest                =
+        SdesRequest(headers = additionalHeaders, metadata = Map("foo" -> "bar", "humpty" -> "dumpty"), body = base64EncodedString, metadataProperties = expectedMetadataProperties)
+      val expectedStatus: Int        = OK
+      primeStubForSuccess(responseBody, expectedStatus)
+
+      val result: SendResult = await(underTest.postMessage(sdesRequest))
+
+      result shouldBe SdesSuccess(responseBody)
+      verifyRequestBody(simpleSdesRequest.body)
+
+      verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders ++ List(
+        "Metadata" -> """{"metadata":{"foo":"bar","humpty":"dumpty","properties":[{"name":"prop1","value":"value1"},{"name":"prop2","value":"value2"}]}}"""
+      ))
     }
 
     "return error statuses returned by SDES" in new Setup {
