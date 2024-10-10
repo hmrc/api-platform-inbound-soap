@@ -59,10 +59,10 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)
       .execute[Either[UpstreamErrorResponse, HttpResponse]]
   }
 
-  private def constructMetadataHeader(metadata: Map[String, String], metadataProperties: Map[String, String]) = {
+  private def constructMetadataHeader(metadata: Map[String, String], metadataProperties: Map[String, String]): String = {
     val mp: List[JsObject] = metadataProperties.map(k => Json.obj("name" -> k._1, "value" -> k._2)).toList
 
-    val built = {
+    val metadataAsJson = {
       val builder = Json.newBuilder
       for ((k, v) <- metadata) builder ++= Seq(k -> JsString(v))
       if (mp.isEmpty) {
@@ -71,6 +71,6 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)
         builder += "properties" -> mp
       }
     }
-    Json.toJson(Json.obj("metadata" -> built.result())).toString()
+    Json.toJson(Json.obj("metadata" -> metadataAsJson.result())).toString()
   }
 }
