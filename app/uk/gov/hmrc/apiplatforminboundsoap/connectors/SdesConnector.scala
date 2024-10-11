@@ -18,14 +18,13 @@ package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
 import java.net.URL
 import javax.inject.{Inject, Singleton}
-import scala.collection.immutable.List
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 import play.api.Logging
 import play.api.http.Status
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, JsString, Json}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
@@ -53,14 +52,25 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)
   }
 
   private def postHttpRequest(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
-    val combinedHeaders = sdesRequest.headers ++ List("Metadata" -> constructMetadataHeader(sdesRequest.metadata))
+    val combinedHeaders = sdesRequest.headers ++ List("Metadata" -> constructMetadataHeader(sdesRequest.metadata, sdesRequest.metadataProperties))
     httpClientV2.post(new URL(appConfig.sdesUrl)).setHeader(requiredHeaders: _*)
       .withBody(sdesRequest.body)
       .transform(_.addHttpHeaders(combinedHeaders: _*))
       .execute[Either[UpstreamErrorResponse, HttpResponse]]
   }
 
-  private def constructMetadataHeader(metadata: Map[String, String]) = {
-    Json.toJson(Json.obj("metadata" -> Json.toJson(metadata))).toString()
+  private def constructMetadataHeader(metadata: Map[String, String], metadataProperties: Map[String, String]): String = {
+    val mp: List[JsObject] = metadataProperties.map(k => Json.obj("name" -> k._1, "value" -> k._2)).toList
+
+    val metadataAsJson = {
+      val builder = Json.newBuilder
+      for ((k, v) <- metadata) builder ++= Seq(k -> JsString(v))
+      if (mp.isEmpty) {
+        builder
+      } else {
+        builder += "properties" -> mp
+      }
+    }
+    Json.toJson(Json.obj("metadata" -> metadataAsJson.result())).toString()
   }
 }

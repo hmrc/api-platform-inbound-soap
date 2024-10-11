@@ -71,19 +71,21 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
   "processMessage" should {
 
     "return success when connector returns success" in new Setup {
-      val expectedSdesUuid      = UUID.randomUUID().toString
-      val xmlBody: Elem         = readFromFile("ie4s03-v2.xml")
-      val expectedMetadata      = Map(
+      val expectedSdesUuid           = UUID.randomUUID().toString
+      val xmlBody: Elem              = readFromFile("ie4s03-v2.xml")
+      val expectedMetadata           = Map(
         "srn"             -> sdesICS2SRN,
         "informationType" -> sdesICS2InfoType,
-        "filename"        -> "test-filename.txt",
-        "fileMIME"        -> "application/pdf",
-        "description"     -> "a file made up for unit testing",
-        "MRN"             -> "7c1aa850-9760-42ab-bebe-709e3a4a888f"
+        "filename"        -> "test-filename.txt"
       )
-      val expectedBody          = "cid:1177341525550"
-      val expectedSdesRequest   = SdesRequest(Seq.empty, expectedMetadata, expectedBody)
-      val expectedServiceResult = SdesSuccessResult(SdesReference(uuid = expectedSdesUuid, forFilename = "test-filename.txt"))
+      val expectedMetadataProperties = Map(
+        ("fileMIME"    -> "application/pdf"),
+        ("description" -> "a file made up for unit testing"),
+        ("MRN"         -> "7c1aa850-9760-42ab-bebe-709e3a4a888f")
+      )
+      val expectedBody               = "cid:1177341525550"
+      val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, expectedBody)
+      val expectedServiceResult      = SdesSuccessResult(SdesReference(uuid = expectedSdesUuid, forFilename = "test-filename.txt"))
 
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
 
@@ -95,32 +97,38 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     }
 
     "make two requests to SDES when XML message contains two binaryAttachment elements" in new Setup {
-      val expectedSdesUuidForFirstCall  = UUID.randomUUID().toString
-      val expectedFilenameForFirstCall  = "filename1.pdf"
-      val expectedSdesUuidForSecondCall = UUID.randomUUID().toString
-      val expectedFilenameForSecondCall = "filename2.txt"
-      val xmlBody: Elem                 = readFromFile("uriAndBinaryObject/ie4r02-v2-two-binaryAttachments-with-included-elements.xml")
-      val expectedFirstRequestMetadata  = Map(
+      val expectedSdesUuidForFirstCall            = UUID.randomUUID().toString
+      val expectedFilenameForFirstCall            = "filename1.pdf"
+      val expectedSdesUuidForSecondCall           = UUID.randomUUID().toString
+      val expectedFilenameForSecondCall           = "filename2.txt"
+      val xmlBody: Elem                           = readFromFile("uriAndBinaryObject/ie4r02-v2-two-binaryAttachments-with-included-elements.xml")
+      val expectedFirstRequestMetadata            = Map(
+        "informationType" -> sdesICS2InfoType,
+        "filename"        -> "filename1.pdf",
+        "srn"             -> sdesICS2SRN
+      )
+      val expectedSecondRequestMetadata           = Map(
+        "srn"             -> sdesICS2SRN,
+        "informationType" -> sdesICS2InfoType,
+        "filename"        -> "filename2.txt"
+      )
+      val expectedFirstRequestMetadataProperties  = Map(
+        "messageId"                -> "ad7f2ad2d4f5-4606-99a0-0dd4e52be116",
         "description"              -> "A PDFy sort of file",
-        "informationType"          -> sdesICS2InfoType,
-        "filename"                 -> "filename1.pdf",
         "fileMIME"                 -> "application/pdf",
         "MRN"                      -> "7c1aa850-9760-42ab",
-        "referralRequestReference" -> "d4af29b4-d1d7-4f42-a186-ca5a71fabeb",
-        "srn"                      -> sdesICS2SRN
+        "referralRequestReference" -> "d4af29b4-d1d7-4f42-a186-ca5a71fabeb"
       )
-      val expectedSecondRequestMetadata = Map(
-        "srn"                      -> sdesICS2SRN,
-        "informationType"          -> sdesICS2InfoType,
-        "filename"                 -> "filename2.txt",
-        "fileMIME"                 -> "text/plain",
+      val expectedSecondRequestMetadataProperties = Map(
+        "messageId"                -> "ad7f2ad2d4f5-4606-99a0-0dd4e52be116",
         "description"              -> "A texty sort of file",
-        "referralRequestReference" -> "d4af29b4-d1d7-4f42-a186-ca5a71fabeb",
-        "MRN"                      -> "7c1aa850-9760-42ab"
+        "fileMIME"                 -> "text/plain",
+        "MRN"                      -> "7c1aa850-9760-42ab",
+        "referralRequestReference" -> "d4af29b4-d1d7-4f42-a186-ca5a71fabeb"
       )
-      val expectedBody                  = "dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo="
-      val expectedFirstSdesRequest      = SdesRequest(Seq.empty, expectedFirstRequestMetadata, expectedBody)
-      val expectedSecondSdesRequest     = SdesRequest(Seq.empty, expectedSecondRequestMetadata, expectedBody)
+      val expectedBody                            = "dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo="
+      val expectedFirstSdesRequest                = SdesRequest(Seq.empty, expectedFirstRequestMetadata, expectedFirstRequestMetadataProperties, expectedBody)
+      val expectedSecondSdesRequest               = SdesRequest(Seq.empty, expectedSecondRequestMetadata, expectedSecondRequestMetadataProperties, expectedBody)
 
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuidForFirstCall)))
         .andThen(successful(SdesSuccess(expectedSdesUuidForSecondCall)))

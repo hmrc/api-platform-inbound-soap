@@ -50,7 +50,9 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     val ics2SdesServiceMock: Ics2SdesService                    = mock[Ics2SdesService]
     val inboundConnectorMock: ImportControlInboundSoapConnector = mock[ImportControlInboundSoapConnector]
     val bodyCaptor                                              = ArgCaptor[NodeSeq]
+    val sdesRequestBodyCaptor                                   = ArgCaptor[NodeSeq]
     val headerCaptor                                            = ArgCaptor[Seq[(String, String)]]
+    val sdesRequestHeaderCaptor                                 = ArgCaptor[Seq[(String, String)]]
     val isTestCaptor                                            = ArgCaptor[Boolean]
 
     val httpStatus: Int          = Status.OK
@@ -94,7 +96,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       )
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess))
-      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("test-filename.txt", "some-uuid-like-string")))))
+      when(ics2SdesServiceMock.processMessage(sdesRequestBodyCaptor)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("test-filename.txt", "some-uuid-like-string")))))
 
       val result = await(service.processInboundMessage(xmlBody))
 

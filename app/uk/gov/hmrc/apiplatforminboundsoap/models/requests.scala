@@ -16,4 +16,4 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.models
 
-case class SdesRequest(headers: Seq[(String, String)], metadata: Map[String, String], body: String)
+case class SdesRequest(headers: Seq[(String, String)], metadata: Map[String, String], metadataProperties: Map[String, String], body: String)
