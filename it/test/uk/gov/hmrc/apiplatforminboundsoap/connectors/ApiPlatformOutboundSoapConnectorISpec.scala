@@ -52,6 +52,7 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
     val underTest: ApiPlatformOutboundSoapConnector = app.injector.instanceOf[ApiPlatformOutboundSoapConnector]
     val codRequestBody: Elem                        = readFromFile("acknowledgement-requests/cod_request.xml")
     val expectedHeaders                             = forwardedHeaders(codRequestBody)
+    val acknowledgementPath                         = "/acknowledgement"
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())
@@ -64,29 +65,29 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
   "postMessage" should {
 
     "return success status (for COD) when returned by the outbound soap service" in new Setup {
-      primeStubForSuccess(codRequestBody, OK)
+      primeStubForSuccess(codRequestBody, OK, path = acknowledgementPath)
 
       val result: SendResult = await(underTest.postMessage(codRequestBody))
 
       result shouldBe SendSuccess
-      verifyRequestBody(codRequestBody)
-      verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2)
+      verifyRequestBody(codRequestBody, path = acknowledgementPath)
+      verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2, path = acknowledgementPath)
     }
 
     "return error status returned by the outbound soap service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
-      primeStubForSuccess(codRequestBody, expectedStatus)
+      primeStubForSuccess(codRequestBody, expectedStatus, path = acknowledgementPath)
 
       val result: SendResult = await(underTest.postMessage(codRequestBody))
 
       result shouldBe SendFailExternal(expectedStatus)
-      verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2)
+      verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2, path = acknowledgementPath)
     }
 
     "return error status when soap fault is returned by the outbound soap service" in new Setup {
       val responseBody = "<Envelope><Body>foobar</Body></Envelope>"
       Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
-        primeStubForFault(codRequestBody, responseBody, fault)
+        primeStubForFault(codRequestBody, responseBody, fault, path = acknowledgementPath)
 
         val result: SendResult = await(underTest.postMessage(codRequestBody))
 
