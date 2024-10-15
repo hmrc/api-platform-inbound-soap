@@ -39,8 +39,8 @@ class ICS2MessageController @Inject() (
   def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
     implicit request =>
       incomingMessageService.processInboundMessage(request.body) flatMap {
-        case SendSuccess              =>
-          Future.successful(Ok.as("application/soap+xml"))
+        case SendSuccess(status)      =>
+          Future.successful(Status(status).as("application/soap+xml"))
         case SendFailExternal(status) =>
           Future.successful(new Status(status).as("application/soap+xml"))
       }
