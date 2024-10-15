@@ -61,7 +61,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       new Ics2SdesService(appConfigMock, sdesConnectorMock)
 
     val sdesUrl = "SDES url"
-    val ics2    = Ics2(srn = "ICS2 SRN", informationType = "ICS2 info type")
+    val ics2    = Ics2(srn = "ICS2 SRN", informationType = "ICS2 info type", uploadPath = "/upload-attachment")
     when(appConfigMock.baseUrl).thenReturn(sdesUrl)
     when(appConfigMock.ics2).thenReturn(ics2)
   }

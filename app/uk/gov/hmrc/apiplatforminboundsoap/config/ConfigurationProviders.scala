@@ -56,7 +56,8 @@ class SdesConnectorConfigProvider @Inject() (val configuration: Configuration)
     val url  = baseUrl("secure-data-exchange-proxy")
     val ics2 = Ics2(
       srn = getConfString("secure-data-exchange-proxy.ics2.srn", "ICS2-SRN-MISSING"),
-      informationType = getConfString("secure-data-exchange-proxy.ics2.informationType", "ICS2-INFO-TYPE-MISSING")
+      informationType = getConfString("secure-data-exchange-proxy.ics2.informationType", "ICS2-INFO-TYPE-MISSING"),
+      uploadPath = getConfString("secure-data-exchange-proxy.ics2.uploadPath", "/upload-attachment")
     )
     SdesConnector.Config(url, ics2)
   }

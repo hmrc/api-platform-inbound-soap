@@ -51,7 +51,7 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
   }
 
   private def buildSdesRequest(wholeMessage: NodeSeq, attachmentElement: NodeSeq) = {
-    def getAttachment(soapRequest: NodeSeq)                                                  = {
+    def getAttachment(soapRequest: NodeSeq)                                      = {
       (getBinaryFilename(attachmentElement), getBinaryBase64Object(soapRequest)) match {
         case (Some(filename), Some(_)) if filename.isEmpty => Left(InvalidFormatResult("Argument filename found in XML but is empty"))
         case (Some(_), Some(binaryAttachment))             => Right(binaryAttachment)
@@ -59,10 +59,10 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
         case (_, None)                                     => Left(InvalidFormatResult("Argument includedBinaryObject was not found in XML"))
       }
     }
-    val filterEmpty: PartialFunction[(String, Option[String]), (String, String)]             = {
+    val filterEmpty: PartialFunction[(String, Option[String]), (String, String)] = {
       case v if v._2.nonEmpty => (v._1, v._2.get)
     }
-    def buildMetadata(attachmentElement: NodeSeq): Map[String, String] = {
+    def buildMetadata(attachmentElement: NodeSeq): Map[String, String]           = {
       val fileName = getBinaryFilename(attachmentElement)
 
       Map(
@@ -81,7 +81,7 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
       val mrn                      = getMRN(wholeMessage)
       val lrn                      = getLRN(wholeMessage)
 
-      val outcome      = Map(
+      Map(
         "referralRequestReference" -> referralRequestReference,
         "messageId"                -> messageId,
         "description"              -> description,
@@ -89,7 +89,6 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
         "MRN"                      -> mrn,
         "LRN"                      -> lrn
       ).collect(filterEmpty)
-      outcome
     }
 
     getAttachment(attachmentElement) match {
