@@ -87,7 +87,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
   }
 
   "POST test message endpoint " should {
-    "return 202 when successful for a message with embedded attached file" in new Setup {
+    "return 200 when successful for a message with embedded attached file" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
@@ -95,7 +95,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
-      status(result) shouldBe ACCEPTED
+      status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured true
