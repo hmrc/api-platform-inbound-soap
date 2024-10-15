@@ -42,7 +42,7 @@ class ApiPlatformOutboundSoapConnector @Inject() (httpClientV2: HttpClientV2, ap
     val newHeaders: Seq[(String, String)] = List("x-soap-action" -> getSoapAction(soapRequest).getOrElse(""))
 
     postHttpRequest(soapRequest, newHeaders, s"${appConfig.baseUrl}/acknowledgement").map {
-      case Right(_)                                         => SendSuccess
+      case Right(response)                                  => SendSuccess(response.status)
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode")
         SendFailExternal(statusCode)

@@ -120,7 +120,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
         .withHeaders(headers.add(validBearerToken))
         .withBody(codRequestBody)
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess))
+      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK
@@ -135,7 +135,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess))
+      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK

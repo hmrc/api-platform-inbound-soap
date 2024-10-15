@@ -37,8 +37,8 @@ class ConfirmationController @Inject() (
 
   def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction).async(parse.xml) { implicit request =>
     apiPlatformOutboundSoapConnector.postMessage(request.body) flatMap {
-      case SendSuccess              =>
-        Future.successful(Ok.as("application/soap+xml"))
+      case SendSuccess(status)      =>
+        Future.successful(Status(status).as("application/soap+xml"))
       case SendFailExternal(status) =>
         Future.successful(new Status(status).as("application/soap+xml"))
     }

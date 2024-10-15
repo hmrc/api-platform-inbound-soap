@@ -95,7 +95,7 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
 
       val result: SendResult = await(underTest.postMessage(requestBody, headers, true))
 
-      result shouldBe SendSuccess
+      result shouldBe SendSuccess(OK)
       verifyRequestBody(requestBody)
       verifyHeader(headers.head._1, headers.head._2)
     }

@@ -69,7 +69,7 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
 
       val result: SendResult = await(underTest.postMessage(codRequestBody))
 
-      result shouldBe SendSuccess
+      result shouldBe SendSuccess(OK)
       verifyRequestBody(codRequestBody, path = acknowledgementPath)
       verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2, path = acknowledgementPath)
     }
