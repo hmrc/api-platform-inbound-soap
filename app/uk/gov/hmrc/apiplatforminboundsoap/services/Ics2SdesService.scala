@@ -62,7 +62,7 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
     val filterEmpty: PartialFunction[(String, Option[String]), (String, String)]             = {
       case v if v._2.nonEmpty => (v._1, v._2.get)
     }
-    def buildMetadata(soapRequest: NodeSeq, attachmentElement: NodeSeq): Map[String, String] = {
+    def buildMetadata(attachmentElement: NodeSeq): Map[String, String] = {
       val fileName = getBinaryFilename(attachmentElement)
 
       Map(
@@ -81,14 +81,6 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
       val mrn                      = getMRN(wholeMessage)
       val lrn                      = getLRN(wholeMessage)
 
-      val outcomeMucky = Map(
-        "referralRequestReference" -> referralRequestReference,
-        "messageId"                -> messageId,
-        "description"              -> description,
-        "fileMIME"                 -> mimeType,
-        "MRN"                      -> mrn,
-        "LRN"                      -> lrn
-      )
       val outcome      = Map(
         "referralRequestReference" -> referralRequestReference,
         "messageId"                -> messageId,
@@ -97,7 +89,6 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
         "MRN"                      -> mrn,
         "LRN"                      -> lrn
       ).collect(filterEmpty)
-      println(s"Metadata properties are $outcomeMucky")
       outcome
     }
 
@@ -106,7 +97,7 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
         Right(SdesRequest(
           body = attachment,
           headers = Seq.empty,
-          metadata = buildMetadata(wholeMessage, attachmentElement),
+          metadata = buildMetadata(attachmentElement),
           metadataProperties = buildMetadataProperties(wholeMessage, attachmentElement)
         ))
       case Left(result)      => Left(result)
