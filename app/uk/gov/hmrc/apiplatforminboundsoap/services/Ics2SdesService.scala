@@ -23,18 +23,17 @@ import scala.xml.NodeSeq
 
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 @Singleton
-class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnector)(implicit executionContext: ExecutionContext) extends Ics2XmlHelper {
+class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector: SdesConnector)(implicit executionContext: ExecutionContext) extends Ics2XmlHelper {
 
-  def processMessage(binaryElements: NodeSeq)(implicit hc: HeaderCarrier): Future[Seq[SendResult]] = {
+  def processMessage(wholeMessage: NodeSeq, binaryElements: NodeSeq)(implicit hc: HeaderCarrier): Future[Seq[SendResult]] = {
     val allAttachments = getBinaryElementsWithEmbeddedData(binaryElements)
     sequence(allAttachments.map(attachmentElement => {
-      buildSdesRequest(binaryElements, attachmentElement) match {
+      buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
             case s: SdesSuccess      => getBinaryFilename(attachmentElement) match {
                 case Some(filename) =>
@@ -51,7 +50,7 @@ class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnec
     }))
   }
 
-  private def buildSdesRequest(soapRequest: NodeSeq, attachmentElement: NodeSeq) = {
+  private def buildSdesRequest(wholeMessage: NodeSeq, attachmentElement: NodeSeq) = {
     def getAttachment(soapRequest: NodeSeq)                                                  = {
       (getBinaryFilename(attachmentElement), getBinaryBase64Object(soapRequest)) match {
         case (Some(filename), Some(_)) if filename.isEmpty => Left(InvalidFormatResult("Argument filename found in XML but is empty"))
@@ -67,22 +66,30 @@ class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnec
       val fileName = getBinaryFilename(attachmentElement)
 
       Map(
-        "srn"             -> Some(appConfig.ics2SdesSrn),
-        "informationType" -> Some(appConfig.ics2SdesInfoType),
+        "srn"             -> Some(appConfig.ics2.srn),
+        "informationType" -> Some(appConfig.ics2.informationType),
         "filename"        -> fileName
       ).collect(filterEmpty)
     }
 
-    def buildMetadataProperties(soapRequest: NodeSeq, attachmentElement: NodeSeq): Map[String, String] = {
+    def buildMetadataProperties(wholeMessage: NodeSeq, attachmentElement: NodeSeq): Map[String, String] = {
 
       val description              = getBinaryDescription(attachmentElement)
       val mimeType                 = getBinaryMimeType(attachmentElement)
-      val messageId                = getMessageId(soapRequest)
-      val referralRequestReference = getReferralRequestReference(soapRequest)
-      val mrn                      = getMRN(soapRequest)
-      val lrn                      = getLRN(soapRequest)
+      val messageId                = getMessageId(wholeMessage)
+      val referralRequestReference = getReferralRequestReference(wholeMessage)
+      val mrn                      = getMRN(wholeMessage)
+      val lrn                      = getLRN(wholeMessage)
 
-      Map(
+      val outcomeMucky = Map(
+        "referralRequestReference" -> referralRequestReference,
+        "messageId"                -> messageId,
+        "description"              -> description,
+        "fileMIME"                 -> mimeType,
+        "MRN"                      -> mrn,
+        "LRN"                      -> lrn
+      )
+      val outcome      = Map(
         "referralRequestReference" -> referralRequestReference,
         "messageId"                -> messageId,
         "description"              -> description,
@@ -90,6 +97,8 @@ class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnec
         "MRN"                      -> mrn,
         "LRN"                      -> lrn
       ).collect(filterEmpty)
+      println(s"Metadata properties are $outcomeMucky")
+      outcome
     }
 
     getAttachment(attachmentElement) match {
@@ -97,8 +106,8 @@ class Ics2SdesService @Inject() (appConfig: AppConfig, sdesConnector: SdesConnec
         Right(SdesRequest(
           body = attachment,
           headers = Seq.empty,
-          metadata = buildMetadata(soapRequest, attachmentElement),
-          metadataProperties = buildMetadataProperties(soapRequest, attachmentElement)
+          metadata = buildMetadata(wholeMessage, attachmentElement),
+          metadataProperties = buildMetadataProperties(wholeMessage, attachmentElement)
         ))
       case Left(result)      => Left(result)
     }

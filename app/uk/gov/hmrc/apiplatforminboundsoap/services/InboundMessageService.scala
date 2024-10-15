@@ -48,7 +48,7 @@ class InboundMessageService @Inject() (
   }
 
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, binaryElements: NodeSeq, isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    sdesService.processMessage(binaryElements) flatMap {
+    sdesService.processMessage(wholeMessage, binaryElements) flatMap {
       sendResults: Seq[SendResult] =>
         sendResults.find(r => r.isInstanceOf[SendFail]) match {
           case Some(value) => successful(value)

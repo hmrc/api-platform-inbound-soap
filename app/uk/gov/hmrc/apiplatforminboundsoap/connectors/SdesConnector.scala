@@ -29,11 +29,15 @@ import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 
-import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SdesSuccess, SendFailExternal, SendResult}
 
+object SdesConnector {
+  case class Config(baseUrl: String, ics2: Ics2)
+  case class Ics2(srn: String, informationType: String)
+}
+
 @Singleton
-class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)(implicit ec: ExecutionContext) extends Logging {
+class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: SdesConnector.Config)(implicit ec: ExecutionContext) extends Logging {
   val requiredHeaders: Seq[(String, String)] = Seq("Content-Type" -> "application/octet-stream", "User-Agent" -> "public-soap-proxy")
 
   def postMessage(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[SendResult] = {
@@ -53,7 +57,7 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)
 
   private def postHttpRequest(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
     val combinedHeaders = sdesRequest.headers ++ List("Metadata" -> constructMetadataHeader(sdesRequest.metadata, sdesRequest.metadataProperties))
-    httpClientV2.post(new URL(appConfig.sdesUrl)).setHeader(requiredHeaders: _*)
+    httpClientV2.post(new URL(s"${appConfig.baseUrl}/upload-attachment")).setHeader(requiredHeaders: _*)
       .withBody(sdesRequest.body)
       .transform(_.addHttpHeaders(combinedHeaders: _*))
       .execute[Either[UpstreamErrorResponse, HttpResponse]]
