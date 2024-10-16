@@ -207,7 +207,6 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().getDifferences.forEach(d => println(d))
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
