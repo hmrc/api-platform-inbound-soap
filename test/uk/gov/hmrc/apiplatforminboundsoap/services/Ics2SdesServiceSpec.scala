@@ -34,8 +34,8 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.Ics2
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
@@ -53,32 +53,36 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     val bodyCaptor                       = ArgCaptor[SdesRequest]
     val headerCaptor                     = ArgCaptor[Seq[(String, String)]]
 
-    val httpStatus: Int          = Status.OK
-    val appConfigMock: AppConfig = mock[AppConfig]
-    val xmlHelper: Ics2XmlHelper = mock[Ics2XmlHelper]
+    val httpStatus: Int                     = Status.OK
+    val appConfigMock: SdesConnector.Config = mock[SdesConnector.Config]
+    val xmlHelper: Ics2XmlHelper            = mock[Ics2XmlHelper]
 
     val service: Ics2SdesService =
       new Ics2SdesService(appConfigMock, sdesConnectorMock)
 
-    val sdesUrl          = "SDES url"
-    val sdesICS2SRN      = "ICS2 SRN"
-    val sdesICS2InfoType = "ICS2 info type"
-    when(appConfigMock.sdesUrl).thenReturn(sdesUrl)
-    when(appConfigMock.ics2SdesSrn).thenReturn(sdesICS2SRN)
-    when(appConfigMock.ics2SdesInfoType).thenReturn(sdesICS2InfoType)
+    val sdesUrl = "SDES url"
+    val ics2    = Ics2(srn = "ICS2 SRN", informationType = "ICS2 info type", uploadPath = "upload-attachment")
+    when(appConfigMock.baseUrl).thenReturn(sdesUrl)
+    when(appConfigMock.ics2).thenReturn(ics2)
   }
 
   "processMessage" should {
-
     "return success when connector returns success" in new Setup {
       val expectedSdesUuid           = UUID.randomUUID().toString
       val xmlBody: Elem              = readFromFile("ie4s03-v2.xml")
+      val binaryElement: Elem        = <urn:binaryFile>
+        <urn:filename>test-filename.txt</urn:filename>
+        <urn:MIME>application/pdf</urn:MIME>
+        <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
+        <urn:description>a file made up for unit testing</urn:description>
+      </urn:binaryFile>
       val expectedMetadata           = Map(
-        "srn"             -> sdesICS2SRN,
-        "informationType" -> sdesICS2InfoType,
+        "srn"             -> ics2.srn,
+        "informationType" -> ics2.informationType,
         "filename"        -> "test-filename.txt"
       )
       val expectedMetadataProperties = Map(
+        ("messageId"   -> "ad7f2ad2d4f5-4606-99a0-0dd4e52be116"),
         ("fileMIME"    -> "application/pdf"),
         ("description" -> "a file made up for unit testing"),
         ("MRN"         -> "7c1aa850-9760-42ab-bebe-709e3a4a888f")
@@ -89,7 +93,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
 
-      val result = await(service.processMessage(xmlBody))
+      val result = await(service.processMessage(xmlBody, binaryElement))
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
@@ -102,14 +106,26 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val expectedSdesUuidForSecondCall           = UUID.randomUUID().toString
       val expectedFilenameForSecondCall           = "filename2.txt"
       val xmlBody: Elem                           = readFromFile("uriAndBinaryObject/ie4r02-v2-two-binaryAttachments-with-included-elements.xml")
+      val binaryElements                          = <urn:binaryAttachment>
+        <urn:filename>filename1.pdf</urn:filename>
+        <urn:MIME>application/pdf</urn:MIME>
+        <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+        <urn:description>A PDFy sort of file</urn:description>
+      </urn:binaryAttachment>
+        <urn:binaryAttachment>
+          <urn:filename>filename2.txt</urn:filename>
+          <urn:MIME>text/plain</urn:MIME>
+          <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+          <urn:description>A texty sort of file</urn:description>
+        </urn:binaryAttachment>
       val expectedFirstRequestMetadata            = Map(
-        "informationType" -> sdesICS2InfoType,
+        "informationType" -> ics2.informationType,
         "filename"        -> "filename1.pdf",
-        "srn"             -> sdesICS2SRN
+        "srn"             -> ics2.srn
       )
       val expectedSecondRequestMetadata           = Map(
-        "srn"             -> sdesICS2SRN,
-        "informationType" -> sdesICS2InfoType,
+        "srn"             -> ics2.srn,
+        "informationType" -> ics2.informationType,
         "filename"        -> "filename2.txt"
       )
       val expectedFirstRequestMetadataProperties  = Map(
@@ -133,7 +149,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuidForFirstCall)))
         .andThen(successful(SdesSuccess(expectedSdesUuidForSecondCall)))
 
-      val result = await(service.processMessage(xmlBody))
+      val result = await(service.processMessage(xmlBody, binaryElements))
 
       result shouldBe List(
         SdesSuccessResult(SdesReference(expectedFilenameForFirstCall, expectedSdesUuidForFirstCall)),
@@ -145,9 +161,13 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     }
 
     "return invalid response when message does not contain includedBinaryObject" in new Setup {
-      val xmlBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-missing-uri-and-includedBinaryObject-element.xml")
-
-      val result = await(service.processMessage(xmlBody))
+      val xmlBody: Elem  = readFromFile("uriAndBinaryObject/ie4r02-v2-missing-uri-and-includedBinaryObject-element.xml")
+      val binaryElements = <urn:binaryAttachment>
+  <urn:filename>?</urn:filename>
+  <urn:MIME>?</urn:MIME>
+  <urn:description>?</urn:description>
+</urn:binaryAttachment>
+      val result         = await(service.processMessage(xmlBody, binaryElements))
 
       result shouldBe List(SendNotAttempted("Argument includedBinaryObject was not found in XML"))
       verifyZeroInteractions(appConfigMock)
@@ -156,8 +176,15 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
     "return invalid response when message's binaryFile block does not contain filename" in new Setup {
       val xmlBody: Elem = readFromFile("filename/ie4r02-v2-missing-filename-element.xml")
-
-      val result = await(service.processMessage(xmlBody))
+      val binaryElement = <urn:binaryAttachment>
+        <!--Optional:-->
+        <urn:MIME>?</urn:MIME>
+        <!--Optional:-->
+        <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+        <!--Optional:-->
+        <urn:description>?</urn:description>
+      </urn:binaryAttachment>
+      val result        = await(service.processMessage(xmlBody, binaryElement))
 
       result shouldBe List(SendNotAttempted("Argument filename was not found in XML"))
       verifyZeroInteractions(appConfigMock)
@@ -166,8 +193,13 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
     "return invalid response when message's binaryFile block contains empty filename" in new Setup {
       val xmlBody: Elem = readFromFile("filename/ie4r02-v2-blank-filename-element.xml")
-
-      val result = await(service.processMessage(xmlBody))
+      val binaryElement = <urn:binaryAttachment>
+  <urn:filename></urn:filename>
+  <urn:MIME>?</urn:MIME>
+  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+  <urn:description>?</urn:description>
+</urn:binaryAttachment>
+      val result        = await(service.processMessage(xmlBody, binaryElement))
 
       result shouldBe List(SendNotAttempted("Argument filename found in XML but is empty"))
       verifyZeroInteractions(appConfigMock)
@@ -176,9 +208,15 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
     "return upstream response when message sending fails" in new Setup {
       val xmlBody: Elem = readFromFile("ie4s03-v2.xml")
+      val binaryElement = <urn:binaryFile>
+        <urn:filename>test-filename.txt</urn:filename>
+        <urn:MIME>application/pdf</urn:MIME>
+        <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
+        <urn:description>a file made up for unit testing</urn:description>
+      </urn:binaryFile>
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SendFailExternal(INTERNAL_SERVER_ERROR)))
 
-      val result = await(service.processMessage(xmlBody))
+      val result = await(service.processMessage(xmlBody, binaryElement))
 
       result shouldBe List(SendFailExternal(INTERNAL_SERVER_ERROR))
     }

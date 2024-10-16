@@ -39,9 +39,10 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "metrics.enabled"  -> false,
-        "auditing.enabled" -> false,
-        "sdesUrl"          -> externalWireMockUrl
+        "metrics.enabled"                                       -> false,
+        "auditing.enabled"                                      -> false,
+        "microservice.services.secure-data-exchange-proxy.host" -> externalWireMockHost,
+        "microservice.services.secure-data-exchange-proxy.port" -> externalWireMockPort
       )
 
   trait Setup {
@@ -50,32 +51,33 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
     val base64EncodedString: String           = Base64.getEncoder.encodeToString(Array[Byte]('a', 'b', 'c'))
     val responseBody: String                  = UUID.randomUUID().toString
     val simpleSdesRequest                     = SdesRequest(headers = List(), metadata = Map.empty, body = base64EncodedString, metadataProperties = Map.empty)
+    val path                                  = "/upload-attachment"
   }
 
   "postMessage" should {
 
     "return success status and accompanying UUID returned by the SDES" in new Setup {
       val expectedStatus: Int = OK
-      primeStubForSuccess(responseBody, expectedStatus)
+      primeStubForSuccess(responseBody, expectedStatus, path)
 
       val result: SendResult = await(underTest.postMessage(simpleSdesRequest))
 
       result shouldBe SdesSuccess(responseBody)
-      verifyRequestBody(simpleSdesRequest.body)
-      verifyHeadersOnRequest(defaultHeaders)
+      verifyRequestBody(simpleSdesRequest.body, path)
+      verifyHeadersOnRequest(defaultHeaders, path)
     }
 
     "send any additional headers" in new Setup {
       val additionalHeaders   = List("x-request-id" -> "abcdefgh1234567890", "any-old-header-name" -> "any-old-header-value")
       val sdesRequest         = SdesRequest(headers = additionalHeaders, metadata = Map.empty, body = base64EncodedString, metadataProperties = Map.empty)
       val expectedStatus: Int = OK
-      primeStubForSuccess(responseBody, expectedStatus)
+      primeStubForSuccess(responseBody, expectedStatus, path)
 
       val result: SendResult = await(underTest.postMessage(sdesRequest))
 
       result shouldBe SdesSuccess(responseBody)
-      verifyRequestBody(simpleSdesRequest.body)
-      verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders)
+      verifyRequestBody(simpleSdesRequest.body, path)
+      verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders, path)
     }
 
     "send the metadata header" in new Setup {
@@ -83,14 +85,14 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val sdesRequest         =
         SdesRequest(headers = additionalHeaders, metadata = Map("foo" -> "bar", "humpty" -> "dumpty"), body = base64EncodedString, metadataProperties = Map.empty)
       val expectedStatus: Int = OK
-      primeStubForSuccess(responseBody, expectedStatus)
+      primeStubForSuccess(responseBody, expectedStatus, path)
 
       val result: SendResult = await(underTest.postMessage(sdesRequest))
 
       result shouldBe SdesSuccess(responseBody)
-      verifyRequestBody(simpleSdesRequest.body)
+      verifyRequestBody(simpleSdesRequest.body, path)
 
-      verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders ++ List("Metadata" -> """{"metadata":{"foo":"bar","humpty":"dumpty"}}"""))
+      verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders ++ List("Metadata" -> """{"metadata":{"foo":"bar","humpty":"dumpty"}}"""), path)
     }
 
     "send the metadata header with properties" in new Setup {
@@ -102,41 +104,44 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val sdesRequest                =
         SdesRequest(headers = additionalHeaders, metadata = Map("foo" -> "bar", "humpty" -> "dumpty"), body = base64EncodedString, metadataProperties = expectedMetadataProperties)
       val expectedStatus: Int        = OK
-      primeStubForSuccess(responseBody, expectedStatus)
+      primeStubForSuccess(responseBody, expectedStatus, path)
 
       val result: SendResult = await(underTest.postMessage(sdesRequest))
 
       result shouldBe SdesSuccess(responseBody)
-      verifyRequestBody(simpleSdesRequest.body)
+      verifyRequestBody(simpleSdesRequest.body, path)
 
-      verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders ++ List(
-        "Metadata" -> """{"metadata":{"foo":"bar","humpty":"dumpty","properties":[{"name":"prop1","value":"value1"},{"name":"prop2","value":"value2"}]}}"""
-      ))
+      verifyHeadersOnRequest(
+        defaultHeaders ++ additionalHeaders ++ List(
+          "Metadata" -> """{"metadata":{"foo":"bar","humpty":"dumpty","properties":[{"name":"prop1","value":"value1"},{"name":"prop2","value":"value2"}]}}"""
+        ),
+        path
+      )
     }
 
     "return error statuses returned by SDES" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
-      primeStubForSuccess(responseBody, expectedStatus)
+      primeStubForSuccess(responseBody, expectedStatus, path)
 
       val result: SendResult = await(underTest.postMessage(simpleSdesRequest))
 
       result shouldBe SendFailExternal(expectedStatus)
-      verifyHeadersOnRequest(defaultHeaders)
+      verifyHeadersOnRequest(defaultHeaders, path)
     }
 
     "return error status when soap fault is returned by the internal service" in new Setup {
       Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
-        primeStubForFault(responseBody, fault)
+        primeStubForFault(responseBody, fault, path)
 
         val result: SendResult = await(underTest.postMessage(simpleSdesRequest))
 
         result shouldBe SendFailExternal(INTERNAL_SERVER_ERROR)
-        verifyHeadersOnRequest(defaultHeaders)
+        verifyHeadersOnRequest(defaultHeaders, path)
       }
     }
   }
 
-  private def verifyHeadersOnRequest(headers: Seq[(String, String)]) = {
-    headers.foreach(headers => verifyHeader(headers._1, headers._2))
+  private def verifyHeadersOnRequest(headers: Seq[(String, String)], path: String = "/") = {
+    headers.foreach(headers => verifyHeader(headers._1, headers._2, path))
   }
 }
