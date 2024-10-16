@@ -1,0 +1,17 @@
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:ccn2="http://ccn2.ec.eu/CCN2.Service.Platform.Acknowledgement.Schema">
+    <soap:Header xmlns:wsa="http://www.w3.org/2005/08/addressing">
+        <wsa:Action>CCN2.Service.Platform.AcknowledgementService/CoD</wsa:Action>
+        <wsa:From>
+            <wsa:Address>theEU</wsa:Address>
+        </wsa:From>
+        <wsa:RelatesTo RelationshipType="http://ccn2.ec.eu/addressing/ack">5d3a71e3-2a1a-43f1-a246-831dff41e9a1
+        </wsa:RelatesTo>
+        <wsa:MessageID></wsa:MessageID>
+        <wsa:To>HMRC</wsa:To>
+    </soap:Header>
+    <soap:Body>
+        <ccn2:CoD>
+            <ccn2:EventTimestamp>2021-03-10T09:30:10Z</ccn2:EventTimestamp>
+        </ccn2:CoD>
+    </soap:Body>
+</soap:Envelope>

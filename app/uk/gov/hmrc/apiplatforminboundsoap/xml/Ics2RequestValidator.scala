@@ -58,14 +58,15 @@ trait Ics2RequestValidator extends Ics2XmlHelper with HttpErrorFunctions {
     }).toEither
   }
 
-  def verifyAction(soapMessage: NodeSeq): Either[NonEmptyList[String], Unit] = {
+  def verifyAcknowledgementRequest(soapMessage: NodeSeq): Either[NonEmptyList[String], Unit] = {
     {
       (
         verifyActionExists(soapMessage),
         verifyActionFormat(soapMessage),
-        verifyActionLength(soapMessage)
+        verifyActionLength(soapMessage),
+        verifyMessageId(soapMessage)
       )
-    }.mapN((_, _, _) => {
+    }.mapN((_, _, _, _) => {
       ()
     }).toEither
   }

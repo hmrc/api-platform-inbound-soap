@@ -40,14 +40,14 @@ class AcknowledgementMessageValidateAction @Inject() ()(implicit ec: ExecutionCo
 
     val body: NodeSeq = request.body.asInstanceOf[xml.NodeSeq]
 
-    verifyAction(body) match {
+    verifyAcknowledgementRequest(body) match {
       case Right(_)                      => successful(None)
       case Left(e: NonEmptyList[String]) =>
         val statusCode = BAD_REQUEST
         val requestId  = request.headers.get("x-request-id").getOrElse("requestId not known")
         logger.warn(s"RequestID: $requestId")
-        logger.warn(mapErrorsToString(e, "Received a request that was rejected for being "))
-        successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(e, ""), requestId))
+        logger.warn(mapErrorsToString("Received a request that was rejected for", e))
+        successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString("", e), requestId))
           .as("application/soap+xml")))
     }
   }
@@ -72,8 +72,8 @@ class AcknowledgementMessageValidateAction @Inject() ()(implicit ec: ExecutionCo
        |</soap:Envelope>""".stripMargin
   }
 
-  private def mapErrorsToString(errorList: NonEmptyList[String], problem: String): String = {
+  private def mapErrorsToString(problem: String, errorList: NonEmptyList[String]): String = {
     val flatListErrors: List[String] = errorList.toList
-    flatListErrors.map(problemDescription => s"$problemDescription$problem").mkString("\n")
+    flatListErrors.map(problemDescription => s"$problem $problemDescription").mkString("\n")
   }
 }

@@ -149,6 +149,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
       status(result) shouldBe Status.BAD_REQUEST
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
+
     "return 400 for empty Action element" in new Setup {
       val codRequestBodyMissingAction: Elem = readFromFile("acknowledgement/requests/cod_request_empty_action.xml")
       val expectedSoapMessage               =
@@ -177,6 +178,36 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+    }
+  "return 400 for empty MessageID element" in new Setup {
+      val codRequestBodyMissingAction: Elem = readFromFile("acknowledgement/requests/cod_request_empty_messageid.xml")
+      val expectedSoapMessage               =
+        s"""<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+           |<soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
+           |<soap:Body>
+           |<soap:Fault>
+           |<soap:Code>
+           |<soap:Value>soap:400</soap:Value>
+           |</soap:Code>
+           |<soap:Reason>
+           |<soap:Text xml:lang="en">Value of element SOAP Header MessageID is too short</soap:Text>
+           |</soap:Reason>
+           |<soap:Node>public-soap-proxy</soap:Node>
+           |<soap:Detail>
+           |<RequestId>$xRequestIdHeaderValue</RequestId>
+           |</soap:Detail>
+           |</soap:Fault>
+           |</soap:Body>
+           |</soap:Envelope>
+           |""".stripMargin
+      val fakeRequest                       = FakeRequest("POST", "/ccn2/acknowledgementV2")
+        .withHeaders(headers.add(validBearerToken, "Content-Type" -> "application/soap+xml"))
+        .withBody(codRequestBodyMissingAction)
+
+      val result = controller.message()(fakeRequest)
+      status(result) shouldBe Status.BAD_REQUEST
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().getDifferences.forEach(d => println(d))
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
