@@ -162,7 +162,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
            |</soap:Code>
            |<soap:Reason>
            |<soap:Text xml:lang="en">SOAP Header Action should contain / character but does not
-           | Value of element SOAP Header Action is too short</soap:Text>
+           |Value of element SOAP Header Action is too short</soap:Text>
            |</soap:Reason>
            |<soap:Node>public-soap-proxy</soap:Node>
            |<soap:Detail>
