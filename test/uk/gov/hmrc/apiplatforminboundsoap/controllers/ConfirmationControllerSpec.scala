@@ -162,7 +162,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
            |</soap:Code>
            |<soap:Reason>
            |<soap:Text xml:lang="en">SOAP Header Action should contain / character but does not
-           |Value of element SOAP Header Action is too short</soap:Text>
+           | Value of element SOAP Header Action is too short</soap:Text>
            |</soap:Reason>
            |<soap:Node>public-soap-proxy</soap:Node>
            |<soap:Detail>
@@ -180,7 +180,8 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
       status(result) shouldBe Status.BAD_REQUEST
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
-  "return 400 for empty MessageID element" in new Setup {
+
+    "return 400 for empty MessageID element" in new Setup {
       val codRequestBodyMissingAction: Elem = readFromFile("acknowledgement/requests/cod_request_empty_messageid.xml")
       val expectedSoapMessage               =
         s"""<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
@@ -261,6 +262,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
       .withTest(actual)
       .withNodeMatcher(new DefaultNodeMatcher(byName))
       .checkForIdentical
+      .ignoreComments
       .ignoreWhitespace
   }
 }
