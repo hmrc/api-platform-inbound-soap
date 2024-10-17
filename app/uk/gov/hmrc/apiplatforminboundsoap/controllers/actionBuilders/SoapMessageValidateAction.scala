@@ -24,15 +24,13 @@ import scala.xml.NodeSeq
 import _root_.uk.gov.hmrc.http.HttpErrorFunctions
 import cats.data._
 
-import play.api.http.Status.BAD_REQUEST
-import play.api.mvc.Results._
 import play.api.mvc.{ActionFilter, Request, Result}
 
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2RequestValidator
 
 @Singleton
 class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
-    extends ActionFilter[Request] with HttpErrorFunctions with Ics2RequestValidator {
+    extends ActionFilter[Request] with HttpErrorFunctions with Ics2RequestValidator with ValidateAction {
 
   override def executionContext: ExecutionContext = ec
 
@@ -42,39 +40,9 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
 
     verifyElements(body) match {
       case Right(_)                      => successful(None)
-      case Left(e: NonEmptyList[String]) => {
-        val statusCode = BAD_REQUEST
-        val requestId  = request.headers.get("x-request-id").getOrElse("requestId not known")
-        logger.warn(s"RequestID: $requestId")
-        logger.warn(mapErrorsToString(e, "Received a request that had a ", " that was rejected for being "))
-        successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(e, "", ""), requestId))
-          .as("application/soap+xml")))
-      }
+      case Left(e: NonEmptyList[String]) =>
+        val requestId = request.headers.get("x-request-id").getOrElse("requestId not known")
+        returnErrorResponse(e, requestId)
     }
-  }
-
-  private def createSoapErrorResponse(statusCode: Int, reason: String, requestId: String) = {
-    s"""<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
-       |    <soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
-       |    <soap:Body>
-       |        <soap:Fault>
-       |            <soap:Code>
-       |                <soap:Value>soap:$statusCode</soap:Value>
-       |            </soap:Code>
-       |            <soap:Reason>
-       |                <soap:Text xml:lang="en">$reason</soap:Text>
-       |            </soap:Reason>
-       |            <soap:Node>public-soap-proxy</soap:Node>
-       |            <soap:Detail>
-       |                <RequestId>$requestId</RequestId>
-       |            </soap:Detail>
-       |        </soap:Fault>
-       |    </soap:Body>
-       |</soap:Envelope>""".stripMargin
-  }
-
-  private def mapErrorsToString(errorList: NonEmptyList[String], fieldName: String, problem: String): String = {
-    val flatListErrors: List[String] = errorList.toList
-    flatListErrors.map(problemDescription => s"$problemDescription$problem").mkString("\n")
   }
 }
