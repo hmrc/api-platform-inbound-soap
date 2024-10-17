@@ -48,14 +48,64 @@ trait Ics2RequestValidator extends Ics2XmlHelper with HttpErrorFunctions {
     {
       (
         verifyAttachments(soapMessage),
+        verifyActionFormat(soapMessage),
         verifyActionExists(soapMessage),
-        verifyMessageId(soapMessage),
-        verifyAction(soapMessage),
-        verifyActionLength(soapMessage)
+        verifyActionLength(soapMessage),
+        verifyMessageId(soapMessage)
       )
     }.mapN((_, _, _, _, _) => {
       ()
     }).toEither
+  }
+
+  def verifyAcknowledgementRequest(soapMessage: NodeSeq): Either[NonEmptyList[String], Unit] = {
+    {
+      (
+        verifyActionExists(soapMessage),
+        verifyActionFormat(soapMessage),
+        verifyActionLength(soapMessage),
+        verifyMessageId(soapMessage)
+      )
+    }.mapN((_, _, _, _) => {
+      ()
+    }).toEither
+  }
+
+  private def verifyActionExists(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
+    getSoapAction(soapMessage) match {
+      case Some(_) => Validated.valid(())
+      case None    => "Element SOAP Header Action is missing".invalidNel[Unit]
+    }
+  }
+
+  private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
+    getSoapAction(soapMessage) match {
+      case None       => Validated.valid(())
+      case actionText => verifyStringLength(maybeString = actionText, attributeName = "SOAP Header Action", minLength = actionMinLength, maxLength = actionMaxLength) match {
+          case Right(_)      => Validated.valid(())
+          case Left(problem) => problem.invalidNel[Unit]
+        }
+    }
+  }
+
+  private def verifyStringLength(maybeString: Option[String], attributeName: String, minLength: Int, maxLength: Int): Either[String, Unit] = {
+    maybeString match {
+      case Some(string) if string.trim.length < minLength => Left(s"Value of element $attributeName is too short")
+      case Some(string) if string.length > maxLength      => Left(s"Value of element $attributeName is too long")
+      case None                                           => Left(s"Element $attributeName is missing")
+      case _                                              => Right(())
+    }
+  }
+
+  private def verifyActionFormat(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
+    getSoapAction(soapMessage) match {
+      case None             => Validated.valid(())
+      case Some(actionText) => if (actionText.contains("/")) {
+          Validated.valid(())
+        } else {
+          "SOAP Header Action should contain / character but does not".invalidNel[Unit]
+        }
+    }
   }
 
   private def verifyAttachments(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
@@ -124,7 +174,7 @@ trait Ics2RequestValidator extends Ics2XmlHelper with HttpErrorFunctions {
       val failLeft = "Value of element includedBinaryObject is not valid base 64 data".invalidNel[Unit]
       try {
         val isValidLength = includedBinaryObject.length % 4 == 0
-        val decoded       = Base64.getDecoder().decode(includedBinaryObject)
+        val decoded       = Base64.getDecoder.decode(includedBinaryObject)
         (isValidLength, decoded.isEmpty) match {
           case (false, _)    => failLeft
           case (_, true)     => failLeft
@@ -156,34 +206,6 @@ trait Ics2RequestValidator extends Ics2XmlHelper with HttpErrorFunctions {
     )
   }
 
-  private def verifyActionExists(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
-    getSoapAction(soapMessage) match {
-      case Some(_) => Validated.valid(())
-      case None    => "Element SOAP Header Action is missing".invalidNel[Unit]
-    }
-  }
-
-  private def verifyActionLength(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
-    getSoapAction(soapMessage) match {
-      case None       => Validated.valid(())
-      case actionText => verifyStringLength(maybeString = actionText, attributeName = "SOAP Header Action", minLength = actionMinLength, maxLength = actionMaxLength) match {
-          case Right(_)      => Validated.valid(())
-          case Left(problem) => problem.invalidNel[Unit]
-        }
-    }
-  }
-
-  private def verifyAction(soapMessage: NodeSeq): ValidatedNel[String, Unit] = {
-    getSoapAction(soapMessage) match {
-      case None             => Validated.valid(())
-      case Some(actionText) => if (actionText.contains("/")) {
-          Validated.valid(())
-        } else {
-          ("SOAP Header Action should contain / character but does not").invalidNel[Unit]
-        }
-    }
-  }
-
   private def verifyAttribute(
       attributeValue: Option[String],
       attributeName: String,
@@ -199,15 +221,6 @@ trait Ics2RequestValidator extends Ics2XmlHelper with HttpErrorFunctions {
     verifyResult match {
       case Right(_)      => Validated.valid(())
       case Left(problem) => problem.invalidNel[Unit]
-    }
-  }
-
-  private def verifyStringLength(maybeString: Option[String], attributeName: String, minLength: Int, maxLength: Int): Either[String, Unit] = {
-    maybeString match {
-      case Some(string) if string.trim.length < minLength => Left(s"Value of element $attributeName is too short")
-      case Some(string) if string.length > maxLength      => Left(s"Value of element $attributeName is too long")
-      case None                                           => Left(s"Element $attributeName is missing")
-      case _                                              => Right(())
     }
   }
 

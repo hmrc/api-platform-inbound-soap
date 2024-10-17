@@ -24,18 +24,19 @@ import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 
 @Singleton()
 class ConfirmationController @Inject() (
     apiPlatformOutboundSoapConnector: ApiPlatformOutboundSoapConnector,
     cc: ControllerComponents,
-    verifyJwtTokenAction: VerifyJwtTokenAction
+    verifyJwtTokenAction: VerifyJwtTokenAction,
+    messageValidateAction: AcknowledgementMessageValidateAction
   )(implicit ec: ExecutionContext
   ) extends BackendController(cc) {
 
-  def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction).async(parse.xml) { implicit request =>
+  def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction andThen messageValidateAction).async(parse.xml) { implicit request =>
     apiPlatformOutboundSoapConnector.postMessage(request.body) flatMap {
       case SendSuccess(status)      =>
         Future.successful(Status(status).as("application/soap+xml"))
