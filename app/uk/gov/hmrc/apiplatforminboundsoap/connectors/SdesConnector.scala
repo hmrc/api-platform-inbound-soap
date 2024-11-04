@@ -33,7 +33,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SdesSuccess, Send
 
 object SdesConnector {
   case class Config(baseUrl: String, ics2: Ics2)
-  case class Ics2(srn: String, informationType: String, uploadPath: String)
+  case class Ics2(srn: String, informationType: String, uploadPath: String, encodeSdesConfiguration: Boolean = false)
 }
 
 @Singleton

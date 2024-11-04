@@ -229,6 +229,14 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
       result shouldBe Right(xmlBodyAfterTransformation)
     }
 
+    "replace includedBinaryObject element with base 64 encoded replacement in a message containing one binaryAttachment element" in new Setup {
+      val xmlBody                    = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4r02-v2-one-binary-attachment-base64-encode.xml")
+      val replacement                = Map("test-filename.txt" -> "some-uuid-like-string")
+      val result                     = replaceEmbeddedAttachments(replacement, xmlBody, true)
+      result shouldBe Right(xmlBodyAfterTransformation)
+    }
+
     "replace a includedBinaryObject block in a message containing two binaryAttachment elements" in new Setup {
       val xmlBody                    = readFromFile("ie4r02-v2-two-binary-attachments.xml")
       val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4r02-v2-two-binary-attachments.xml")

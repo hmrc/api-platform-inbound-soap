@@ -45,12 +45,20 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
         "metrics.enabled"       -> false,
         "auditing.enabled"      -> false,
         "forwardMessageUrl"     -> externalWireMockUrl,
-        "testForwardMessageUrl" -> externalWireMockUrl
+        "testForwardMessageUrl" -> s"$externalWireMockUrl/test-only"
       )
 
   trait Setup {
     val headers: Seq[(String, String)]               = List("Authorization" -> "Bearer value")
     val underTest: ImportControlInboundSoapConnector = app.injector.instanceOf[ImportControlInboundSoapConnector]
+    val requestBody: Elem                            = readFromFile("ie4r02-v2.xml")
+    val xRequestIdHeaderValue                        = randomUUID.toString()
+
+    val faultResponse                                = getExpectedSoapFault(
+      400,
+      "Value of element referralRequestReference is too long\nValue of element MIME is too long",
+      xRequestIdHeaderValue
+    )
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())
@@ -76,24 +84,14 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
          |</soap:Envelope>""".stripMargin
     }
 
-    val requestBody: Elem     = readFromFile("ie4r02-v2.xml")
-    val xRequestIdHeaderValue = randomUUID.toString()
-
-    val faultResponse = getExpectedSoapFault(
-      400,
-      "Value of element referralRequestReference is too long\nValue of element MIME is too long",
-      xRequestIdHeaderValue
-    )
-
   }
 
   "postMessage" should {
-
     "return successful statuses returned by the internal service" in new Setup {
       val expectedStatus: Int = OK
       primeStubForSuccess(requestBody, expectedStatus)
 
-      val result: SendResult = await(underTest.postMessage(requestBody, headers, true))
+      val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = false))
 
       result shouldBe SendSuccess(OK)
       verifyRequestBody(requestBody)
@@ -104,7 +102,7 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
       primeStubForSuccess(requestBody, expectedStatus)
 
-      val result: SendResult = await(underTest.postMessage(requestBody, headers, true))
+      val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = false))
 
       result shouldBe SendFailExternal(expectedStatus)
       verifyHeader(headers.head._1, headers.head._2)
@@ -114,18 +112,31 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
       Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
         primeStubForFault(requestBody, faultResponse, fault)
 
-        val result: SendResult = await(underTest.postMessage(requestBody, headers, true))
+        val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = false))
 
         result shouldBe SendFailExternal(INTERNAL_SERVER_ERROR)
         verifyHeader(headers.head._1, headers.head._2)
       }
     }
 
+    "send the given message to the test service if so configured" in new Setup {
+      val path = "/test-only"
+      primeStubForSuccess(requestBody, OK, path)
+
+      val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = true))
+
+      result shouldBe SendSuccess(OK)
+      verifyRequestBody(requestBody, path)
+      verifyHeader(headers.head._1, headers.head._2, path)
+
+    }
+
     "send the given message to the internal service" in new Setup {
       primeStubForSuccess(requestBody, OK)
 
-      await(underTest.postMessage(requestBody, headers, true))
+      val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = false))
 
+      result shouldBe SendSuccess(OK)
       verifyRequestBody(requestBody)
       verifyHeader(headers.head._1, headers.head._2)
     }

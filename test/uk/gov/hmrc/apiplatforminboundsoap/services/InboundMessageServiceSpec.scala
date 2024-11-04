@@ -33,7 +33,8 @@ import play.api.http.Status.{ACCEPTED, IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.ImportControlInboundSoapConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.Ics2
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ImportControlInboundSoapConnector, SdesConnector}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
@@ -49,6 +50,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
   trait Setup {
     val ics2SdesServiceMock: Ics2SdesService                    = mock[Ics2SdesService]
     val inboundConnectorMock: ImportControlInboundSoapConnector = mock[ImportControlInboundSoapConnector]
+    val sdesConnectorConfig: SdesConnector.Config               = mock[SdesConnector.Config]
     val bodyCaptor                                              = ArgCaptor[NodeSeq]
     val wholeMessageCaptor                                      = ArgCaptor[NodeSeq]
     val binaryElementsCaptor                                    = ArgCaptor[NodeSeq]
@@ -60,7 +62,8 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     val xmlHelper: Ics2XmlHelper = mock[Ics2XmlHelper]
 
     val service: InboundMessageService =
-      new InboundMessageService(inboundConnectorMock, ics2SdesServiceMock)
+      new InboundMessageService(inboundConnectorMock, ics2SdesServiceMock, sdesConnectorConfig)
+    when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType", uploadPath = "some/path")
   }
 
   "processInboundMessage for production" should {
@@ -83,6 +86,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       verify(inboundConnectorMock).postMessage(xmlBody, forwardedHeaders, true)
       bodyCaptor hasCaptured xmlBody
     }
+
     "invoke SDESConnector when message contains embedded file attachment" in new Setup {
       val xmlBody          = readFromFile("ie4s03-v2.xml")
       val binaryElement    = getBinaryElementsWithEmbeddedData(xmlBody)
@@ -96,6 +100,37 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
         "x-version-id"     -> getMessageVersion(xmlBody).displayName
       )
 
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(ics2SdesServiceMock.processMessage(wholeMessageCaptor, binaryElementsCaptor)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference(
+        "test-filename.txt",
+        "some-uuid-like-string"
+      )))))
+
+      val result = await(service.processInboundMessage(xmlBody))
+
+      result shouldBe SendSuccess(OK)
+      bodyCaptor hasCaptured forwardedXmlBody
+      wholeMessageCaptor hasCaptured xmlBody
+      binaryElementsCaptor hasCaptured binaryElement
+      headerCaptor hasCaptured forwardedHeaders
+      verify(inboundConnectorMock).postMessage(forwardedXmlBody, forwardedHeaders, false)
+      verify(ics2SdesServiceMock).processMessage(xmlBody, binaryElement)
+    }
+
+    "ensure SDES UUID is encoded when config demands it" in new Setup {
+      val xmlBody          = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val binaryElement    = getBinaryElementsWithEmbeddedData(xmlBody)
+      val forwardedXmlBody = readFromFile("post-sdes-processing/ie4r02-v2-one-binary-attachment-base64-encode.xml")
+
+      val forwardedHeaders = Seq[(String, String)](
+        "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
+        "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
+        "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
+        "x-files-included" -> isFileIncluded(xmlBody).toString,
+        "x-version-id"     -> getMessageVersion(xmlBody).displayName
+      )
+
+      when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType", uploadPath = "some/path", encodeSdesConfiguration = true)
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
       when(ics2SdesServiceMock.processMessage(wholeMessageCaptor, binaryElementsCaptor)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference(
         "test-filename.txt",
