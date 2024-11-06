@@ -82,10 +82,10 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
         "filename"        -> "test-filename.txt"
       )
       val expectedMetadataProperties = Map(
-        ("messageId"   -> "ad7f2ad2d4f5-4606-99a0-0dd4e52be116"),
-        ("fileMIME"    -> "application/pdf"),
-        ("description" -> "a file made up for unit testing"),
-        ("MRN"         -> "7c1aa850-9760-42ab-bebe-709e3a4a888f")
+        "messageId"   -> "ad7f2ad2d4f5-4606-99a0-0dd4e52be116",
+        "fileMIME"    -> "application/pdf",
+        "description" -> "a file made up for unit testing",
+        "MRN"         -> "7c1aa850-9760-42ab-bebe-709e3a4a888f"
       )
       val expectedBody               = "cid:1177341525550"
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, expectedBody)

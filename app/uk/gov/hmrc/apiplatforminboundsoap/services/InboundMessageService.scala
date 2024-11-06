@@ -25,7 +25,7 @@ import org.apache.pekko.http.scaladsl.util.FastFuture.successful
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.ImportControlInboundSoapConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ImportControlInboundSoapConnector, SdesConnector}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesSuccessResult, SendFail, SendFailExternal, SendResult}
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
@@ -33,7 +33,8 @@ import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 @Singleton
 class InboundMessageService @Inject() (
     importControlInboundSoapConnector: ImportControlInboundSoapConnector,
-    sdesService: Ics2SdesService
+    sdesService: Ics2SdesService,
+    sdesConnectorConfig: SdesConnector.Config
   )(implicit ec: ExecutionContext
   ) extends ApplicationLogger with Ics2XmlHelper {
 
@@ -74,7 +75,7 @@ class InboundMessageService @Inject() (
 
   private def processSdesResults(sdesResults: Seq[SdesSuccessResult], wholeMessage: NodeSeq): Either[Set[String], NodeSeq] = {
     val replacements = sdesResults.map(sr => (sr.sdesReference.forFilename, sr.sdesReference.uuid))
-    replaceEmbeddedAttachments(replacements.toMap[String, String], wholeMessage)
+    replaceEmbeddedAttachments(replacements.toMap[String, String], wholeMessage, sdesConnectorConfig.ics2.encodeSdesConfiguration)
   }
 
   private def forwardMessage(soapRequest: NodeSeq, newHeaders: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {

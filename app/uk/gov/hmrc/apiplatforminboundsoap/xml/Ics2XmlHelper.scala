@@ -20,9 +20,9 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 import scala.xml.{Elem, Node, NodeSeq, Text}
 
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
+import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, Base64Encoder}
 
-trait Ics2XmlHelper extends ApplicationLogger {
+trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
 
   def getMessageVersion(soapMessage: NodeSeq): SoapMessageVersion = {
     def getVersionTwoNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
@@ -34,17 +34,18 @@ trait Ics2XmlHelper extends ApplicationLogger {
 
     def isVersionOneNamespace(soapMessage: NodeSeq): Boolean = {
       val body: NodeSeq = soapMessage \ "Body"
-      body.map((n: Node) => n.descendant.toString.contains("ns1")).contains(true)
+      body.exists((n: Node) => n.descendant.toString.contains("ns1"))
     }
 
-    isVersionOneNamespace(soapMessage) match {
-      case true  => Version1
-      case false => getVersionTwoNamespace(soapMessage)
+    if (isVersionOneNamespace(soapMessage)) {
+      Version1
+    } else {
+      getVersionTwoNamespace(soapMessage)
     }
   }
 
   def getSoapAction(soapMessage: NodeSeq): Option[String] = {
-    val action = (soapMessage \\ "Action")
+    val action = soapMessage \\ "Action"
     if (action.isEmpty) None else Some(action.text)
   }
 
@@ -82,17 +83,17 @@ trait Ics2XmlHelper extends ApplicationLogger {
   }
 
   def getBinaryMimeType(binaryBlock: NodeSeq): Option[String] = {
-    val mime = (binaryBlock \\ "MIME")
+    val mime = binaryBlock \\ "MIME"
     if (mime.isEmpty) None else Some(mime.text)
   }
 
   def getReferralRequestReference(soapMessage: NodeSeq): Option[String] = {
-    val referralRequestReference = (soapMessage \\ "referralRequestReference")
+    val referralRequestReference = soapMessage \\ "referralRequestReference"
     if (referralRequestReference.isEmpty) None else Some(referralRequestReference.text)
   }
 
   def getBinaryDescription(binaryBlock: NodeSeq): Option[String] = {
-    val description = (binaryBlock \\ "description")
+    val description = binaryBlock \\ "description"
     if (description.isEmpty) None else Some(description.text)
   }
 
@@ -101,14 +102,14 @@ trait Ics2XmlHelper extends ApplicationLogger {
     if (includedBinaryObject.isEmpty) None else Some(includedBinaryObject.text)
   }
 
-  def replaceEmbeddedAttachments(replacement: Map[String, String], completeXML: NodeSeq): Either[Set[String], NodeSeq] = {
+  def replaceEmbeddedAttachments(replacement: Map[String, String], completeXML: NodeSeq, encodeReplacement: Boolean = false): Either[Set[String], NodeSeq] = {
     object replaceIncludedBinaryObject extends RewriteRule {
       override def transform(n: Node): Seq[Node] =
         n match {
           case e: Elem if e.label == "binaryFile" || e.label == "binaryAttachment" =>
             val filename = (n \\ "filename").text
             replacement.get(filename) match {
-              case Some(uuid) => replaceBinaryBase64Object(n, uuid)
+              case Some(uuid) => if (encodeReplacement) replaceBinaryBase64Object(n, encode(uuid)) else replaceBinaryBase64Object(n, uuid)
               case None       =>
                 logger.warn(s"Found a filename [$filename] for which we have no UUID to replace its body")
                 n
