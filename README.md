@@ -41,6 +41,8 @@ which will result in a response like:
     </soap:Body>
 </soap:Envelope>
 ```
+Note that requests are accompanied by an `Authorization: Bearer` header. This must be a JWT with the correct issuer 
+and a valid expiry date. Confluence has instructions on generating an appropriate JWT in the CCN2 Gateway page.
 ### Request validation
 Bad requests will be met with:
 ```
@@ -66,3 +68,22 @@ with content-type header containing :
 ```
 content-type: application/soap+xml
 ```
+
+### SDES integration
+Where an incoming message is found to contain a complex element named `binaryAttachment` or `binaryFile` then the embedded binary
+data is sent to SDES for quarantining. It will be easier to understand this by reference to the following chunk of XML:
+```
+<urn:binaryAttachment>
+      <urn:filename>test-filename.txt</urn:filename>
+      <urn:MIME>text/plain</urn:MIME>
+      <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+      <urn:description>A text file containing some text</urn:description>
+</urn:binaryAttachment>
+```
+
+The embedded binary data is the value of the element named `includedBinaryObject`. This Base 64 encoded string is sent to SDES, accompanied
+by a metadata header, and SDES returns a UUID in its response.
+The values if the `includedBinaryObject` is replaced with the SDES UUID and the message is then forwarded to the configured 
+recipient service. Note that for ICS2, the UUID is itself Base 64 encoded before being inserted in the message. This is
+probably not necessary as a UUID wouldn't contain any characters that could violate an XML schema, but is the behaviour
+that is expected by the consumer of ICS2 messages `import-control-inbound-soap`.
