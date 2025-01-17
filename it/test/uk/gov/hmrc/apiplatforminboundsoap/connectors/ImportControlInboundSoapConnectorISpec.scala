@@ -54,7 +54,7 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
     val requestBody: Elem                            = readFromFile("ie4r02-v2.xml")
     val xRequestIdHeaderValue                        = randomUUID.toString()
 
-    val faultResponse = getExpectedSoapFault(
+    val faultResponse                                = getExpectedSoapFault(
       400,
       "Value of element referralRequestReference is too long\nValue of element MIME is too long",
       xRequestIdHeaderValue
