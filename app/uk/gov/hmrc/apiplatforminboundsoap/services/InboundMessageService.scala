@@ -26,7 +26,7 @@ import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ImportControlInboundSoapConnector, SdesConnector}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesSuccessResult, SendFail, SendFailExternal, SendResult}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesSuccessResult, SendFail, SendFailExternal, SendResult, SoapMessageVersion}
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
@@ -69,7 +69,7 @@ class InboundMessageService @Inject() (
       "x-correlation-id" -> getMessageId(soapRequest).getOrElse(""),
       "x-message-id"     -> getMessageId(soapRequest).getOrElse(""),
       "x-files-included" -> isFileIncluded(soapRequest).toString,
-      "x-version-id"     -> getMessageVersion(soapRequest).displayName
+      "x-version-id"     -> SoapMessageVersion("V2").displayName
     )
   }
 

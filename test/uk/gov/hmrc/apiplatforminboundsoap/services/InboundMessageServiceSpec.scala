@@ -74,7 +74,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
       "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
       "x-files-included" -> isFileIncluded(xmlBody).toString,
-      "x-version-id"     -> getMessageVersion(xmlBody).displayName
+      "x-version-id"     -> "V2"
     )
 
     "return success when connector returns success" in new Setup {
@@ -97,7 +97,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
         "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
         "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
         "x-files-included" -> isFileIncluded(xmlBody).toString,
-        "x-version-id"     -> getMessageVersion(xmlBody).displayName
+        "x-version-id"     -> "V2"
       )
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
@@ -127,7 +127,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
         "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
         "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
         "x-files-included" -> isFileIncluded(xmlBody).toString,
-        "x-version-id"     -> getMessageVersion(xmlBody).displayName
+        "x-version-id"     -> "V2"
       )
 
       when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType", uploadPath = "some/path", encodeSdesConfiguration = true)
@@ -188,7 +188,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
         "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
         "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
         "x-files-included" -> isFileIncluded(xmlBody).toString,
-        "x-version-id"     -> getMessageVersion(xmlBody).displayName
+        "x-version-id"     -> "V2"
       )
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
 
@@ -235,7 +235,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
         "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
         "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
         "x-files-included" -> isFileIncluded(xmlBody).toString,
-        "x-version-id"     -> getMessageVersion(xmlBody).displayName
+        "x-version-id"     -> "V2"
       )
       when(ics2SdesServiceMock.processMessage(*, *)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("filename1.pdf", "some-uuid-like-string")))))
       when(inboundConnectorMock.postMessage(*, *, *)(*)).thenReturn(successful(SendSuccess(OK)))
@@ -292,7 +292,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
       "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
       "x-files-included" -> isFileIncluded(xmlBody).toString,
-      "x-version-id"     -> getMessageVersion(xmlBody).displayName
+      "x-version-id"     -> "V2"
     )
 
     "return success when connector returns success" in new Setup {

@@ -19,30 +19,9 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 import scala.xml.{Elem, Node, NodeSeq, Text}
 
-import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, Base64Encoder}
 
 trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
-
-  def getMessageVersion(soapMessage: NodeSeq): SoapMessageVersion = {
-    def getVersionTwoNamespace(soapMessage: NodeSeq): SoapMessageVersion = {
-      soapMessage.map((n: Node) => Option(n.getNamespace("v2"))).exists(ns => ns.nonEmpty) match {
-        case true  => Version2
-        case false => VersionNotRecognised
-      }
-    }
-
-    def isVersionOneNamespace(soapMessage: NodeSeq): Boolean = {
-      val body: NodeSeq = soapMessage \ "Body"
-      body.exists((n: Node) => n.descendant.toString.contains("ns1"))
-    }
-
-    if (isVersionOneNamespace(soapMessage)) {
-      Version1
-    } else {
-      getVersionTwoNamespace(soapMessage)
-    }
-  }
 
   def getSoapAction(soapMessage: NodeSeq): Option[String] = {
     val action = soapMessage \\ "Action"

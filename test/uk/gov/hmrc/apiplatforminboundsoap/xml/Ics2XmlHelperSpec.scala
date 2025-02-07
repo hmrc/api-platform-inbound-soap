@@ -60,22 +60,6 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
     }
   }
 
-  "get version namespace" should {
-    "return whether V1 namespace found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4n05-v1.xml")
-      getMessageVersion(xmlBody).displayName shouldBe "V1"
-    }
-
-    "return whether V2 namespace found in SOAP message" in new Setup {
-      val xmlBody: NodeSeq = readFromFile("ie4n09-v2.xml")
-      getMessageVersion(xmlBody).displayName shouldBe "V2"
-    }
-
-    "return whether invalid namespace found in SOAP message" in new Setup {
-      getMessageVersion(xmlBodyForElementNotFoundScenario).displayName shouldBe "Not Recognised"
-    }
-  }
-
   "isFileAttached" should {
     "return true when binaryFile found in SOAP message" in new Setup {
       val xmlBody: NodeSeq = readFromFile("ie4s03-v2.xml")
