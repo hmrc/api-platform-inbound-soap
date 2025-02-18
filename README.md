@@ -89,8 +89,8 @@ probably not necessary as a UUID wouldn't contain any characters that could viol
 that is expected by the consumer of ICS2 messages `import-control-inbound-soap`.
 
 ### Running on its own
-The service can be started locally using sbt. If you wanted to start it on the same port as does Service Manager (6707) you would
-excute ```sbt "run 6707"```
+The service can be started locally using sbt. It will start on the same port as it does when started using Service Manager (6707) 
+if you execute ```sbt run```
 
 ### Running the tests
 There's a selection of unit and integration tests which can be run by executing:
