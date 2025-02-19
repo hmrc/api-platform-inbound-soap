@@ -16,6 +16,7 @@ lazy val microservice = Project(appName, file("."))
   .enablePlugins(PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin)
   .settings(
+    PlayKeys.playDefaultPort := 6707,
     libraryDependencies ++= AppDependencies(),
     retrieveManaged := true,
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
