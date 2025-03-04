@@ -18,11 +18,15 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
-
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.xmlunit.builder.{DiffBuilder, Input}
+import org.xmlunit.builder.DiffBuilder.compare
+import org.xmlunit.diff.DefaultNodeMatcher
+import org.xmlunit.diff.ElementSelectors.byName
 
 class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with Ics2XmlHelper {
 
@@ -201,52 +205,68 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
       val xmlBody                    = readFromFile("ie4s03-v2.xml")
       val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4s03-v2.xml")
       val replacement                = Map("test-filename.txt" -> "some-uuid-like-string")
-      val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
-      result shouldBe Right(xmlBodyAfterTransformation)
-    }
+      val result                     = replaceEmbeddedAttachments2(replacement, xmlBody)
+      val diff = getXmlDiff(result,xmlBodyAfterTransformation).build()
+      diff.getDifferences.forEach(println(_))
+      diff.hasDifferences shouldBe false    }
+
+  "replace includedBinaryObject element in a message containing one binaryFile element elt" in new Setup {
+      val xmlBody                    = readFromFile("ie4s03-v2.xml")
+      val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4s03-v2.xml")
+      val replacement                = Map("test-filename.txt" -> "some-uuid-like-string")
+      val result                     = replaceEmbeddedAttachments2(replacement, xmlBody)
+    val diff = getXmlDiff(result,xmlBodyAfterTransformation).build()
+    diff.getDifferences.forEach(println(_))
+    diff.hasDifferences shouldBe false    }
 
     "replace includedBinaryObject element in a message containing one binaryAttachment element" in new Setup {
       val xmlBody                    = readFromFile("ie4r02-v2-one-binary-attachment.xml")
       val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4r02-v2-one-binary-attachment.xml")
       val replacement                = Map("test-filename.txt" -> "some-uuid-like-string")
-      val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
-      result shouldBe Right(xmlBodyAfterTransformation)
-    }
+      val result                     = replaceEmbeddedAttachments2(replacement, xmlBody)
+      val diff = getXmlDiff(result,xmlBodyAfterTransformation).build()
+      diff.getDifferences.forEach(println(_))
+      diff.hasDifferences shouldBe false    }
 
     "replace includedBinaryObject element with base 64 encoded replacement in a message containing one binaryAttachment element" in new Setup {
       val xmlBody                    = readFromFile("ie4r02-v2-one-binary-attachment.xml")
       val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4r02-v2-one-binary-attachment-base64-encode.xml")
       val replacement                = Map("test-filename.txt" -> "some-uuid-like-string")
-      val result                     = replaceEmbeddedAttachments(replacement, xmlBody, true)
-      result shouldBe Right(xmlBodyAfterTransformation)
-    }
+      val result                     = replaceEmbeddedAttachments2(replacement, xmlBody, true)
+      val diff = getXmlDiff(result,xmlBodyAfterTransformation).build()
+      diff.getDifferences.forEach(println(_))
+      diff.hasDifferences shouldBe false    }
 
     "replace a includedBinaryObject block in a message containing two binaryAttachment elements" in new Setup {
       val xmlBody                    = readFromFile("ie4r02-v2-two-binary-attachments.xml")
       val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4r02-v2-two-binary-attachments.xml")
       val replacement                = Map("test-filename.txt" -> "some-uuid-like-string", "test-filename2.txt" -> "some-different-uuid-like-string")
-      val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
-      result shouldBe Right(xmlBodyAfterTransformation)
-    }
+      val result                     = replaceEmbeddedAttachments2(replacement, xmlBody)
+      val diff = getXmlDiff(result,xmlBodyAfterTransformation).build()
+      diff.getDifferences.forEach(println(_))
+      diff.hasDifferences shouldBe false    }
 
     "replace a includedBinaryObject block in a message containing one each of binaryFile and binaryAttachment elements" in new Setup {
       val xmlBody                    = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
-      val xmlBodyAfterTransformation = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline-after-sdes.xml")
+      val xmlBodyAfterTransformation: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline-after-sdes.xml")
       val replacement                = Map("filename1.pdf" -> "some-uuid-like-string", "filename2.txt" -> "some-different-uuid-like-string")
-      val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
-      result shouldBe Right(xmlBodyAfterTransformation)
+      val result: Either[Set[String], NodeSeq] = replaceEmbeddedAttachments2(replacement, xmlBody)
+      val diff = getXmlDiff(result,xmlBodyAfterTransformation).build()
+      diff.getDifferences.forEach(println(_))
+      diff.hasDifferences shouldBe false
     }
     "replace a includedBinaryObject block in a message containing one binaryFile and two binaryAttachment elements" in new Setup {
       val xmlBody                    = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
       val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
-      val replacement                = Map("filename1.pdf" -> "some-uuid-like-string", "filename2.txt" -> "some-different-uuid-like-string", "filename3.docx" -> "yet-another-uuid-like-string")
-      val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
-      result shouldBe Right(xmlBodyAfterTransformation)
-    }
+      val replacement                = Map("filename1.pdf" -> "uuid-for-filename1.pdf", "filename2.txt" -> "uuid-for-filename2.txt", "filename3.docx" -> "uuid-for-filename3.docx")
+      val result                     = replaceEmbeddedAttachments2(replacement, xmlBody)
+      val diff = getXmlDiff(result,xmlBodyAfterTransformation).build()
+      diff.getDifferences.forEach(println(_))
+      diff.hasDifferences shouldBe false    }
     "return a Left when given a UUID for an unknown filename" in new Setup {
       val xmlBody     = readFromFile("ie4r02-v2-one-binary-attachment.xml")
       val replacement = Map("wrong-filename.pdf" -> "some-uuid-like-string")
-      val result      = replaceEmbeddedAttachments(replacement, xmlBody)
+      val result      = replaceEmbeddedAttachments2(replacement, xmlBody)
       result shouldBe Left(Set("wrong-filename.pdf"))
     }
   }
@@ -304,4 +324,10 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
       }
     }
   }
-}
+  private def getXmlDiff(actual: Either[Set[String],NodeSeq], expected: Elem): DiffBuilder = {
+    compare(Input.fromString(expected.toString).build())
+      .withTest(Input.fromString(actual.getOrElse(NodeSeq.Empty).toString).build())
+      .withNodeMatcher(new DefaultNodeMatcher(byName))
+      .checkForSimilar()
+      .ignoreElementContentWhitespace
+  }}
