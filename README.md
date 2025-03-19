@@ -13,13 +13,13 @@ XML request bodies received at the CCN2 controller are validated by a filter to 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
 
 ### Sample cURL requests
-For 200 response (you'll need to alter the path to the XML file in the `-d` argument, according to where you have the project checked out):
+For a successful 2xx response (you'll need to alter the path to the XML file in the `-d` argument, according to where you have the project checked out):
 ```
-curl -v localhost:9000/api-platform-inbound-soap/ics2/NESReferralBASV2  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mjc5NjY4ODd9.cSKzno8ytgA8-C5kIg_0NSVF-Ar48fJ9_1jnygbYuGM" -H "Content-Type: application/soap+xml" -d @/<your projects directory>/api-platform-inbound-soap/test/resources/ie4r02-v2.xml
+curl -v localhost:6707/ics2/NESReferralBASV2  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU" -H "Content-Type: application/soap+xml" -d @/<your projects directory>/api-platform-inbound-soap/test/resources/ie4n09-v2.xml
 ``` 
 One example of a bad request is:
 ```
-curl -v localhost:9000/api-platform-inbound-soap/ics2/NESReferralBASV2  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mjc5NjY4ODd9.cSKzno8ytgA8-C5kIg_0NSVF-Ar48fJ9_1jnygbYuGM" -H "x-request-id: cc901cd5-3348-4713-8a6b-4c803e308dc1" -H "Content-Type: application/soap+xml" -d @/<your projects directory>/api-platform-inbound-soap/test/resources/ie4r02-v2-missing-description-element.xml
+curl -v localhost:6707/ics2/NESReferralBASV2  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU" -H "x-request-id: cc901cd5-3348-4713-8a6b-4c803e308dc1" -H "Content-Type: application/soap+xml" -d @/<your projects directory>/api-platform-inbound-soap/test/resources/ie4r02-v2-missing-description-element.xml
 ```
 which will result in a response like:
 ```
@@ -42,9 +42,9 @@ which will result in a response like:
 </soap:Envelope>
 ```
 Note that requests are accompanied by an `Authorization: Bearer` header. This must be a JWT with the correct issuer 
-and a valid expiry date. Confluence has instructions on generating an appropriate JWT in the CCN2 Gateway page.
+and a valid expiry date. Confluence has instructions on generating an appropriate JWT, in the CCN2 Gateway page.
 ### Request validation
-Bad requests will be met with:
+Bad requests will be met with a SOAP response detailing the problem e.g.:
 ```
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
     <soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
@@ -83,7 +83,32 @@ data is sent to SDES for quarantining. It will be easier to understand this by r
 
 The embedded binary data is the value of the element named `includedBinaryObject`. This Base 64 encoded string is sent to SDES, accompanied
 by a metadata header, and SDES returns a UUID in its response.
-The values if the `includedBinaryObject` is replaced with the SDES UUID and the message is then forwarded to the configured 
+The value of the `includedBinaryObject` is replaced with the SDES UUID and the message is then forwarded to the configured 
 recipient service. Note that for ICS2, the UUID is itself Base 64 encoded before being inserted in the message. This is
 probably not necessary as a UUID wouldn't contain any characters that could violate an XML schema, but is the behaviour
 that is expected by the consumer of ICS2 messages `import-control-inbound-soap`.
+
+### Running on its own
+The service can be started locally using sbt. It will start on the same port as it does when started using Service Manager (6707) 
+if you execute ```sbt run```
+
+### Running the tests
+There's a selection of unit and integration tests which can be run by executing:
+```
+sbt run-all-tests
+```
+When ready to commit it's advisable to run:
+```
+sbt pre-commit
+```
+as this formats the code and generates a coverage report. Test coverage below the configured level will cause build 
+failures locally and on Jenkins.
+
+### Running with Service Manager
+Executing the shell script ```run_local_with_dependencies.sh``` will start the service along with the services it depends upon.
+It will start on port 6707 and will forward all requests on to the instance of ```api-platform-test``` started by Service Manager.
+After executing the "For a successful 2xx response" cURL request provided above you can inspect what payload this service has forwarded
+by viewing the  logs of ```api-platform-test```.
+
+This can be done by executing
+```sm2 --logs API_PLATFORM_TEST``` and looking for a line beginning ```Received notification with payload```.
