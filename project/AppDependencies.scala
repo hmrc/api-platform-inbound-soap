@@ -18,7 +18,7 @@ object AppDependencies {
     "org.mockito"             %% "mockito-scala-scalatest"    % "1.17.30",
     "com.sun.activation"      % "javax.activation"            % "1.2.0",
     "org.xmlunit"             %  "xmlunit-core"               % "2.9.0",
-     "jakarta.xml.bind"       % "jakarta.xml.bind-api"        % "2.3.2",
+    "jakarta.xml.bind"        % "jakarta.xml.bind-api"        % "2.3.2",
     "org.glassfish.jaxb"      % "jaxb-runtime"                % "2.3.2"
   ).map(_ % "test")
 }

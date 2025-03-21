@@ -75,8 +75,7 @@ class InboundMessageService @Inject() (
 
   private def processSdesResults(sdesResults: Seq[SdesSuccessResult], wholeMessage: NodeSeq): Either[Set[String], NodeSeq] = {
     val replacements = sdesResults.map(sr => (sr.sdesReference.forFilename, sr.sdesReference.uuid))
-    replaceEmbeddedAttachments2(replacements.toMap[String, String], wholeMessage, sdesConnectorConfig.ics2.encodeSdesConfiguration)
-//    replaceEmbeddedAttachments(replacements.toMap[String, String], wholeMessage, sdesConnectorConfig.ics2.encodeSdesConfiguration)
+    replaceEmbeddedAttachments(replacements.toMap[String, String], wholeMessage, sdesConnectorConfig.ics2.encodeSdesConfiguration)
   }
 
   private def forwardMessage(soapRequest: NodeSeq, newHeaders: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
