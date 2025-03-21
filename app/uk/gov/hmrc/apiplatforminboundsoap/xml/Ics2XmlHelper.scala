@@ -97,19 +97,11 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
       add(List("binaryAttachment", "binaryFile"), elem)
     }
 
-    def replaceAllBinaryObjects2(e: Elem, filename: String, replacement: String): Either[String, Elem] = {
+    def replaceAllBinaryObjects(e: Elem, filename: String, replacement: String): Either[String, Elem] = {
       def replaceText(elem: Elem, x: String): Elem = {
         (elem \\~ (x, _ \@ "for" == filename)) mapChildren {
           case e: Elem =>
-            if (e.label == "includedBinaryObject") e.copy(child = new Text(replacement)) else e
-          case n       => n
-        }
-      }.getOrElse(elem)
-
-      def replaceTextBase64Encode(elem: Elem, x: String): Elem = {
-        (elem \\~ (x, _ \@ "for" == filename)) mapChildren {
-          case e: Elem =>
-            if (e.label == "includedBinaryObject") e.copy(child = new Text(encode(replacement))) else e
+            if (e.label == "includedBinaryObject") e.copy(child = if (encodeReplacement) new Text(encode(replacement)) else new Text(replacement)) else e
           case n       => n
         }
       }.getOrElse(elem)
@@ -119,7 +111,7 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
         targets match {
           case Nil       => elem
           case x :: tail =>
-            replaceBinaryObject(tail, if (encodeReplacement) replaceTextBase64Encode(elem, x) else replaceText(elem, x))
+            replaceBinaryObject(tail,replaceText(elem, x))
         }
       }
       val transformed                                                  = replaceBinaryObject(List("binaryAttachment", "binaryFile"), e)
@@ -129,7 +121,7 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
     def doReplace(r: Map[String, String], elem: Elem): Either[String, Elem] = {
       if (r.isEmpty) Right(elem)
       else {
-        replaceAllBinaryObjects2(elem, r.head._1, r.head._2) match {
+        replaceAllBinaryObjects(elem, r.head._1, r.head._2) match {
           case Right(e) => doReplace(r.tail, e)
           case _        => Left(r.head._1)
         }
