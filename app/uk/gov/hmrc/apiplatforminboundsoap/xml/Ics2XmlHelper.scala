@@ -84,8 +84,8 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
   }
 
   def replaceEmbeddedAttachments(replacement: Map[String, String], completeXML: NodeSeq, encodeReplacement: Boolean = false): Either[Set[String], NodeSeq] = {
-    val xmlElem = completeXML.asInstanceOf[Elem]
-    def addForLabels(elem: Elem): Elem = {
+    val xmlElem                       = completeXML.asInstanceOf[Elem]
+    def addForAttrs(elem: Elem): Elem = {
       @tailrec
       def add(targets: List[String], elem: Elem): Elem = {
         targets match {
@@ -111,7 +111,7 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
         targets match {
           case Nil       => elem
           case x :: tail =>
-            replaceBinaryObject(tail,replaceText(elem, x))
+            replaceBinaryObject(tail, replaceText(elem, x))
         }
       }
       val transformed                                                  = replaceBinaryObject(List("binaryAttachment", "binaryFile"), e)
@@ -140,11 +140,11 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
       remove(List("binaryAttachment", "binaryFile"), elem)
     }
 
-    val withFileLabels2 = addForLabels(xmlElem)
-    val attachmentsReplaced = doReplace(replacement, withFileLabels2)
+    val withForFileAttrs    = addForAttrs(xmlElem)
+    val attachmentsReplaced = doReplace(replacement, withForFileAttrs)
     attachmentsReplaced match {
-      case Right(e)   => Right(removeForLabels(e).asInstanceOf[NodeSeq])
-      case Left(prob) => Left(Set(prob))
+      case Right(elem)            => Right(removeForLabels(elem).asInstanceOf[NodeSeq])
+      case Left(notFoundFilename) => Left(Set(notFoundFilename))
     }
   }
 
