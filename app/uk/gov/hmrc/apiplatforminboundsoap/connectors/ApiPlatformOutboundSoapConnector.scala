@@ -49,7 +49,7 @@ class ApiPlatformOutboundSoapConnector @Inject() (httpClientV2: HttpClientV2, ap
     }
       .recoverWith {
         case NonFatal(e) =>
-          logger.warn(s"NonFatal error ${e.getMessage} while forwarding message in ${this.getClass.getName}", e)
+          logger.warn(s"NonFatal error ${e.getMessage} while forwarding message in ApiPlatformOutboundSoapConnector.postMessage", e)
           Future.successful(SendFailExternal(Status.INTERNAL_SERVER_ERROR))
       }
   }
