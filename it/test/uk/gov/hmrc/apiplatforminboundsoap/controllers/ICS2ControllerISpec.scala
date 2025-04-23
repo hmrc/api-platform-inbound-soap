@@ -44,7 +44,7 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
 
   val codRequestBody: Elem = readFromFile("ie4r02-v2.xml")
 
-  override implicit lazy val app: Application = new GuiceApplicationBuilder()
+  override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
       "metrics.enabled"     -> false,
       "auditing.enabled"    -> false,
@@ -53,12 +53,12 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
       "passThroughHost"     -> externalWireMockHost,
       "passThroughPort"     -> externalWireMockPort
     ).build()
-  implicit val mat: Materializer              = app.injector.instanceOf[Materializer]
+  implicit val mat: Materializer            = fakeApplication.injector.instanceOf[Materializer]
 
   val path        = "/ics2/NESControlBASV2"
   val fakeRequest = FakeRequest("POST", path)
 
-  val underTest: ICS2MessageController = app.injector.instanceOf[ICS2MessageController]
+  val underTest: ICS2MessageController = fakeApplication.injector.instanceOf[ICS2MessageController]
   "message" should {
     "forward an XML message" in {
       val expectedStatus = Status.OK

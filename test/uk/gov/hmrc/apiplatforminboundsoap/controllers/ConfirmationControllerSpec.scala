@@ -46,8 +46,12 @@ import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{Acknowledg
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 
 class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
-  implicit val hc: HeaderCarrier = HeaderCarrier()
-  implicit val mat: Materializer = app.injector.instanceOf[Materializer]
+  implicit val hc: HeaderCarrier            = HeaderCarrier()
+  implicit val mat: Materializer            = app.injector.instanceOf[Materializer]
+
+  override def fakeApplication: Application = new GuiceApplicationBuilder()
+    .configure("passThroughEnabled" -> "false")
+    .build()
 
   trait Setup {
     val xRequestIdHeaderValue = randomUUID.toString
@@ -68,12 +72,9 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
     val codRequestBody: Elem = readFromFile("acknowledgement/requests/cod_request.xml")
     val coeRequestBody: Elem = readFromFile("acknowledgement/requests/coe_request.xml")
 
-    val app: Application              = new GuiceApplicationBuilder()
-      .configure("passThroughEnabled" -> "false")
-      .build()
-    private val verifyJwtTokenAction  = app.injector.instanceOf[VerifyJwtTokenAction]
-    private val messageValidateAction = app.injector.instanceOf[AcknowledgementMessageValidateAction]
-    private val passThroughModeAction = app.injector.instanceOf[PassThroughModeAction]
+    private val verifyJwtTokenAction  = fakeApplication.injector.instanceOf[VerifyJwtTokenAction]
+    private val messageValidateAction = fakeApplication.injector.instanceOf[AcknowledgementMessageValidateAction]
+    private val passThroughModeAction = fakeApplication.injector.instanceOf[PassThroughModeAction]
     val mockOutboundConnector         = mock[ApiPlatformOutboundSoapConnector]
     val controller                    = new ConfirmationController(mockOutboundConnector, Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, messageValidateAction)
   }
