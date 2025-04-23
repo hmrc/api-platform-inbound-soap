@@ -43,7 +43,7 @@ class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: Ap
   lazy val passThroughHost = s"${appConfig.passThroughProtocol}://${appConfig.passThroughHost}:${appConfig.passThroughPort}"
 
   override protected def filter[A](request: Request[A]): Future[Option[Result]] = {
-    logger.info(s"Entering pass through filter; passthrough URL is $passThroughHost")
+    logger.info(s"Entering pass through filter; passthrough host is $passThroughHost")
     val maybeAuthHeader = request.headers.headers.find(f => f._1.equalsIgnoreCase("Authorization"))
     if (appConfig.passThroughEnabled) {
       logger.info(s"In pass-through mode. Passing request on")
