@@ -36,23 +36,27 @@ import uk.gov.hmrc.apiplatforminboundsoap.stubs.ApiPlatformOutboundSoapStub
 
 class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
     with GuiceOneAppPerSuite with ExternalWireMockSupport with ApiPlatformOutboundSoapStub {
-  override implicit lazy val app: Application = appBuilder.build()
-  implicit val hc: HeaderCarrier              = HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "metrics.enabled"       -> false,
-        "auditing.enabled"      -> false,
-        "forwardMessageUrl"     -> externalWireMockUrl,
-        "testForwardMessageUrl" -> s"$externalWireMockUrl/test-only"
-      )
+  val appWithoutPassthroughConfigured = new GuiceApplicationBuilder()
+    .configure(
+      "metrics.enabled"     -> false,
+      "auditing.enabled"    -> false,
+      "passThroughProtocol" -> "http",
+      "passThroughHost"     -> externalWireMockHost,
+      "passThroughPort"     -> externalWireMockPort
+    )
+
+  override def fakeApplication: Application = appWithoutPassthroughConfigured
+    .configure(
+      "passThroughEnabled" -> true
+    ).build()
 
   trait Setup {
     val headers: Seq[(String, String)]               = List("Authorization" -> "Bearer value")
     val underTest: ImportControlInboundSoapConnector = app.injector.instanceOf[ImportControlInboundSoapConnector]
     val requestBody: Elem                            = readFromFile("ie4r02-v2.xml")
-    val xRequestIdHeaderValue                        = randomUUID.toString()
+    val xRequestIdHeaderValue                        = randomUUID.toString
 
     val faultResponse = getExpectedSoapFault(
       400,
@@ -119,8 +123,17 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
       }
     }
 
-    "send the given message to the test service if so configured" in new Setup {
-      val path = "/test-only"
+    "send the given message to the test service if so configured" in {
+      val appForTest                                   = appWithoutPassthroughConfigured
+        .configure(
+          "passThroughEnabled"    -> false,
+          "testForwardMessageUrl" -> s"http://$externalWireMockHost:$externalWireMockPort/test-only"
+        ).build()
+      val underTest: ImportControlInboundSoapConnector = appForTest.injector.instanceOf[ImportControlInboundSoapConnector]
+
+      val path                           = "/test-only"
+      val requestBody                    = <xml>foo</xml>
+      val headers: Seq[(String, String)] = List("Authorization" -> "Bearer value")
       primeStubForSuccess(requestBody, OK, path)
 
       val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = true))

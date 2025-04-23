@@ -33,7 +33,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, 
 class ImportControlInboundSoapConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)(implicit ec: ExecutionContext) extends BaseConnector(httpClientV2) with Logging {
 
   def postMessage(soapRequest: NodeSeq, headers: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val forwardUrl = if (isTest) appConfig.testForwardMessageUrl else appConfig.forwardMessageUrl
+    val forwardUrl = if (isTest) appConfig.testForwardMessageUrl else s"${appConfig.passThroughProtocol}://${appConfig.passThroughHost}:${appConfig.passThroughPort}"
 
     postHttpRequest(soapRequest, headers, forwardUrl).map {
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>

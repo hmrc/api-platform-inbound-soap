@@ -28,12 +28,14 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 
@@ -41,6 +43,10 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
+
+    val app: Application           = new GuiceApplicationBuilder()
+      .configure("passThroughEnabled" -> "false")
+      .build()
     val incomingMessageServiceMock = mock[InboundMessageService]
     val xRequestIdHeaderValue      = randomUUID.toString()
 
@@ -61,10 +67,13 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     val headersWithInvalidIssuerBearerToken = commonHeaders.add(
       "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImFueSBvbGQgY3JhcCJ9.ANiEhrg1ZDCXA5axh4G2RXpyZwGuX7_AU1V3FJdX5DU"
     )
+    private val passThroughModeAction       = app.injector.instanceOf[PassThroughModeAction]
     private val verifyJwtTokenAction        = app.injector.instanceOf[VerifyJwtTokenAction]
     private val soapMessageValidateAction   = app.injector.instanceOf[SoapMessageValidateAction]
-    val controller                          = new ICS2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
-    val fakeRequest                         = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headersWithValidBearerToken)
+
+    val controller  =
+      new ICS2MessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
+    val fakeRequest = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headersWithValidBearerToken)
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())

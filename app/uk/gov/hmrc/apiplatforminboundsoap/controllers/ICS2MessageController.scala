@@ -23,20 +23,21 @@ import scala.xml.NodeSeq
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 
 @Singleton()
 class ICS2MessageController @Inject() (
     cc: ControllerComponents,
+    passThroughModeAction: PassThroughModeAction,
     verifyJwtTokenAction: VerifyJwtTokenAction,
     soapMessageValidateAction: SoapMessageValidateAction,
     incomingMessageService: InboundMessageService
   )(implicit ec: ExecutionContext
   ) extends BackendController(cc) {
 
-  def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
+  def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
     implicit request =>
       incomingMessageService.processInboundMessage(request.body) flatMap {
         case SendSuccess(status)      =>
