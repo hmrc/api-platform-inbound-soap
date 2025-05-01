@@ -34,7 +34,7 @@ import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
-class ConfirmationControllerISpec extends AnyWordSpecLike with Matchers
+class ConfirmationControllerPassThroughISpec extends AnyWordSpecLike with Matchers
     with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
 
   def readFromFile(fileName: String) = {
@@ -45,14 +45,16 @@ class ConfirmationControllerISpec extends AnyWordSpecLike with Matchers
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
-      "metrics.enabled"                                       -> false,
-      "auditing.enabled"                                      -> false,
-      "microservice.services.api-platform-outbound-soap.host" -> externalWireMockHost,
-      "microservice.services.api-platform-outbound-soap.port" -> externalWireMockPort
+      "metrics.enabled"     -> false,
+      "auditing.enabled"    -> false,
+      "passThroughProtocol" -> "http",
+      "passThroughEnabled"  -> true,
+      "passThroughHost"     -> externalWireMockHost,
+      "passThroughPort"     -> externalWireMockPort
     ).build()
   implicit val mat: Materializer              = app.injector.instanceOf[Materializer]
 
-  val path        = "/acknowledgement"
+  val path        = "/ccn2/acknowledgementV2"
   val fakeRequest = FakeRequest("POST", path)
 
   val underTest: ConfirmationController = app.injector.instanceOf[ConfirmationController]

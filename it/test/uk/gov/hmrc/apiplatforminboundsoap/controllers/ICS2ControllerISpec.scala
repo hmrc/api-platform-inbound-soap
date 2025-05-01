@@ -33,7 +33,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
-import uk.gov.hmrc.apiplatforminboundsoap.support.ExternalServiceStub
+import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
 class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
     with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
@@ -42,86 +42,62 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
     XML.load(Source.fromResource(fileName).bufferedReader())
   }
 
-  val codRequestBody: Elem = readFromFile("ie4r02-v2.xml")
+  val ics2RequestBody: Elem = readFromFile("requests/ie4r02-v2.xml")
+  val forwardedBody: Elem   = readFromFile("requests/post-sdes-processing/ie4r02-v2-one-binary-attachment.xml")
 
   override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
-      "metrics.enabled"     -> false,
-      "auditing.enabled"    -> false,
-      "passThroughEnabled"  -> true,
-      "passThroughProtocol" -> "http",
-      "passThroughHost"     -> externalWireMockHost,
-      "passThroughPort"     -> externalWireMockPort
+      "metrics.enabled"                                                           -> false,
+      "auditing.enabled"                                                          -> false,
+      "microservice.services.secure-data-exchange-proxy.ics2.encodeSdesReference" -> false,
+      "microservice.services.import-control-inbound-soap.host"                    -> externalWireMockHost,
+      "microservice.services.import-control-inbound-soap.port"                    -> externalWireMockPort,
+      "microservice.services.secure-data-exchange-proxy.host"                     -> externalWireMockHost,
+      "microservice.services.secure-data-exchange-proxy.port"                     -> externalWireMockPort
     ).build()
   implicit val mat: Materializer            = fakeApplication.injector.instanceOf[Materializer]
 
-  val path        = "/ics2/NESControlBASV2"
-  val fakeRequest = FakeRequest("POST", path)
+  val forwardRequestPath = "/import-control-inbound-soap"
+  val sdesPath           = "/upload-attachment"
+  val fakeRequest        = FakeRequest("POST", forwardRequestPath)
+
+  val expectedRequestHeaders   = Headers(
+    "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU",
+    "Content-Type"  -> "text/xml; charset=UTF-8"
+  )
+  val expectedSdesStatus       = Status.ACCEPTED
+  val expectedForwardedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
 
   val underTest: ICS2MessageController = fakeApplication.injector.instanceOf[ICS2MessageController]
   "message" should {
     "forward an XML message" in {
-      val expectedStatus = Status.OK
+      val expectedRequestStatus = Status.OK
 
-      val expectedHeaders = Headers("Authorization" -> "Bearer blah", "Content-Type" -> "text/xml; charset=UTF-8")
-      primeStubForSuccess("OK", expectedStatus, path)
-      val result          = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(expectedHeaders))
-      status(result) shouldBe expectedStatus
+      primeStubForSuccess("OK", expectedRequestStatus, forwardRequestPath)
+      primeStubForSuccess("some-uuid-like-string", expectedSdesStatus, sdesPath)
+      val result = underTest.message()(fakeRequest.withBody(ics2RequestBody).withHeaders(expectedRequestHeaders))
+      status(result) shouldBe expectedRequestStatus
 
-      verifyRequestBody(codRequestBody.toString(), path)
-      expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
+      verifyRequestBody(forwardedBody.toString, forwardRequestPath)
+      expectedForwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = forwardRequestPath))
     }
 
-    "forward an XML message when Authorization header missing from request" in {
-      val expectedStatus = Status.OK
-
-      val receivedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
-      val expectedHeaders = Headers("Authorization" -> "", "Content-Type" -> "text/xml; charset=UTF-8")
-      primeStubForSuccess("OK", expectedStatus, path)
-      val result          = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(receivedHeaders))
-      status(result) shouldBe expectedStatus
-
-      verifyRequestBody(codRequestBody.toString(), path)
-      expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
-    }
-
-    "return error responses to caller" in {
+    "return downstream error responses to caller" in {
       val expectedStatus = Status.INTERNAL_SERVER_ERROR
 
-      val receivedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
-      val expectedHeaders = Headers("Authorization" -> "", "Content-Type" -> "text/xml; charset=UTF-8")
-      primeStubForFault("Error", Fault.CONNECTION_RESET_BY_PEER, path)
-      val result          = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(receivedHeaders))
+      primeStubForFault("Error", Fault.CONNECTION_RESET_BY_PEER, forwardRequestPath)
+      primeStubForSuccess("some-uuid-like-string", expectedSdesStatus, sdesPath)
+      val result = underTest.message()(fakeRequest.withBody(ics2RequestBody).withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedStatus
 
-      verifyRequestBody(codRequestBody.toString(), path)
-      expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
+      verifyRequestBody(forwardedBody.toString, forwardRequestPath)
+      expectedForwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = forwardRequestPath))
     }
 
     "reject an non-XML message" in {
-      val expectedStatus  = Status.BAD_REQUEST
-      val expectedHeaders = Headers("Authorization" -> "Bearer blah", "Content-Type" -> "text/xml; charset=UTF-8")
-      val result          = underTest.message()(fakeRequest.withBody("foobar").withHeaders(expectedHeaders))
+      val expectedStatus = Status.BAD_REQUEST
+      val result         = underTest.message()(fakeRequest.withBody("foobar").withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedStatus
     }
   }
-
-  val soapFaultResponse =
-    """<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
-      |    <soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
-      |    <soap:Body>
-      |        <soap:Fault>
-      |            <soap:Code>
-      |                <soap:Value>soap:400</soap:Value>
-      |            </soap:Code>
-      |            <soap:Reason>
-      |                <soap:Text xml:lang="en">Some Fault</soap:Text>
-      |            </soap:Reason>
-      |            <soap:Node>public-soap-proxy</soap:Node>
-      |            <soap:Detail>
-      |                <RequestId>abcd1234</RequestId>
-      |            </soap:Detail>
-      |        </soap:Fault>
-      |    </soap:Body>
-      |</soap:Envelope>""".stripMargin
 }

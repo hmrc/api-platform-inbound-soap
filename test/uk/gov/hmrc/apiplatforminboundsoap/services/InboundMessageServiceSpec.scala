@@ -130,7 +130,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
         "x-version-id"     -> "V2"
       )
 
-      when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType", uploadPath = "some/path", encodeSdesConfiguration = true)
+      when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType", uploadPath = "some/path", encodeSdesReference = true)
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
       when(ics2SdesServiceMock.processMessage(wholeMessageCaptor, binaryElementsCaptor)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference(
         "test-filename.txt",

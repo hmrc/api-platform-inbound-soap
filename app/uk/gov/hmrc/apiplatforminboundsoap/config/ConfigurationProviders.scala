@@ -23,7 +23,7 @@ import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.Ics2
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ApiPlatformOutboundSoapConnector, SdesConnector}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ApiPlatformOutboundSoapConnector, ImportControlInboundSoapConnector, SdesConnector}
 
 class ConfigurationModule extends Module {
 
@@ -31,7 +31,8 @@ class ConfigurationModule extends Module {
 
     List(
       bind[ApiPlatformOutboundSoapConnector.Config].toProvider[ApiPlatformOutboundSoapConnectorConfigProvider],
-      bind[SdesConnector.Config].toProvider[SdesConnectorConfigProvider]
+      bind[SdesConnector.Config].toProvider[SdesConnectorConfigProvider],
+      bind[ImportControlInboundSoapConnector.Config].toProvider[ImportControlInboundSoapConnectorConfigProvider]
     )
   }
 }
@@ -48,6 +49,18 @@ class ApiPlatformOutboundSoapConnectorConfigProvider @Inject() (val configuratio
 }
 
 @Singleton
+class ImportControlInboundSoapConnectorConfigProvider @Inject() (val configuration: Configuration)
+    extends ServicesConfig(configuration)
+    with Provider[ImportControlInboundSoapConnector.Config] {
+
+  override def get(): ImportControlInboundSoapConnector.Config = {
+    val url                   = baseUrl("import-control-inbound-soap")
+    val testForwardMessageUrl = getString("testForwardMessageUrl")
+    ImportControlInboundSoapConnector.Config(url, testForwardMessageUrl)
+  }
+}
+
+@Singleton
 class SdesConnectorConfigProvider @Inject() (val configuration: Configuration)
     extends ServicesConfig(configuration)
     with Provider[SdesConnector.Config] {
@@ -58,7 +71,7 @@ class SdesConnectorConfigProvider @Inject() (val configuration: Configuration)
       srn = getConfString("secure-data-exchange-proxy.ics2.srn", "ICS2-SRN-MISSING"),
       informationType = getConfString("secure-data-exchange-proxy.ics2.informationType", "ICS2-INFO-TYPE-MISSING"),
       uploadPath = getConfString("secure-data-exchange-proxy.uploadPath", "upload-attachment"),
-      encodeSdesConfiguration = getConfBool("secure-data-exchange-proxy.ics2.encodeSdesReference", defBool = false)
+      encodeSdesReference = getConfBool("secure-data-exchange-proxy.ics2.encodeSdesReference", defBool = false)
     )
     SdesConnector.Config(url, ics2)
   }

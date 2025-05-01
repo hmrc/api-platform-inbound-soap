@@ -26,36 +26,33 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
+import play.api.http.Status.{INTERNAL_SERVER_ERROR, OK}
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.Helpers._
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.ExternalWireMockSupport
 
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.stubs.ApiPlatformOutboundSoapStub
+import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ApiPlatformOutboundSoapStub
 
 class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
     with GuiceOneAppPerSuite with ExternalWireMockSupport with ApiPlatformOutboundSoapStub {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  val appWithoutPassthroughConfigured = new GuiceApplicationBuilder()
+  override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
-      "metrics.enabled"     -> false,
-      "auditing.enabled"    -> false,
-      "passThroughProtocol" -> "http",
-      "passThroughHost"     -> externalWireMockHost,
-      "passThroughPort"     -> externalWireMockPort
-    )
-
-  override def fakeApplication: Application = appWithoutPassthroughConfigured
-    .configure(
-      "passThroughEnabled" -> true
+      "metrics.enabled"                                        -> false,
+      "auditing.enabled"                                       -> false,
+      "testForwardMessageUrl"                                  -> s"$externalWireMockUrl/test-only",
+      "microservice.services.import-control-inbound-soap.host" -> externalWireMockHost,
+      "microservice.services.import-control-inbound-soap.port" -> externalWireMockPort
     ).build()
 
   trait Setup {
     val headers: Seq[(String, String)]               = List("Authorization" -> "Bearer value")
     val underTest: ImportControlInboundSoapConnector = app.injector.instanceOf[ImportControlInboundSoapConnector]
-    val requestBody: Elem                            = readFromFile("ie4r02-v2.xml")
+    val forwardPath: String                          = "/import-control-inbound-soap"
+    val requestBody: Elem                            = <xml>foobar</xml>
     val xRequestIdHeaderValue                        = randomUUID.toString
 
     val faultResponse = getExpectedSoapFault(
@@ -87,53 +84,43 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
          |    </soap:Body>
          |</soap:Envelope>""".stripMargin
     }
-
   }
 
   "postMessage" should {
     "return successful statuses returned by the internal service" in new Setup {
       val expectedStatus: Int = OK
-      primeStubForSuccess(requestBody, expectedStatus)
+      primeStubForSuccess(requestBody, expectedStatus, forwardPath)
 
       val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = false))
 
       result shouldBe SendSuccess(OK)
-      verifyRequestBody(requestBody)
-      verifyHeader(headers.head._1, headers.head._2)
+      verifyRequestBody(requestBody, forwardPath)
+      verifyHeader(headers.head._1, headers.head._2, forwardPath)
     }
 
     "return error statuses returned by the internal service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
-      primeStubForSuccess(requestBody, expectedStatus)
+      primeStubForSuccess(requestBody, expectedStatus, forwardPath)
 
       val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = false))
 
       result shouldBe SendFailExternal(expectedStatus)
-      verifyHeader(headers.head._1, headers.head._2)
+      verifyHeader(headers.head._1, headers.head._2, forwardPath)
     }
 
     "return error status when soap fault is returned by the internal service" in new Setup {
       Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
-        primeStubForFault(requestBody, faultResponse, fault)
+        primeStubForFault(requestBody, faultResponse, fault, forwardPath)
 
         val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = false))
 
         result shouldBe SendFailExternal(INTERNAL_SERVER_ERROR)
-        verifyHeader(headers.head._1, headers.head._2)
+        verifyHeader(headers.head._1, headers.head._2, forwardPath)
       }
     }
 
-    "send the given message to the test service if so configured" in {
-      val appForTest                                   = appWithoutPassthroughConfigured
-        .configure(
-          "passThroughEnabled"    -> false,
-          "testForwardMessageUrl" -> s"http://$externalWireMockHost:$externalWireMockPort/test-only"
-        ).build()
-      val underTest: ImportControlInboundSoapConnector = appForTest.injector.instanceOf[ImportControlInboundSoapConnector]
-
-      val path                           = "/test-only"
-      val requestBody                    = <xml>foo</xml>
-      val headers: Seq[(String, String)] = List("Authorization" -> "Bearer value")
+    "send the given message to the test service if so configured" in new Setup {
+      val path = "/test-only"
       primeStubForSuccess(requestBody, OK, path)
 
       val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = true))
@@ -145,13 +132,13 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
     }
 
     "send the given message to the internal service" in new Setup {
-      primeStubForSuccess(requestBody, OK)
+      primeStubForSuccess(requestBody, OK, forwardPath)
 
       val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = false))
 
       result shouldBe SendSuccess(OK)
-      verifyRequestBody(requestBody)
-      verifyHeader(headers.head._1, headers.head._2)
+      verifyRequestBody(requestBody, forwardPath)
+      verifyHeader(headers.head._1, headers.head._2, forwardPath)
     }
   }
 }

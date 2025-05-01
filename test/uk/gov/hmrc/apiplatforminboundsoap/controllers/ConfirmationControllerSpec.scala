@@ -46,8 +46,8 @@ import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{Acknowledg
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 
 class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
-  implicit val hc: HeaderCarrier            = HeaderCarrier()
-  implicit val mat: Materializer            = app.injector.instanceOf[Materializer]
+  implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
   override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure("passThroughEnabled" -> "false")
