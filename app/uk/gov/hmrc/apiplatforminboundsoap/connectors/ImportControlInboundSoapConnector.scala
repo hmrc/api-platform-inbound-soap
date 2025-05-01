@@ -26,14 +26,18 @@ import play.api.http.Status
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 
-import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
 
+object ImportControlInboundSoapConnector {
+  case class Config(baseUrl: String, testForwardMessageUrl: String)
+}
+
 @Singleton
-class ImportControlInboundSoapConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)(implicit ec: ExecutionContext) extends BaseConnector(httpClientV2) with Logging {
+class ImportControlInboundSoapConnector @Inject() (httpClientV2: HttpClientV2, appConfig: ImportControlInboundSoapConnector.Config)(implicit ec: ExecutionContext)
+    extends BaseConnector(httpClientV2) with Logging {
 
   def postMessage(soapRequest: NodeSeq, headers: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val forwardUrl = if (isTest) appConfig.testForwardMessageUrl else appConfig.forwardMessageUrl
+    val forwardUrl = if (isTest) appConfig.testForwardMessageUrl else s"${appConfig.baseUrl}/import-control-inbound-soap"
 
     postHttpRequest(soapRequest, headers, forwardUrl).map {
       case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>

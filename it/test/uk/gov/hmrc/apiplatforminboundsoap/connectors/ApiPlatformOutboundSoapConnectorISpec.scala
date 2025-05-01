@@ -31,7 +31,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.ExternalWireMockSupport
 
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.stubs.ApiPlatformOutboundSoapStub
+import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ApiPlatformOutboundSoapStub
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite
@@ -59,7 +59,6 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
     }
 
     def forwardedHeaders(xmlBody: Elem) = Seq[(String, String)]("x-soap-action" -> getSoapAction(xmlBody).getOrElse(""))
-
   }
 
   "postMessage" should {

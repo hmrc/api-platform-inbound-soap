@@ -33,26 +33,27 @@ import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
 
+import play.api.Application
 import play.api.http.Status
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 
 class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
-  trait Setup {
-    private val verifyJwtTokenAction  = app.injector.instanceOf[VerifyJwtTokenAction]
-    private val messageValidateAction = app.injector.instanceOf[AcknowledgementMessageValidateAction]
-    val mockOutboundConnector         = mock[ApiPlatformOutboundSoapConnector]
-    val controller                    = new ConfirmationController(mockOutboundConnector, Helpers.stubControllerComponents(), verifyJwtTokenAction, messageValidateAction)
+  override def fakeApplication: Application = new GuiceApplicationBuilder()
+    .configure("passThroughEnabled" -> "false")
+    .build()
 
+  trait Setup {
     val xRequestIdHeaderValue = randomUUID.toString
 
     val headers = Headers(
@@ -70,6 +71,12 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
 
     val codRequestBody: Elem = readFromFile("acknowledgement/requests/cod_request.xml")
     val coeRequestBody: Elem = readFromFile("acknowledgement/requests/coe_request.xml")
+
+    private val verifyJwtTokenAction  = fakeApplication.injector.instanceOf[VerifyJwtTokenAction]
+    private val messageValidateAction = fakeApplication.injector.instanceOf[AcknowledgementMessageValidateAction]
+    private val passThroughModeAction = fakeApplication.injector.instanceOf[PassThroughModeAction]
+    val mockOutboundConnector         = mock[ApiPlatformOutboundSoapConnector]
+    val controller                    = new ConfirmationController(mockOutboundConnector, Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, messageValidateAction)
   }
 
   "POST acknowledgement endpoint with no authorisation header" should {

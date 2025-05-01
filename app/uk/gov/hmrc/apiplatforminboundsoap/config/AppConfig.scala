@@ -25,7 +25,7 @@ class AppConfig @Inject() (config: Configuration) {
 
   val appName: String               = config.get[String]("appName")
   val hmacSecret: String            = config.get[String]("hmacSecret")
-  val forwardMessageUrl: String     = config.get[String]("forwardMessageUrl")
+  val passThroughEnabled: Boolean   = config.get[Boolean]("passThroughEnabled")
   val passThroughProtocol: String   = config.get[String]("passThroughProtocol")
   val passThroughHost: String       = config.get[String]("passThroughHost")
   val passThroughPort: Int          = config.get[Int]("passThroughPort")

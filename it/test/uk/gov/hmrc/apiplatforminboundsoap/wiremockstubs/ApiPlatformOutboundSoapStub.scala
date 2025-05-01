@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.stubs
+package uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs
 
 import scala.xml.Elem
 
