@@ -22,7 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 
-import _root_.uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse, StringContextOps}
+import _root_.uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, StringContextOps}
 import org.apache.pekko.util.ByteString
 
 import play.api.Logging
@@ -37,10 +37,10 @@ import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 
 @Singleton
 class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)(implicit ec: ExecutionContext)
-    extends ActionFilter[Request] with HttpErrorFunctions with Logging {
+    extends ActionFilter[Request] with Logging {
   override def executionContext: ExecutionContext = ec
-
-  lazy val passThroughHost = s"${appConfig.passThroughProtocol}://${appConfig.passThroughHost}:${appConfig.passThroughPort}"
+  implicit def httpReads: HttpReads[HttpResponse] = (method: String, url: String, response: HttpResponse) => HttpReads.Implicits.readRaw.read(method, url, response)
+  lazy val passThroughHost                        = s"${appConfig.passThroughProtocol}://${appConfig.passThroughHost}:${appConfig.passThroughPort}"
 
   override protected def filter[A](request: Request[A]): Future[Option[Result]] = {
     logger.info(s"Entering pass through filter; passthrough host is $passThroughHost")
@@ -61,7 +61,7 @@ class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: Ap
     }
   }
 
-  private def postAndReturn(url: String, requestBody: NodeSeq, authHeader: (String, String))(implicit hc: HeaderCarrier) = {
+  private def postAndReturn(url: String, requestBody: NodeSeq, authHeader: (String, String))(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val httpClient = httpClientV2.post(url"$url").withBody(requestBody).transform(_.withHttpHeaders(authHeader))
     if (appConfig.proxyRequired) {
       httpClient.withProxy.execute[HttpResponse]
