@@ -74,14 +74,15 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
     }
 
     "forward an XML message when Authorization header missing from request" in {
-      val expectedStatus = Status.OK
+      val expectedStatus = Status.UNAUTHORIZED
 
       val receivedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
       val expectedHeaders = Headers("Authorization" -> "", "Content-Type" -> "text/xml; charset=UTF-8")
-      primeStubForSuccess("OK", expectedStatus, path)
+      primeStubForSuccess(soapFaultResponse, expectedStatus, path)
       val result          = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(receivedHeaders))
-      status(result) shouldBe expectedStatus
 
+      status(result) shouldBe expectedStatus
+      contentAsString(result) shouldEqual soapFaultResponse
       verifyRequestBody(codRequestBody.toString(), path)
       expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
     }

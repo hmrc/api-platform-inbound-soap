@@ -47,6 +47,7 @@ class ConfirmationControllerISpec extends AnyWordSpecLike with Matchers
     .configure(
       "metrics.enabled"                                       -> false,
       "auditing.enabled"                                      -> false,
+      "passThroughEnabled"                                    -> false,
       "microservice.services.api-platform-outbound-soap.host" -> externalWireMockHost,
       "microservice.services.api-platform-outbound-soap.port" -> externalWireMockPort
     ).build()
