@@ -14,33 +14,33 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.controllers
+package uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2
+
+import play.api.mvc.{Action, ControllerComponents}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
-import play.api.mvc.{Action, ControllerComponents}
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
-
 @Singleton()
-class TestController @Inject() (
+class ICS2MessageController @Inject() (
     cc: ControllerComponents,
+    passThroughModeAction: PassThroughModeAction,
     verifyJwtTokenAction: VerifyJwtTokenAction,
     soapMessageValidateAction: SoapMessageValidateAction,
     incomingMessageService: InboundMessageService
   )(implicit ec: ExecutionContext
   ) extends BackendController(cc) {
 
-  def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
+  def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
     implicit request =>
-      incomingMessageService.processInboundMessage(request.body, isTest = true) flatMap {
-        case SendSuccess(_)           =>
-          Future.successful(Ok.as("application/soap+xml"))
+      incomingMessageService.processInboundMessage(request.body) flatMap {
+        case SendSuccess(status)      =>
+          Future.successful(Status(status).as("application/soap+xml"))
         case SendFailExternal(status) =>
           Future.successful(new Status(status).as("application/soap+xml"))
       }
