@@ -16,15 +16,16 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers.testmessage
 
-import play.api.mvc.{Action, ControllerComponents}
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
+
+import play.api.mvc.{Action, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 
 @Singleton()
 class TestController @Inject() (

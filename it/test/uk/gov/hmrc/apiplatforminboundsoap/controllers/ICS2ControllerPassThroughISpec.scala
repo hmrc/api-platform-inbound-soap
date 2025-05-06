@@ -18,19 +18,22 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import scala.io.Source
 import scala.xml.{Elem, XML}
+
 import com.github.tomakehurst.wiremock.http.Fault
 import org.apache.pekko.stream.Materializer
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import play.api.Application
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
+
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
 class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
