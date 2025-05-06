@@ -14,3 +14,5 @@ POST       /ics2/NESReferralBASV2             uk.gov.hmrc.apiplatforminboundsoap
 # although this path contains a typo - "analyis" rather than "analysis" - it is, in fact, the one that is used by ICS2
 POST       /ics2/NESRiskAnalyisBASV2          uk.gov.hmrc.apiplatforminboundsoap.controllers.ICS2MessageController.message()
 POST       /ics2/NESRiskAnalysisBASV2         uk.gov.hmrc.apiplatforminboundsoap.controllers.ICS2MessageController.message()
+POST       /crdl/incoming         uk.gov.hmrc.apiplatforminboundsoap.controllers.CrdlMessageController.message()
+POST       /certex/inbound         uk.gov.hmrc.apiplatforminboundsoap.controllers.CertexMessageController.message()
