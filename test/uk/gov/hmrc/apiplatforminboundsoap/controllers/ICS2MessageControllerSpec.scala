@@ -36,6 +36,7 @@ import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
 

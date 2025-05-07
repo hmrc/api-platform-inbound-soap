@@ -43,6 +43,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, PassThroughModeAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 
 class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {

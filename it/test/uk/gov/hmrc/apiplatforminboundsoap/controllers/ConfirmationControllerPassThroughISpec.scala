@@ -32,6 +32,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
 class ConfirmationControllerPassThroughISpec extends AnyWordSpecLike with Matchers

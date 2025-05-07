@@ -33,6 +33,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
 class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
