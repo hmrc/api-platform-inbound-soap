@@ -1,6 +1,7 @@
 # microservice specific routes
 
 POST       /ccn2/acknowledgementV2            uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController.message()
+POST       /ccn2/acknowledgement              uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController.message()
 POST       /ics2/NESControlBAS                uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController.message()
 POST       /ics2/NESErrorNotificationBAS      uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController.message()
 POST       /ics2/NESNotificationBAS           uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController.message()
