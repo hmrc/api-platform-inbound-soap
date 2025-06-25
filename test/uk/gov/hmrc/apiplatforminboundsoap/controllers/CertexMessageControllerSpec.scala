@@ -58,16 +58,25 @@ class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOn
     private val passThroughModeAction = app.injector.instanceOf[PassThroughModeAction]
     private val verifyJwtTokenAction  = app.injector.instanceOf[VerifyJwtTokenAction]
 
-    val controller  =
+    val controller                     =
       new CertexMessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction)
-    val fakeRequest = FakeRequest("POST", "/certex/inbound").withHeaders(headersWithValidBearerToken)
+    val fakeRequest                    = FakeRequest("POST", "/certex/inbound").withHeaders(headersWithValidBearerToken)
+    val fakeRequestPartlyUpperCasePath = FakeRequest("POST", "/CERTEX/inbound").withHeaders(headersWithValidBearerToken)
   }
 
   "POST Certex message endpoint" should {
-    "return 200" in new Setup {
+    "return 200 for all lower case path" in new Setup {
       val requestBody: Elem = <xml>foobar</xml>
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe OK
+    }
+
+    "return 200 for part upper case path" in new Setup {
+      val requestBody: Elem = <xml>foobar</xml>
+
+      val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
       status(result) shouldBe OK
     }

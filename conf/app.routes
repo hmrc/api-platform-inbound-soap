@@ -16,3 +16,4 @@ POST       /ics2/NESRiskAnalyisBASV2          uk.gov.hmrc.apiplatforminboundsoap
 POST       /ics2/NESRiskAnalysisBASV2         uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController.message()
 POST       /crdl/incoming                     uk.gov.hmrc.apiplatforminboundsoap.controllers.crdl.CrdlMessageController.message()
 POST       /certex/inbound                    uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController.message()
+POST       /CERTEX/inbound                    uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController.message()
