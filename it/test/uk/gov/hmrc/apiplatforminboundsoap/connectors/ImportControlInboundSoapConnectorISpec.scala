@@ -104,17 +104,22 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
 
       val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = false))
 
-      result shouldBe SendFailExternal(expectedStatus)
+      result shouldBe SendFailExternal(s"POST of 'http://$externalWireMockHost:$externalWireMockPort$forwardPath' returned $expectedStatus. Response body: ''", expectedStatus)
       verifyHeader(headers.head._1, headers.head._2, forwardPath)
     }
 
     "return error status when soap fault is returned by the internal service" in new Setup {
-      Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
-        primeStubForFault(requestBody, faultResponse, fault, forwardPath)
+      Seq(
+        Fault.CONNECTION_RESET_BY_PEER -> "Connection reset",
+        Fault.EMPTY_RESPONSE           -> "Remotely closed",
+        Fault.MALFORMED_RESPONSE_CHUNK -> "Remotely closed",
+        Fault.RANDOM_DATA_THEN_CLOSE   -> "Remotely closed"
+      ) foreach { input =>
+        primeStubForFault(requestBody, faultResponse, input._1, forwardPath)
 
         val result: SendResult = await(underTest.postMessage(requestBody, headers, isTest = false))
 
-        result shouldBe SendFailExternal(INTERNAL_SERVER_ERROR)
+        result shouldBe SendFailExternal(s"${input._2}", INTERNAL_SERVER_ERROR)
         verifyHeader(headers.head._1, headers.head._2, forwardPath)
       }
     }

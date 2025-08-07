@@ -1,0 +1,46 @@
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v4="http://xmlns.ec.eu/BusinessActivityService/CSRD2/IReferenceDataExportDefinitionBAS/V4" xmlns:v41="http://xmlns.ec.eu/BusinessObjects/CSRD2/ReferenceDataExportDefinitionBASServiceType/V4" xmlns:v2="http://xmlns.ec.eu/BusinessObjects/CSRD2/MessageHeaderType/V2" xmlns:v21="http://xmlns.ec.eu/BusinessObjects/CSRD2/StatementsType/V2">
+    <soap:Header/>
+    <soap:Body>
+        <v4:ExtractSearchResultsReferenceDataEntitiesReqMsg>
+            <v41:MessageHeader>
+                <!--Optional:-->
+                <v2:AddressingInformation>
+                    <v2:messageID>?</v2:messageID>
+                    <!--Optional:-->
+                    <v2:relatesTo>?</v2:relatesTo>
+                    <!--Zero or more repetitions:-->
+                    <v2:attribute name="?">?</v2:attribute>
+                </v2:AddressingInformation>
+                <!--Optional:-->
+                <v2:RequestInformation>
+                    <!--You may enter ANY elements at this point-->
+                </v2:RequestInformation>
+                <!--Optional:-->
+                <v2:AdditionalInformation>
+                    <!--1 or more repetitions:-->
+                    <v2:attribute name="?">?</v2:attribute>
+                </v2:AdditionalInformation>
+            </v41:MessageHeader>
+            <!--Optional:-->
+            <v41:RDEntityName name="?"/>
+            <!--Optional:-->
+            <v41:RDEntityStatements>
+                <!--Zero or more repetitions:-->
+                <v21:Statement name="?" lang="?">?</v21:Statement>
+            </v41:RDEntityStatements>
+            <!--Optional:-->
+            <v41:LanguageCode>?</v41:LanguageCode>
+            <!--Optional:-->
+            <v41:ReferenceDataViewName>?</v41:ReferenceDataViewName>
+            <!--Optional:-->
+            <v41:RDViewStatements>
+                <!--Zero or more repetitions:-->
+                <v21:Statement name="?" lang="?">?</v21:Statement>
+            </v41:RDViewStatements>
+            <!--Optional:-->
+            <v41:SnapShotDate>?</v41:SnapShotDate>
+            <v41:State>?</v41:State>
+            <v41:IncludeFutureUpdates>?</v41:IncludeFutureUpdates>
+        </v4:ExtractSearchResultsReferenceDataEntitiesReqMsg>
+    </soap:Body>
+</soap:Envelope>

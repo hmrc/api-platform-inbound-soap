@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
-import java.net.URL
+import java.net.URI
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
-import play.api.Logging
 import play.api.http.Status
 import play.api.libs.json.{JsObject, JsString, Json}
 import uk.gov.hmrc.http.HttpReads.Implicits._
@@ -30,34 +29,36 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SdesSuccess, SendFailExternal, SendResult}
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
 object SdesConnector {
-  case class Config(baseUrl: String, ics2: Ics2)
-  case class Ics2(srn: String, informationType: String, uploadPath: String, encodeSdesReference: Boolean = false)
+  case class Config(baseUrl: String, uploadPath: String, ics2: Ics2, crdl: Crdl)
+  case class Ics2(srn: String, informationType: String, encodeSdesReference: Boolean = false)
+  case class Crdl(srn: String, informationType: String)
 }
 
 @Singleton
-class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: SdesConnector.Config)(implicit ec: ExecutionContext) extends Logging {
+class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: SdesConnector.Config)(implicit ec: ExecutionContext) extends ApplicationLogger {
   val requiredHeaders: Seq[(String, String)] = Seq("Content-Type" -> "application/octet-stream", "User-Agent" -> "public-soap-proxy")
 
   def postMessage(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[SendResult] = {
     postHttpRequest(sdesRequest).map {
-      case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
-        logger.warn(s"Sending message failed with status code $statusCode")
-        SendFailExternal(statusCode)
-      case Right(response: HttpResponse)                    =>
+      case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
+        logger.warn(s"Sending message failed with status code $statusCode: $message")
+        SendFailExternal(message, statusCode)
+      case Right(response: HttpResponse)                          =>
         SdesSuccess(response.body)
     }
       .recoverWith {
         case NonFatal(e) =>
           logger.warn(s"NonFatal error ${e.getMessage} while forwarding message", e)
-          successful(SendFailExternal(Status.INTERNAL_SERVER_ERROR))
+          successful(SendFailExternal(e.getMessage, Status.INTERNAL_SERVER_ERROR))
       }
   }
 
   private def postHttpRequest(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
     val combinedHeaders = sdesRequest.headers ++ List("Metadata" -> constructMetadataHeader(sdesRequest.metadata, sdesRequest.metadataProperties))
-    httpClientV2.post(new URL(s"${appConfig.baseUrl}/${appConfig.ics2.uploadPath}")).setHeader(requiredHeaders: _*)
+    httpClientV2.post(new URI(s"${appConfig.uploadPath}").toURL).setHeader(requiredHeaders: _*)
       .withBody(sdesRequest.body)
       .transform(_.addHttpHeaders(combinedHeaders: _*))
       .execute[Either[UpstreamErrorResponse, HttpResponse]]

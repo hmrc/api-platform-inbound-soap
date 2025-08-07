@@ -73,9 +73,9 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
     val codRequestBody: Elem = readFromFile("acknowledgement/requests/cod_request.xml")
     val coeRequestBody: Elem = readFromFile("acknowledgement/requests/coe_request.xml")
 
-    private val verifyJwtTokenAction  = fakeApplication.injector.instanceOf[VerifyJwtTokenAction]
-    private val messageValidateAction = fakeApplication.injector.instanceOf[AcknowledgementMessageValidateAction]
-    private val passThroughModeAction = fakeApplication.injector.instanceOf[PassThroughModeAction]
+    private val verifyJwtTokenAction  = fakeApplication().injector.instanceOf[VerifyJwtTokenAction]
+    private val messageValidateAction = fakeApplication().injector.instanceOf[AcknowledgementMessageValidateAction]
+    private val passThroughModeAction = fakeApplication().injector.instanceOf[PassThroughModeAction]
     val mockOutboundConnector         = mock[ApiPlatformOutboundSoapConnector]
     val controller                    = new ConfirmationController(mockOutboundConnector, Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, messageValidateAction)
   }
@@ -256,7 +256,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendFailExternal(INTERNAL_SERVER_ERROR)))
+      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", INTERNAL_SERVER_ERROR)))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR

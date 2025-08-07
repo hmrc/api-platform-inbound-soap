@@ -22,8 +22,8 @@ import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.Ics2
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ApiPlatformOutboundSoapConnector, ImportControlInboundSoapConnector, SdesConnector}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Crdl, Ics2}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ApiPlatformOutboundSoapConnector, CrdlOrchestratorConnector, ImportControlInboundSoapConnector, SdesConnector}
 
 class ConfigurationModule extends Module {
 
@@ -32,7 +32,8 @@ class ConfigurationModule extends Module {
     List(
       bind[ApiPlatformOutboundSoapConnector.Config].toProvider[ApiPlatformOutboundSoapConnectorConfigProvider],
       bind[SdesConnector.Config].toProvider[SdesConnectorConfigProvider],
-      bind[ImportControlInboundSoapConnector.Config].toProvider[ImportControlInboundSoapConnectorConfigProvider]
+      bind[ImportControlInboundSoapConnector.Config].toProvider[ImportControlInboundSoapConnectorConfigProvider],
+      bind[CrdlOrchestratorConnector.Config].toProvider[CrdlOrchestratorConnectorConfigProvider]
     )
   }
 }
@@ -45,6 +46,17 @@ class ApiPlatformOutboundSoapConnectorConfigProvider @Inject() (val configuratio
   override def get(): ApiPlatformOutboundSoapConnector.Config = {
     val url = baseUrl("api-platform-outbound-soap")
     ApiPlatformOutboundSoapConnector.Config(url)
+  }
+}
+
+@Singleton
+class CrdlOrchestratorConnectorConfigProvider @Inject() (val configuration: Configuration)
+    extends ServicesConfig(configuration)
+    with Provider[CrdlOrchestratorConnector.Config] {
+
+  override def get(): CrdlOrchestratorConnector.Config = {
+    val url = baseUrl("crdl-orchestrator")
+    CrdlOrchestratorConnector.Config(url)
   }
 }
 
@@ -66,13 +78,17 @@ class SdesConnectorConfigProvider @Inject() (val configuration: Configuration)
     with Provider[SdesConnector.Config] {
 
   override def get(): SdesConnector.Config = {
-    val url  = baseUrl("secure-data-exchange-proxy")
-    val ics2 = Ics2(
+    val url        = baseUrl("secure-data-exchange-proxy")
+    val uploadPath = s"$url/upload-attachment"
+    val ics2       = Ics2(
       srn = getConfString("secure-data-exchange-proxy.ics2.srn", "ICS2-SRN-MISSING"),
       informationType = getConfString("secure-data-exchange-proxy.ics2.informationType", "ICS2-INFO-TYPE-MISSING"),
-      uploadPath = getConfString("secure-data-exchange-proxy.uploadPath", "upload-attachment"),
       encodeSdesReference = getConfBool("secure-data-exchange-proxy.ics2.encodeSdesReference", defBool = false)
     )
-    SdesConnector.Config(url, ics2)
+    val crdl       = Crdl(
+      srn = getConfString("secure-data-exchange-proxy.crdl.srn", "CRDL-SRN-MISSING"),
+      informationType = getConfString("secure-data-exchange-proxy.crdl.informationType", "CRDL-INFO-TYPE-MISSING")
+    )
+    SdesConnector.Config(url, uploadPath, ics2, crdl)
   }
 }

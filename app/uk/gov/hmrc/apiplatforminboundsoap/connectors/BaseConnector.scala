@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
-import java.net.URL
+import java.net.URI
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
@@ -27,7 +27,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 abstract class BaseConnector(httpClientV2: HttpClientV2)(implicit ec: ExecutionContext) {
 
   def postHttpRequest(soapRequest: NodeSeq, headers: Seq[(String, String)], forwardUrl: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
-    httpClientV2.post(new URL(forwardUrl))
+    httpClientV2.post(new URI(forwardUrl).toURL)
       .withBody(soapRequest)
       .transform(_.addHttpHeaders(headers: _*))
       .execute[Either[UpstreamErrorResponse, HttpResponse]]

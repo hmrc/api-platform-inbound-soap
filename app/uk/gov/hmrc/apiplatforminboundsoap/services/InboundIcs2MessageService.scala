@@ -17,10 +17,9 @@
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
-
-import org.apache.pekko.http.scaladsl.util.FastFuture.successful
 
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
@@ -31,7 +30,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 @Singleton
-class InboundMessageService @Inject() (
+class InboundIcs2MessageService @Inject() (
     importControlInboundSoapConnector: ImportControlInboundSoapConnector,
     sdesService: Ics2SdesService,
     sdesConnectorConfig: SdesConnector.Config
@@ -40,16 +39,15 @@ class InboundMessageService @Inject() (
 
   def processInboundMessage(wholeMessage: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val newHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
-    val allAttachments                    = getBinaryElementsWithEmbeddedData(wholeMessage)
-    if (isFileIncluded(wholeMessage) && allAttachments.nonEmpty) {
-      sendToSdesThenForwardMessage(wholeMessage, allAttachments, isTest)
+    if (isFileIncluded(wholeMessage) && getBinaryElementsWithEmbeddedData(wholeMessage).nonEmpty) {
+      sendToSdesThenForwardMessage(wholeMessage, isTest)
     } else {
       forwardMessage(wholeMessage, newHeaders, isTest)
     }
   }
 
-  private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, binaryElements: NodeSeq, isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    sdesService.processMessage(wholeMessage, binaryElements) flatMap {
+  private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
+    sdesService.processMessage(wholeMessage) flatMap {
       sendResults: Seq[SendResult] =>
         sendResults.find(r => r.isInstanceOf[SendFail]) match {
           case Some(value) => successful(value)
@@ -57,7 +55,7 @@ class InboundMessageService @Inject() (
               case Right(xml) => forwardMessage(xml, buildHeadersToAppend(wholeMessage), isTest)
               case Left(f)    =>
                 logger.warn(s"Failed to replace all embedded attachments for files $f")
-                successful(SendFailExternal(UNPROCESSABLE_ENTITY))
+                successful(SendFailExternal(s"Failed to replace all embedded attachments for files $f", UNPROCESSABLE_ENTITY))
             }
         }
     }

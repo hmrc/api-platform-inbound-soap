@@ -79,18 +79,26 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
 
       val result: SendResult = await(underTest.postMessage(codRequestBody))
 
-      result shouldBe SendFailExternal(expectedStatus)
+      result shouldBe SendFailExternal(
+        s"POST of 'http://$externalWireMockHost:$externalWireMockPort$acknowledgementPath' returned $expectedStatus. Response body: ''",
+        expectedStatus
+      )
       verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2, path = acknowledgementPath)
     }
 
     "return error status when soap fault is returned by the outbound soap service" in new Setup {
       val responseBody = "<Envelope><Body>foobar</Body></Envelope>"
-      Seq(Fault.CONNECTION_RESET_BY_PEER, Fault.EMPTY_RESPONSE, Fault.MALFORMED_RESPONSE_CHUNK, Fault.RANDOM_DATA_THEN_CLOSE) foreach { fault =>
-        primeStubForFault(codRequestBody, responseBody, fault, path = acknowledgementPath)
+      Seq(
+        Fault.CONNECTION_RESET_BY_PEER -> "Connection reset",
+        Fault.EMPTY_RESPONSE           -> "Remotely closed",
+        Fault.MALFORMED_RESPONSE_CHUNK -> "Remotely closed",
+        Fault.RANDOM_DATA_THEN_CLOSE   -> "Remotely closed"
+      ) foreach { input =>
+        primeStubForFault(codRequestBody, responseBody, input._1, path = acknowledgementPath)
 
         val result: SendResult = await(underTest.postMessage(codRequestBody))
 
-        result shouldBe SendFailExternal(INTERNAL_SERVER_ERROR)
+        result shouldBe SendFailExternal(s"${input._2}", INTERNAL_SERVER_ERROR)
       }
     }
   }
