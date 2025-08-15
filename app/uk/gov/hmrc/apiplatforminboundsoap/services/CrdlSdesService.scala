@@ -22,7 +22,6 @@ import scala.concurrent.Future.{sequence, successful}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
-import uk.gov.hmrc.apiplatform.modules.common.services.ClockNow
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
@@ -33,10 +32,10 @@ import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
 class CrdlSdesService @Inject() (
     appConfig: SdesConnector.Config,
     sdesConnector: SdesConnector,
-    val clock: Clock,
+    clock: Clock,
     override val xmlTransformer: XmlTransformer
   )(implicit executionContext: ExecutionContext
-  ) extends MessageService with CrdlXml with ClockNow {
+  ) extends MessageService with CrdlXml {
 
   override def getAttachment(wholeMessage: NodeSeq): Either[InvalidFormatResult, String] = {
     getBinaryAttachment(wholeMessage) match {

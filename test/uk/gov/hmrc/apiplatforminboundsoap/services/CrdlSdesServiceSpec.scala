@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
+import java.time.{Clock, Instant, ZoneId}
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
@@ -32,7 +33,6 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
-import uk.gov.hmrc.apiplatform.modules.common.utils.FixedClock
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
@@ -40,7 +40,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.Crdl
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{Ics2XmlHelper, NoChangeTransformer}
 
-class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with FixedClock {
+class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
@@ -54,13 +54,15 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     val bodyCaptor                       = ArgCaptor[SdesRequest]
     val headerCaptor                     = ArgCaptor[Seq[(String, String)]]
 
+    val sdesRequestTime: Instant            = Instant.parse("2020-01-02T03:04:05.006Z")
+    val sdesRequestClock: Clock             = Clock.fixed(sdesRequestTime, ZoneId.of("UTC"))
     val httpStatus: Int                     = Status.OK
     val appConfigMock: SdesConnector.Config = mock[SdesConnector.Config]
     val xmlHelper: Ics2XmlHelper            = mock[Ics2XmlHelper]
     val xmlTransformer: NoChangeTransformer = new NoChangeTransformer()
 
     val service: CrdlSdesService =
-      new CrdlSdesService(appConfigMock, sdesConnectorMock, FixedClock.clock, xmlTransformer)
+      new CrdlSdesService(appConfigMock, sdesConnectorMock, sdesRequestClock, xmlTransformer)
 
     val sdesUrl    = "SDES url"
     val crdlConfig = Crdl(srn = "CRDL SRN", informationType = "CRDL info type")

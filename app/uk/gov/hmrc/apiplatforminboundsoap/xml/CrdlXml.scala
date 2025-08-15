@@ -26,12 +26,14 @@ abstract class XmlTransformer {
 }
 
 class NoChangeTransformer extends XmlTransformer {
+
   override def replaceAttachment: (NodeSeq, String) => NodeSeq = {
     (n, _) => n
   }
 }
 
 class AttachmentReplacingTransformer extends XmlTransformer {
+
   def replaceAttachment: (NodeSeq, String) => NodeSeq = {
     (m, s) =>
       {
