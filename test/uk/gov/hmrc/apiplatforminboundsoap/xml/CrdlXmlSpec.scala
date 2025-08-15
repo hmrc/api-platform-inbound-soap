@@ -28,7 +28,7 @@ import org.xmlunit.builder.{DiffBuilder, Input}
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
 
-class CrdlXmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with CrdlXml {
+class CrdlXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with CrdlXml {
 
   private def getXmlDiff(actual: NodeSeq, expected: Elem): DiffBuilder = {
     compare(Input.fromString(expected.toString).build())
