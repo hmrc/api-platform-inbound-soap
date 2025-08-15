@@ -19,11 +19,13 @@ package uk.gov.hmrc.apiplatforminboundsoap.connectors
 import scala.io.Source
 import scala.xml.{Elem, XML}
 
+import com.github.tomakehurst.wiremock.http.Fault
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
@@ -76,6 +78,22 @@ class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with Guic
       val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
 
       result shouldBe SendFailExternal(s"POST of 'http://$externalWireMockHost:$externalWireMockPort$targetPath' returned $expectedStatus. Response body: ''", expectedStatus)
+    }
+
+    "return error status when soap fault is returned by the internal service" in new Setup {
+      val responseBody = "<Envelope><Body>foobar</Body></Envelope>"
+      Seq(
+        Fault.CONNECTION_RESET_BY_PEER -> "Connection reset",
+        Fault.EMPTY_RESPONSE           -> "Remotely closed",
+        Fault.MALFORMED_RESPONSE_CHUNK -> "Remotely closed",
+        Fault.RANDOM_DATA_THEN_CLOSE   -> "Remotely closed"
+      ) foreach { input =>
+        primeStubForFault(crdlRequestBody, responseBody, input._1, targetPath)
+
+        val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
+
+        result shouldBe SendFailExternal(s"${input._2}", INTERNAL_SERVER_ERROR)
+      }
     }
   }
 }

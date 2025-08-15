@@ -18,7 +18,9 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import java.util.UUID.randomUUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.xml.Elem
+import scala.concurrent.Future.successful
+import scala.io.Source
+import scala.xml.{Elem, XML}
 
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
@@ -34,6 +36,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.crdl.CrdlMessageController
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCrdlMessageService
 
 class CrdlMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -57,19 +61,34 @@ class CrdlMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
     private val passThroughModeAction = app.injector.instanceOf[PassThroughModeAction]
     private val verifyJwtTokenAction  = app.injector.instanceOf[VerifyJwtTokenAction]
+    val mockService                   = mock[InboundCrdlMessageService]
 
     val controller  =
-      new CrdlMessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction)
+      new CrdlMessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, mockService)
     val fakeRequest = FakeRequest("POST", "/crdl/incoming").withHeaders(headersWithValidBearerToken)
   }
 
-  "POST CRDL message endpoint" should {
-    "return 200" in new Setup {
-      val requestBody: Elem = <xml>foobar</xml>
+  def readFromFile(fileName: String) = {
+    XML.load(Source.fromResource(fileName).bufferedReader())
+  }
 
-      val result = controller.message()(fakeRequest.withBody(requestBody))
+  "POST CRDL message endpoint" should {
+    "return success when connector returns success" in new Setup {
+      val requestBody: Elem = readFromFile("crdl/crdl-request-no-attachment.xml")
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK)))
+      val result            = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
+      contentType(result) shouldBe Some("application/soap+xml")
+    }
+
+    "return failure when connector returns failure" in new Setup {
+      val requestBody: Elem = readFromFile("crdl/crdl-request-no-attachment.xml")
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", SERVICE_UNAVAILABLE)))
+      val result            = controller.message()(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe SERVICE_UNAVAILABLE
+      (contentAsJson(result) \ "error").as[String] shouldBe "some error"
     }
   }
 }

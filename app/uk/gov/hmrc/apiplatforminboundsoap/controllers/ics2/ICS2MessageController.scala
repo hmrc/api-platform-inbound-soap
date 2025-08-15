@@ -17,9 +17,11 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future.successful
 import scala.xml.NodeSeq
 
+import play.api.libs.json.Json
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -41,9 +43,9 @@ class ICS2MessageController @Inject() (
     implicit request =>
       incomingMessageService.processInboundMessage(request.body) flatMap {
         case SendSuccess(status)               =>
-          Future.successful(Status(status).as("application/soap+xml"))
+          successful(Status(status).as("application/soap+xml"))
         case SendFailExternal(message, status) =>
-          Future.successful(new Status(status).as("application/soap+xml"))
+          successful(Status(status)(Json.obj("error" -> message)).as("application/soap+xml"))
       }
   }
 }

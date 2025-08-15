@@ -23,22 +23,27 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
 import uk.gov.hmrc.apiplatform.modules.common.services.ClockNow
-import uk.gov.hmrc.apiplatform.modules.common.utils.FixedClock
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.xml.CrdlXmlHelper
+import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
 
 @Singleton
-class CrdlSdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector: SdesConnector, val clock: Clock)(implicit executionContext: ExecutionContext)
-    extends MessageService with CrdlXmlHelper with ClockNow {
+class CrdlSdesService @Inject() (
+    appConfig: SdesConnector.Config,
+    sdesConnector: SdesConnector,
+    val clock: Clock,
+    override val xmlTransformer: XmlTransformer
+  )(implicit executionContext: ExecutionContext
+  ) extends MessageService with CrdlXml with ClockNow {
 
   override def getAttachment(wholeMessage: NodeSeq): Either[InvalidFormatResult, String] = {
     getBinaryAttachment(wholeMessage) match {
-      case attachment: NodeSeq if attachment.text.isBlank => Left(InvalidFormatResult("Embedded attachment element ReceiveReferenceDataRequestResult is empty"))
-      case attachment: NodeSeq                            => Right(attachment.text)
-      case _                                              => Left(InvalidFormatResult("Embedded attachment element ReceiveReferenceDataRequestResult not found in XML"))
+      case attachment: NodeSeq if attachment.text.isBlank =>
+        Left(InvalidFormatResult("Embedded attachment element ReceiveReferenceDataRequestResult is empty"))
+      case attachment: NodeSeq                            =>
+        Right(attachment.text)
     }
   }
 
@@ -78,7 +83,7 @@ class CrdlSdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
       case Some(i) => s"referencedata_${i}_${clock.instant.getEpochSecond}.txt.gz"
       case None    =>
         logger.warn("TaskIdentifier not found so omitting in SDES filename")
-        s"referencedata__${FixedClock.instant}.txt.gz"
+        s"referencedata__${clock.instant.getEpochSecond}.txt.gz"
     }
     Map(
       "srn" -> appConfig.crdl.srn,
@@ -90,5 +95,4 @@ class CrdlSdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
   override def buildMetadataProperties(wholeMessage: NodeSeq, attachmentElement: NodeSeq): Map[String, String] = {
     Map.empty[String, String]
   }
-
 }

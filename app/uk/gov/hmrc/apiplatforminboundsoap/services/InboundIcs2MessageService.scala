@@ -38,21 +38,21 @@ class InboundIcs2MessageService @Inject() (
   ) extends ApplicationLogger with Ics2XmlHelper {
 
   def processInboundMessage(wholeMessage: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val newHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
+    val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
     if (isFileIncluded(wholeMessage) && getBinaryElementsWithEmbeddedData(wholeMessage).nonEmpty) {
-      sendToSdesThenForwardMessage(wholeMessage, isTest)
+      sendToSdesThenForwardMessage(wholeMessage, extraHeaders, isTest)
     } else {
-      forwardMessage(wholeMessage, newHeaders, isTest)
+      forwardMessage(wholeMessage, extraHeaders, isTest)
     }
   }
 
-  private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
+  private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
       sendResults: Seq[SendResult] =>
         sendResults.find(r => r.isInstanceOf[SendFail]) match {
           case Some(value) => successful(value)
           case None        => processSdesResults(sendResults.asInstanceOf[Seq[SdesSuccessResult]], wholeMessage) match {
-              case Right(xml) => forwardMessage(xml, buildHeadersToAppend(wholeMessage), isTest)
+              case Right(xml) => forwardMessage(xml, extraHeaders, isTest)
               case Left(f)    =>
                 logger.warn(s"Failed to replace all embedded attachments for files $f")
                 successful(SendFailExternal(s"Failed to replace all embedded attachments for files $f", UNPROCESSABLE_ENTITY))

@@ -167,6 +167,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
+      contentType(result) shouldBe Some("application/soap+xml")
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured false
@@ -181,6 +182,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
+      (contentAsJson(result) \ "error").as[String] shouldBe "some error"
       status(result) shouldBe PRECONDITION_FAILED
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody

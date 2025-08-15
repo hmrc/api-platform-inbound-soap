@@ -24,35 +24,36 @@ import scala.xml.NodeSeq
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.{CrdlOrchestratorConnector, SdesConnector}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
-import uk.gov.hmrc.apiplatforminboundsoap.xml.CrdlXmlHelper
+import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
 
 @Singleton
 class InboundCrdlMessageService @Inject() (
     crdlOrchestratorConnector: CrdlOrchestratorConnector,
     sdesService: CrdlSdesService,
-    sdesConnectorConfig: SdesConnector.Config
+    override val xmlTransformer: XmlTransformer
   )(implicit ec: ExecutionContext
-  ) extends ApplicationLogger with CrdlXmlHelper {
+  ) extends ApplicationLogger with CrdlXml {
 
   def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val newHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
+    val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
+
     if (fileIncluded(wholeMessage)) {
-      sendToSdesThenForwardMessage(wholeMessage)
+      sendToSdesThenForwardMessage(wholeMessage, extraHeaders)
     } else {
-      forwardMessage(wholeMessage, Seq.empty)
+      forwardMessage(wholeMessage, extraHeaders)
     }
   }
 
-  private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
+  private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
       sendResults: Seq[SendResult] =>
         sendResults.find(r => r.isInstanceOf[SendFail]) match {
           case Some(value) => successful(value)
           case None        => processSdesResults(wholeMessage, sendResults.asInstanceOf[List[SdesSuccess]]) match {
-              case Right(xml) => forwardMessage(xml, buildHeadersToAppend(xml))
+              case Right(xml) => forwardMessage(xml, extraHeaders)
               case Left(_)    =>
                 logger.warn(s"Failed to replace embedded attachment for $wholeMessage")
                 successful(SendFailExternal(s"Failed to replace embedded attachment for $wholeMessage", UNPROCESSABLE_ENTITY))
@@ -68,8 +69,8 @@ class InboundCrdlMessageService @Inject() (
   }
 
   private def processSdesResults(wholeMessage: NodeSeq, sdesResult: List[SdesSuccess]): Either[Unit, NodeSeq] = {
-    val messageWithAttachmentReplaced = replaceAttachment(wholeMessage, sdesResult.head.uuid)
-    if (messageWithAttachmentReplaced != wholeMessage) Right(messageWithAttachmentReplaced) else Left()
+    val messageWithAttachmentReplaced = xmlTransformer.replaceAttachment(wholeMessage, sdesResult.head.uuid)
+    if (messageWithAttachmentReplaced != wholeMessage) Right(messageWithAttachmentReplaced) else Left(())
   }
 
   private def forwardMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
