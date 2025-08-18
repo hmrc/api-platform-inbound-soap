@@ -24,13 +24,14 @@ import _root_.uk.gov.hmrc.http.HttpErrorFunctions
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.JWTVerifier
 
-import play.api.Logging
 import play.api.mvc.Results._
 import play.api.mvc.{ActionFilter, Request, Result}
 
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
+
 @Singleton
 class VerifyJwtTokenAction @Inject() (jwtVerifier: JWTVerifier)(implicit ec: ExecutionContext)
-    extends ActionFilter[Request] with HttpErrorFunctions with Logging {
+    extends ActionFilter[Request] with HttpErrorFunctions with ApplicationLogger {
   override def executionContext: ExecutionContext = ec
 
   override protected def filter[A](request: Request[A]): Future[Option[Result]] = {

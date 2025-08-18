@@ -57,7 +57,7 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
       "microservice.services.secure-data-exchange-proxy.host"                     -> externalWireMockHost,
       "microservice.services.secure-data-exchange-proxy.port"                     -> externalWireMockPort
     ).build()
-  implicit val mat: Materializer            = fakeApplication.injector.instanceOf[Materializer]
+  implicit val mat: Materializer            = fakeApplication().injector.instanceOf[Materializer]
 
   val forwardRequestPath = "/import-control-inbound-soap"
   val sdesPath           = "/upload-attachment"
@@ -70,7 +70,7 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
   val expectedSdesStatus       = Status.ACCEPTED
   val expectedForwardedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
 
-  val underTest: ICS2MessageController = fakeApplication.injector.instanceOf[ICS2MessageController]
+  val underTest: ICS2MessageController = fakeApplication().injector.instanceOf[ICS2MessageController]
   "message" should {
     "forward an XML message" in {
       val expectedRequestStatus = Status.OK

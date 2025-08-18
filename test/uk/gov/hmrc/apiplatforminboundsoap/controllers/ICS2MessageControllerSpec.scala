@@ -38,7 +38,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundIcs2MessageService
 
 class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -48,7 +48,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     val app: Application           = new GuiceApplicationBuilder()
       .configure("passThroughEnabled" -> "false")
       .build()
-    val incomingMessageServiceMock = mock[InboundMessageService]
+    val incomingMessageServiceMock = mock[InboundIcs2MessageService]
     val xRequestIdHeaderValue      = randomUUID.toString()
 
     val commonHeaders = Headers(
@@ -167,6 +167,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
+      contentType(result) shouldBe Some("application/soap+xml")
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured false
@@ -177,10 +178,11 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
 
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal(PRECONDITION_FAILED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
+      (contentAsJson(result) \ "error").as[String] shouldBe "some error"
       status(result) shouldBe PRECONDITION_FAILED
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody

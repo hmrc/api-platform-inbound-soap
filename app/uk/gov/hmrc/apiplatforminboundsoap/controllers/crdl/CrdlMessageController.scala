@@ -21,20 +21,28 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future.successful
 import scala.xml.NodeSeq
 
+import play.api.libs.json.Json
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCrdlMessageService
 
 @Singleton()
 class CrdlMessageController @Inject() (
     cc: ControllerComponents,
     passThroughModeAction: PassThroughModeAction,
-    verifyJwtTokenAction: VerifyJwtTokenAction
+    verifyJwtTokenAction: VerifyJwtTokenAction,
+    inboundCrdlMessageService: InboundCrdlMessageService
   )(implicit ec: ExecutionContext
   ) extends BackendController(cc) {
 
   def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction).async(parse.xml) {
-    implicit request => successful(Status(OK).as("application/soap+xml"))
+    implicit request =>
+      inboundCrdlMessageService.processInboundMessage(request.body) flatMap {
+        case SendSuccess(status)               => successful(Status(status).as("application/soap+xml"))
+        case SendFailExternal(message, status) => successful(Status(status)(Json.obj("error" -> message)).as("application/soap+xml"))
+      }
   }
 }

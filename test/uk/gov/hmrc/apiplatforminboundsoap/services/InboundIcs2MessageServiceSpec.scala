@@ -38,7 +38,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ImportControlInboundSoapCo
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
-class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with Ics2XmlHelper {
+class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with Ics2XmlHelper {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
@@ -61,9 +61,9 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     val httpStatus: Int          = Status.OK
     val xmlHelper: Ics2XmlHelper = mock[Ics2XmlHelper]
 
-    val service: InboundMessageService =
-      new InboundMessageService(inboundConnectorMock, ics2SdesServiceMock, sdesConnectorConfig)
-    when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType", uploadPath = "some/path")
+    val service: InboundIcs2MessageService =
+      new InboundIcs2MessageService(inboundConnectorMock, ics2SdesServiceMock, sdesConnectorConfig)
+    when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType")
   }
 
   "processInboundMessage for production" should {
@@ -101,7 +101,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       )
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
-      when(ics2SdesServiceMock.processMessage(wholeMessageCaptor, binaryElementsCaptor)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference(
+      when(ics2SdesServiceMock.processMessage(wholeMessageCaptor)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference(
         "test-filename.txt",
         "some-uuid-like-string"
       )))))
@@ -111,15 +111,13 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       result shouldBe SendSuccess(OK)
       bodyCaptor hasCaptured forwardedXmlBody
       wholeMessageCaptor hasCaptured xmlBody
-      binaryElementsCaptor hasCaptured binaryElement
       headerCaptor hasCaptured forwardedHeaders
       verify(inboundConnectorMock).postMessage(forwardedXmlBody, forwardedHeaders, false)
-      verify(ics2SdesServiceMock).processMessage(xmlBody, binaryElement)
+      verify(ics2SdesServiceMock).processMessage(xmlBody)
     }
 
     "ensure SDES UUID is encoded when config demands it" in new Setup {
       val xmlBody          = readFromFile("ie4r02-v2-one-binary-attachment.xml")
-      val binaryElement    = getBinaryElementsWithEmbeddedData(xmlBody)
       val forwardedXmlBody = readFromFile("post-sdes-processing/ie4r02-v2-one-binary-attachment-base64-encode.xml")
 
       val forwardedHeaders = Seq[(String, String)](
@@ -130,9 +128,9 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
         "x-version-id"     -> "V2"
       )
 
-      when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType", uploadPath = "some/path", encodeSdesReference = true)
+      when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType", encodeSdesReference = true)
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
-      when(ics2SdesServiceMock.processMessage(wholeMessageCaptor, binaryElementsCaptor)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference(
+      when(ics2SdesServiceMock.processMessage(wholeMessageCaptor)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference(
         "test-filename.txt",
         "some-uuid-like-string"
       )))))
@@ -142,42 +140,35 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       result shouldBe SendSuccess(OK)
       bodyCaptor hasCaptured forwardedXmlBody
       wholeMessageCaptor hasCaptured xmlBody
-      binaryElementsCaptor hasCaptured binaryElement
       headerCaptor hasCaptured forwardedHeaders
       verify(inboundConnectorMock).postMessage(forwardedXmlBody, forwardedHeaders, false)
-      verify(ics2SdesServiceMock).processMessage(xmlBody, binaryElement)
+      verify(ics2SdesServiceMock).processMessage(xmlBody)
     }
 
-    "not invoke SDESConnector when embedded file attachment wasn't replaced" in new Setup {
-      val xmlBody       = readFromFile("ie4s03-v2.xml")
-      val binaryElement = getBinaryElementsWithEmbeddedData(xmlBody)
+    "not forward message when embedded file attachment wasn't replaced" in new Setup {
+      val xmlBody = readFromFile("ie4s03-v2.xml")
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
-      when(ics2SdesServiceMock.processMessage(*, *)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("filename-not-in-xml.txt", "anything")))))
-      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
-      when(ics2SdesServiceMock.processMessage(*, *)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("filename-not-in-xml.txt", "anything")))))
+      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("filename-not-in-xml.txt", "anything")))))
 
       val result = await(service.processInboundMessage(xmlBody))
 
-      result shouldBe SendFailExternal(Status.UNPROCESSABLE_ENTITY)
+      result shouldBe SendFailExternal("Failed to replace all embedded attachments for files Set(filename-not-in-xml.txt)", Status.UNPROCESSABLE_ENTITY)
       verifyZeroInteractions(inboundConnectorMock)
-      verify(ics2SdesServiceMock).processMessage(xmlBody, binaryElement)
+      verify(ics2SdesServiceMock).processMessage(xmlBody)
     }
 
     "not invoke SDESConnector when embedded file attachment filename is missing" in new Setup {
-      val xmlBody       = readFromFile("ie4s03-v2.xml")
-      val binaryElement = getBinaryElementsWithEmbeddedData(xmlBody)
+      val xmlBody = readFromFile("ie4s03-v2.xml")
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
-      when(ics2SdesServiceMock.processMessage(*, *)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("", "anything")))))
-      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
-      when(ics2SdesServiceMock.processMessage(*, *)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("", "anything")))))
+      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("", "anything")))))
 
       val result = await(service.processInboundMessage(xmlBody))
 
-      result shouldBe SendFailExternal(Status.UNPROCESSABLE_ENTITY)
+      result shouldBe SendFailExternal("Failed to replace all embedded attachments for files Set()", Status.UNPROCESSABLE_ENTITY)
       verifyZeroInteractions(inboundConnectorMock)
-      verify(ics2SdesServiceMock).processMessage(xmlBody, binaryElement)
+      verify(ics2SdesServiceMock).processMessage(xmlBody)
     }
 
     "not invoke SDESConnector when message contains binary file with URI" in new Setup {
@@ -205,7 +196,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       val xmlBody = readFromFile("filename/ie4r02-v2-missing-filename-element.xml")
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
-      when(ics2SdesServiceMock.processMessage(*, *)(*)).thenReturn(successful(List(SendNotAttempted("validation"))))
+      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SendNotAttempted("validation"))))
 
       val result = await(service.processInboundMessage(xmlBody))
 
@@ -217,7 +208,7 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
       val xmlBody = readFromFile("filename/ie4r02-v2-blank-filename-element.xml")
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
-      when(ics2SdesServiceMock.processMessage(*, *)(*)).thenReturn(successful(List(SendNotAttempted("validation"))))
+      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SendNotAttempted("validation"))))
 
       val result = await(service.processInboundMessage(xmlBody))
 
@@ -237,13 +228,13 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
         "x-files-included" -> isFileIncluded(xmlBody).toString,
         "x-version-id"     -> "V2"
       )
-      when(ics2SdesServiceMock.processMessage(*, *)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("filename1.pdf", "some-uuid-like-string")))))
+      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("filename1.pdf", "some-uuid-like-string")))))
       when(inboundConnectorMock.postMessage(*, *, *)(*)).thenReturn(successful(SendSuccess(OK)))
 
       val result = await(service.processInboundMessage(xmlBody))
 
       result shouldBe SendSuccess(OK)
-      verify(ics2SdesServiceMock).processMessage(xmlBody, binaryElement)
+      verify(ics2SdesServiceMock).processMessage(xmlBody)
       verifyNoMoreInteractions(ics2SdesServiceMock)
       verify(inboundConnectorMock).postMessage(forwardedXmlBody, forwardedHeaders, false)
     }
@@ -262,23 +253,23 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
     <urn:description>A texty sort of file</urn:description>
   </urn:binaryAttachment>
-      when(ics2SdesServiceMock.processMessage(refEq(xmlBody), refEq(binaryElements))(*)).thenReturn(successful(List(
+      when(ics2SdesServiceMock.processMessage(refEq(xmlBody))(*)).thenReturn(successful(List(
         SdesSuccess("sdes-uuid"),
-        SendFailExternal(SERVICE_UNAVAILABLE)
+        SendFailExternal("some error", SERVICE_UNAVAILABLE)
       )))
 
       val result = await(service.processInboundMessage(xmlBody))
 
-      result shouldBe SendFailExternal(SERVICE_UNAVAILABLE)
+      result shouldBe SendFailExternal("some error", SERVICE_UNAVAILABLE)
       verifyZeroInteractions(inboundConnectorMock)
     }
 
     "return failure when connector returns failure" in new Setup {
-      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal(IM_A_TEAPOT)))
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
 
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
-      result shouldBe SendFailExternal(IM_A_TEAPOT)
+      result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
       verify(inboundConnectorMock).postMessage(xmlBody, forwardedHeaders, true)
       bodyCaptor hasCaptured xmlBody
     }
@@ -307,11 +298,11 @@ class InboundMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return failure when connector returns failure" in new Setup {
-      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal(IM_A_TEAPOT)))
+      when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
 
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
-      result shouldBe SendFailExternal(IM_A_TEAPOT)
+      result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
       verify(inboundConnectorMock).postMessage(xmlBody, forwardedHeaders, true)
       bodyCaptor hasCaptured xmlBody
     }

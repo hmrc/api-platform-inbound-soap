@@ -42,15 +42,15 @@ class ApiPlatformOutboundSoapConnector @Inject() (httpClientV2: HttpClientV2, ap
     val newHeaders: Seq[(String, String)] = List("x-soap-action" -> getSoapAction(soapRequest).getOrElse(""))
 
     postHttpRequest(soapRequest, newHeaders, s"${appConfig.baseUrl}/acknowledgement").map {
-      case Right(response)                                  => SendSuccess(response.status)
-      case Left(UpstreamErrorResponse(_, statusCode, _, _)) =>
-        logger.warn(s"Sending message failed with status code $statusCode")
-        SendFailExternal(statusCode)
+      case Right(response)                                        => SendSuccess(response.status)
+      case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
+        logger.warn(s"Sending message failed with status code $statusCode: $message")
+        SendFailExternal(message, statusCode)
     }
       .recoverWith {
         case NonFatal(e) =>
           logger.warn(s"NonFatal error ${e.getMessage} while forwarding message in ApiPlatformOutboundSoapConnector.postMessage", e)
-          Future.successful(SendFailExternal(Status.INTERNAL_SERVER_ERROR))
+          Future.successful(SendFailExternal(e.getMessage, Status.INTERNAL_SERVER_ERROR))
       }
   }
 }

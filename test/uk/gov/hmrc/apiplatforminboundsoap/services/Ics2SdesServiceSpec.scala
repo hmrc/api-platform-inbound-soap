@@ -61,7 +61,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       new Ics2SdesService(appConfigMock, sdesConnectorMock)
 
     val sdesUrl = "SDES url"
-    val ics2    = Ics2(srn = "ICS2 SRN", informationType = "ICS2 info type", uploadPath = "upload-attachment")
+    val ics2    = Ics2(srn = "ICS2 SRN", informationType = "ICS2 info type")
     when(appConfigMock.baseUrl).thenReturn(sdesUrl)
     when(appConfigMock.ics2).thenReturn(ics2)
   }
@@ -93,7 +93,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
 
-      val result = await(service.processMessage(xmlBody, binaryElement))
+      val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
@@ -149,7 +149,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuidForFirstCall)))
         .andThen(successful(SdesSuccess(expectedSdesUuidForSecondCall)))
 
-      val result = await(service.processMessage(xmlBody, binaryElements))
+      val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(
         SdesSuccessResult(SdesReference(expectedFilenameForFirstCall, expectedSdesUuidForFirstCall)),
@@ -167,7 +167,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
   <urn:MIME>?</urn:MIME>
   <urn:description>?</urn:description>
 </urn:binaryAttachment>
-      val result         = await(service.processMessage(xmlBody, binaryElements))
+      val result         = await(service.processMessage(xmlBody))
 
       result shouldBe List(SendNotAttempted("Argument includedBinaryObject was not found in XML"))
       verifyZeroInteractions(appConfigMock)
@@ -184,7 +184,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
         <!--Optional:-->
         <urn:description>?</urn:description>
       </urn:binaryAttachment>
-      val result        = await(service.processMessage(xmlBody, binaryElement))
+      val result        = await(service.processMessage(xmlBody))
 
       result shouldBe List(SendNotAttempted("Argument filename was not found in XML"))
       verifyZeroInteractions(appConfigMock)
@@ -199,7 +199,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
   <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
   <urn:description>?</urn:description>
 </urn:binaryAttachment>
-      val result        = await(service.processMessage(xmlBody, binaryElement))
+      val result        = await(service.processMessage(xmlBody))
 
       result shouldBe List(SendNotAttempted("Argument filename found in XML but is empty"))
       verifyZeroInteractions(appConfigMock)
@@ -214,11 +214,11 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
         <urn:includedBinaryObject>cid:1177341525550</urn:includedBinaryObject>
         <urn:description>a file made up for unit testing</urn:description>
       </urn:binaryFile>
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SendFailExternal(INTERNAL_SERVER_ERROR)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SendFailExternal("some error", INTERNAL_SERVER_ERROR)))
 
-      val result = await(service.processMessage(xmlBody, binaryElement))
+      val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(SendFailExternal(INTERNAL_SERVER_ERROR))
+      result shouldBe List(SendFailExternal("500 returned from SDES call", INTERNAL_SERVER_ERROR))
     }
   }
 }

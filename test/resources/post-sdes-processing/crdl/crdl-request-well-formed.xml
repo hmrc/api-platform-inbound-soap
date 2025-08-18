@@ -1,0 +1,27 @@
+
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v4="http://xmlns.ec.eu/CallbackService/CSRD2/IReferenceDataSubmissionResultReceiverCBS/V4" xmlns:v41="http://xmlns.ec.eu/BusinessObjects/CSRD2/ReferenceDataSubmissionResultReceiverCBSServiceType/V4" xmlns:v2="http://xmlns.ec.eu/BusinessObjects/CSRD2/MessageHeaderType/V2">
+   <soap:Header>
+      <Action xmlns="http://www.w3.org/2005/08/addressing">CCN2.Service.Customs.Default.CSRD.ReferenceDataExportReceiverCBS/ReceiveReferenceData</Action>
+      <MessageID xmlns="http://www.w3.org/2005/08/addressing">urn:uuid:fcb0896f-33d1-4542-8f64-1dce8101ca09</MessageID>
+      <To xmlns="http://www.w3.org/2005/08/addressing">partner:CCN2.Partner.EU.Customs.TAXUD/CSRDv3.CONF</To>
+      <ReplyTo xmlns="http://www.w3.org/2005/08/addressing">
+         <Address>http://www.w3.org/2005/08/addressing/anonymous</Address>
+      </ReplyTo>
+      <From xmlns="http://www.w3.org/2005/08/addressing">
+         <Address>partner:CCN2.Partner.MT.Customs.TAXUD/CSRDv3.CONF</Address>
+      </From>
+      <wsse:Security soap:mustUnderstand="true" soap:role="CCN2.Platform" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+         <wsse:UsernameToken wsu:Id="UsernameToken-56b405cf-b817-4f4d-8722-54e6a485d80e">
+            <wsse:Username>MITA-CSRD-S2S</wsse:Username>
+            <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">XXXXXXX</wsse:Password>
+         </wsse:UsernameToken>
+      </wsse:Security>
+   </soap:Header>
+   <soap:Body>
+      <v4:ReceiveReferenceDataReqMsg>
+         <v41:MessageHeader/>
+         <v41:TaskIdentifier>13933062</v41:TaskIdentifier>
+         <v41:ReceiveReferenceDataRequestResult>some-uuid-like-string</v41:ReceiveReferenceDataRequestResult>
+      </v4:ReceiveReferenceDataReqMsg>
+   </soap:Body>
+</soap:Envelope>

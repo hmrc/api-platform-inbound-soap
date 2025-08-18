@@ -25,6 +25,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
@@ -34,7 +35,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, 
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ApiPlatformOutboundSoapStub
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
-class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite
+class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite
     with ExternalWireMockSupport with ApiPlatformOutboundSoapStub with Ics2XmlHelper {
   override implicit lazy val app: Application = appBuilder.build()
   implicit val hc: HeaderCarrier              = HeaderCarrier()
@@ -42,51 +43,44 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "metrics.enabled"                                       -> false,
-        "auditing.enabled"                                      -> false,
-        "microservice.services.api-platform-outbound-soap.host" -> externalWireMockHost,
-        "microservice.services.api-platform-outbound-soap.port" -> externalWireMockPort
+        "metrics.enabled"                              -> false,
+        "auditing.enabled"                             -> false,
+        "microservice.services.crdl-orchestrator.host" -> externalWireMockHost,
+        "microservice.services.crdl-orchestrator.port" -> externalWireMockPort
       )
 
   trait Setup {
-    val underTest: ApiPlatformOutboundSoapConnector = app.injector.instanceOf[ApiPlatformOutboundSoapConnector]
-    val codRequestBody: Elem                        = readFromFile("acknowledgement-requests/cod_request.xml")
-    val expectedHeaders                             = forwardedHeaders(codRequestBody)
-    val acknowledgementPath                         = "/acknowledgement"
+    val underTest: CrdlOrchestratorConnector = app.injector.instanceOf[CrdlOrchestratorConnector]
+    val crdlRequestBody: Elem                = readFromFile("requests/crdl/crdl-request.xml")
+    val targetPath                           = "/crdl/incoming"
+    val addedHeaders                         = Seq.empty
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())
     }
-
-    def forwardedHeaders(xmlBody: Elem) = Seq[(String, String)]("x-soap-action" -> getSoapAction(xmlBody).getOrElse(""))
   }
 
   "postMessage" should {
 
-    "return success status (for COD) when returned by the outbound soap service" in new Setup {
-      primeStubForSuccess(codRequestBody, OK, path = acknowledgementPath)
+    "return success status when returned by the CRDL orchestrator service" in new Setup {
+      primeStubForSuccess(crdlRequestBody, OK, path = targetPath)
 
-      val result: SendResult = await(underTest.postMessage(codRequestBody))
+      val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
 
       result shouldBe SendSuccess(OK)
-      verifyRequestBody(codRequestBody, path = acknowledgementPath)
-      verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2, path = acknowledgementPath)
+      verifyRequestBody(crdlRequestBody, path = targetPath)
     }
 
-    "return error status returned by the outbound soap service" in new Setup {
+    "return error status returned by the CRDL orchestrator service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
-      primeStubForSuccess(codRequestBody, expectedStatus, path = acknowledgementPath)
+      primeStubForSuccess(crdlRequestBody, expectedStatus, path = targetPath)
 
-      val result: SendResult = await(underTest.postMessage(codRequestBody))
+      val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
 
-      result shouldBe SendFailExternal(
-        s"POST of 'http://$externalWireMockHost:$externalWireMockPort$acknowledgementPath' returned $expectedStatus. Response body: ''",
-        expectedStatus
-      )
-      verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2, path = acknowledgementPath)
+      result shouldBe SendFailExternal(s"POST of 'http://$externalWireMockHost:$externalWireMockPort$targetPath' returned $expectedStatus. Response body: ''", expectedStatus)
     }
 
-    "return error status when soap fault is returned by the outbound soap service" in new Setup {
+    "return error status when soap fault is returned by the internal service" in new Setup {
       val responseBody = "<Envelope><Body>foobar</Body></Envelope>"
       Seq(
         Fault.CONNECTION_RESET_BY_PEER -> "Connection reset",
@@ -94,9 +88,9 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
         Fault.MALFORMED_RESPONSE_CHUNK -> "Remotely closed",
         Fault.RANDOM_DATA_THEN_CLOSE   -> "Remotely closed"
       ) foreach { input =>
-        primeStubForFault(codRequestBody, responseBody, input._1, path = acknowledgementPath)
+        primeStubForFault(crdlRequestBody, responseBody, input._1, targetPath)
 
-        val result: SendResult = await(underTest.postMessage(codRequestBody))
+        val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
 
         result shouldBe SendFailExternal(s"${input._2}", INTERNAL_SERVER_ERROR)
       }

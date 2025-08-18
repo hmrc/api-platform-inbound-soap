@@ -45,6 +45,25 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
 
   val codRequestBody: Elem = readFromFile("requests/ie4r02-v2.xml")
 
+  val soapFaultResponse =
+    """<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+      |    <soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
+      |    <soap:Body>
+      |        <soap:Fault>
+      |            <soap:Code>
+      |                <soap:Value>soap:400</soap:Value>
+      |            </soap:Code>
+      |            <soap:Reason>
+      |                <soap:Text xml:lang="en">Some Fault</soap:Text>
+      |            </soap:Reason>
+      |            <soap:Node>public-soap-proxy</soap:Node>
+      |            <soap:Detail>
+      |                <RequestId>abcd1234</RequestId>
+      |            </soap:Detail>
+      |        </soap:Fault>
+      |    </soap:Body>
+      |</soap:Envelope>""".stripMargin
+
   override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
       "metrics.enabled"     -> false,
@@ -55,7 +74,7 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
       "passThroughPort"     -> externalWireMockPort
     ).build()
 
-  implicit val mat: Materializer = fakeApplication.injector.instanceOf[Materializer]
+  implicit val mat: Materializer = fakeApplication().injector.instanceOf[Materializer]
 
   val path        = "/ics2/NESControlBASV2"
   val fakeRequest = FakeRequest("POST", path)
@@ -109,22 +128,4 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
     }
   }
 
-  val soapFaultResponse =
-    """<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
-      |    <soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
-      |    <soap:Body>
-      |        <soap:Fault>
-      |            <soap:Code>
-      |                <soap:Value>soap:400</soap:Value>
-      |            </soap:Code>
-      |            <soap:Reason>
-      |                <soap:Text xml:lang="en">Some Fault</soap:Text>
-      |            </soap:Reason>
-      |            <soap:Node>public-soap-proxy</soap:Node>
-      |            <soap:Detail>
-      |                <RequestId>abcd1234</RequestId>
-      |            </soap:Detail>
-      |        </soap:Fault>
-      |    </soap:Body>
-      |</soap:Envelope>""".stripMargin
 }

@@ -25,7 +25,6 @@ import scala.xml.NodeSeq
 import _root_.uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, StringContextOps}
 import org.apache.pekko.util.ByteString
 
-import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.{ContentTypes, HttpEntity}
 import play.api.mvc.Results._
@@ -34,10 +33,11 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
 @Singleton
 class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)(implicit ec: ExecutionContext)
-    extends ActionFilter[Request] with Logging {
+    extends ActionFilter[Request] with ApplicationLogger {
   override def executionContext: ExecutionContext = ec
   implicit def httpReads: HttpReads[HttpResponse] = (method: String, url: String, response: HttpResponse) => HttpReads.Implicits.readRaw.read(method, url, response)
   lazy val passThroughHost                        = s"${appConfig.passThroughProtocol}://${appConfig.passThroughHost}:${appConfig.passThroughPort}"

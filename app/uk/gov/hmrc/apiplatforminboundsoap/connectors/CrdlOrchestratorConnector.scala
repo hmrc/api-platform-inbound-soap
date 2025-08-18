@@ -23,32 +23,29 @@ import scala.xml.NodeSeq
 
 import play.api.http.Status
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
-object ImportControlInboundSoapConnector {
-  case class Config(baseUrl: String, testForwardMessageUrl: String)
+object CrdlOrchestratorConnector {
+  case class Config(baseUrl: String)
 }
 
 @Singleton
-class ImportControlInboundSoapConnector @Inject() (httpClientV2: HttpClientV2, appConfig: ImportControlInboundSoapConnector.Config)(implicit ec: ExecutionContext)
+class CrdlOrchestratorConnector @Inject() (httpClientV2: HttpClientV2, appConfig: CrdlOrchestratorConnector.Config)(implicit ec: ExecutionContext)
     extends BaseConnector(httpClientV2) with ApplicationLogger {
 
-  def postMessage(soapRequest: NodeSeq, headers: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val forwardUrl = if (isTest) appConfig.testForwardMessageUrl else s"${appConfig.baseUrl}/import-control-inbound-soap"
-
-    postHttpRequest(soapRequest, headers, forwardUrl).map {
+  def postMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
+    postHttpRequest(soapRequest, headers, s"${appConfig.baseUrl}/crdl/incoming").map {
+      case Right(response)                                        => SendSuccess(response.status)
       case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode: $message")
         SendFailExternal(message, statusCode)
-      case Right(httpResponse: HttpResponse)                      =>
-        SendSuccess(httpResponse.status)
     }
       .recoverWith {
         case NonFatal(e) =>
-          logger.warn(s"NonFatal error ${e.getMessage} while forwarding message", e)
+          logger.warn(s"NonFatal error ${e.getMessage} while forwarding message in CrdlOrchestratorConnector.postMessage", e)
           Future.successful(SendFailExternal(e.getMessage, Status.INTERNAL_SERVER_ERROR))
       }
   }

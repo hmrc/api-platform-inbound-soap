@@ -17,15 +17,17 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future.successful
 import scala.xml.NodeSeq
 
+import play.api.libs.json.Json
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundMessageService
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundIcs2MessageService
 
 @Singleton()
 class ICS2MessageController @Inject() (
@@ -33,17 +35,17 @@ class ICS2MessageController @Inject() (
     passThroughModeAction: PassThroughModeAction,
     verifyJwtTokenAction: VerifyJwtTokenAction,
     soapMessageValidateAction: SoapMessageValidateAction,
-    incomingMessageService: InboundMessageService
+    incomingMessageService: InboundIcs2MessageService
   )(implicit ec: ExecutionContext
   ) extends BackendController(cc) {
 
   def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
     implicit request =>
       incomingMessageService.processInboundMessage(request.body) flatMap {
-        case SendSuccess(status)      =>
-          Future.successful(Status(status).as("application/soap+xml"))
-        case SendFailExternal(status) =>
-          Future.successful(new Status(status).as("application/soap+xml"))
+        case SendSuccess(status)               =>
+          successful(Status(status).as("application/soap+xml"))
+        case SendFailExternal(message, status) =>
+          successful(Status(status)(Json.obj("error" -> message)).as("application/soap+xml"))
       }
   }
 }
