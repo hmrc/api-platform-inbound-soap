@@ -39,6 +39,7 @@ class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with Guic
     with ExternalWireMockSupport with ApiPlatformOutboundSoapStub with Ics2XmlHelper {
   override implicit lazy val app: Application = appBuilder.build()
   implicit val hc: HeaderCarrier              = HeaderCarrier()
+  val targetPath                              = "/crdl/incoming"
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -46,13 +47,13 @@ class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with Guic
         "metrics.enabled"                              -> false,
         "auditing.enabled"                             -> false,
         "microservice.services.crdl-orchestrator.host" -> externalWireMockHost,
-        "microservice.services.crdl-orchestrator.port" -> externalWireMockPort
+        "microservice.services.crdl-orchestrator.port" -> externalWireMockPort,
+        "microservice.services.crdl-orchestrator.path" -> targetPath
       )
 
   trait Setup {
     val underTest: CrdlOrchestratorConnector = app.injector.instanceOf[CrdlOrchestratorConnector]
     val crdlRequestBody: Elem                = readFromFile("requests/crdl/crdl-request.xml")
-    val targetPath                           = "/crdl/incoming"
     val addedHeaders                         = Seq.empty
 
     def readFromFile(fileName: String) = {
