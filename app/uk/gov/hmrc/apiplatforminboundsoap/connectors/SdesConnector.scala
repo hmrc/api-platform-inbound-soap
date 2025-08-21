@@ -58,7 +58,7 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: SdesConnec
 
   private def postHttpRequest(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
     val combinedHeaders = sdesRequest.headers ++ List("Metadata" -> constructMetadataHeader(sdesRequest.metadata, sdesRequest.metadataProperties))
-    httpClientV2.post(new URI(s"${appConfig.uploadPath}").toURL).setHeader(requiredHeaders: _*)
+    httpClientV2.post(new URI(s"${appConfig.baseUrl}/${appConfig.uploadPath}").toURL).setHeader(requiredHeaders: _*)
       .withBody(sdesRequest.body)
       .transform(_.addHttpHeaders(combinedHeaders: _*))
       .execute[Either[UpstreamErrorResponse, HttpResponse]]
