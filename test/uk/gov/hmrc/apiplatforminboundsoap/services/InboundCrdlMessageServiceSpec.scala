@@ -38,9 +38,9 @@ import play.api.http.Status.{IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.xml.{AttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlAttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
 
 class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -57,17 +57,17 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
   }
 
   trait Setup {
-    val crdlSdesServiceMock: CrdlSdesService                     = mock[CrdlSdesService]
-    val crdlOrchestratorConnectorMock: CrdlOrchestratorConnector = mock[CrdlOrchestratorConnector]
-    val workingXmlTransformer: XmlTransformer                    = new AttachmentReplacingTransformer()
-    val failingXmlTransformer: XmlTransformer                    = new NoChangeTransformer()
-    val forwardedMessageCaptor                                   = ArgCaptor[NodeSeq]
-    val wholeMessageCaptor                                       = ArgCaptor[NodeSeq]
-    val binaryElementsCaptor                                     = ArgCaptor[NodeSeq]
-    val headerCaptor                                             = ArgCaptor[Seq[(String, String)]]
-    val sdesRequestHeaderCaptor                                  = ArgCaptor[Seq[(String, String)]]
-    val xmlBodyWithAttachment                                    = readFromFile("crdl/crdl-request-well-formed.xml")
-    val xmlBodyNoAttachment                                      = readFromFile("crdl/crdl-request-no-attachment.xml")
+    val crdlSdesServiceMock: CrdlSdesService                  = mock[CrdlSdesService]
+    val crdlOrchestratorConnectorMock: CertexServiceConnector = mock[CertexServiceConnector]
+    val workingXmlTransformer: XmlTransformer                 = new CrdlAttachmentReplacingTransformer()
+    val failingXmlTransformer: XmlTransformer                 = new NoChangeTransformer()
+    val forwardedMessageCaptor                                = ArgCaptor[NodeSeq]
+    val wholeMessageCaptor                                    = ArgCaptor[NodeSeq]
+    val binaryElementsCaptor                                  = ArgCaptor[NodeSeq]
+    val headerCaptor                                          = ArgCaptor[Seq[(String, String)]]
+    val sdesRequestHeaderCaptor                               = ArgCaptor[Seq[(String, String)]]
+    val xmlBodyWithAttachment                                 = readFromFile("crdl/crdl-request-well-formed.xml")
+    val xmlBodyNoAttachment                                   = readFromFile("crdl/crdl-request-no-attachment.xml")
 
     val service: InboundCrdlMessageService =
       new InboundCrdlMessageService(crdlOrchestratorConnectorMock, crdlSdesServiceMock, workingXmlTransformer)

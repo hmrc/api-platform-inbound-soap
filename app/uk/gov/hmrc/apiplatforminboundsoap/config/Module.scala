@@ -20,8 +20,9 @@ import java.time.Clock
 
 import com.auth0.jwt.interfaces.JWTVerifier
 import com.google.inject.AbstractModule
+import com.google.inject.name.Names
 
-import uk.gov.hmrc.apiplatforminboundsoap.xml.{AttachmentReplacingTransformer, XmlTransformer}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexAttachmentReplacingTransformer, CrdlAttachmentReplacingTransformer, XmlTransformer}
 
 class Module extends AbstractModule {
 
@@ -29,6 +30,7 @@ class Module extends AbstractModule {
     bind(classOf[JWTVerifier]).toProvider(classOf[JWTVerifierProvider])
     bind(classOf[AppConfig]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC())
-    bind(classOf[XmlTransformer]).toInstance(new AttachmentReplacingTransformer())
+    bind(classOf[XmlTransformer]).annotatedWith(Names.named("crdl")) toInstance (new CrdlAttachmentReplacingTransformer())
+    bind(classOf[XmlTransformer]).annotatedWith(Names.named("certex")) toInstance (new CertexAttachmentReplacingTransformer())
   }
 }

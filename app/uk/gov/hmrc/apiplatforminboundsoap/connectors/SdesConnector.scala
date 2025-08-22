@@ -32,9 +32,10 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SdesSuccess, Send
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
 object SdesConnector {
-  case class Config(baseUrl: String, uploadPath: String, ics2: Ics2, crdl: Crdl)
+  case class Config(baseUrl: String, uploadPath: String, ics2: Ics2, crdl: Crdl, certex: Certex)
   case class Ics2(srn: String, informationType: String, encodeSdesReference: Boolean = false)
   case class Crdl(srn: String, informationType: String)
+  case class Certex(srn: String, informationType: String)
 }
 
 @Singleton

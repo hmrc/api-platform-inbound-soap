@@ -21,19 +21,21 @@ import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
+import com.google.inject.name.Named
+
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
 
 @Singleton
 class InboundCrdlMessageService @Inject() (
-    crdlOrchestratorConnector: CrdlOrchestratorConnector,
+    crdlOrchestratorConnector: CertexServiceConnector,
     sdesService: CrdlSdesService,
-    override val xmlTransformer: XmlTransformer
+    @Named("crdl") override val xmlTransformer: XmlTransformer
   )(implicit ec: ExecutionContext
   ) extends ApplicationLogger with CrdlXml {
 

@@ -22,8 +22,14 @@ import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Crdl, Ics2}
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ApiPlatformOutboundSoapConnector, CrdlOrchestratorConnector, ImportControlInboundSoapConnector, SdesConnector}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Certex, Crdl, Ics2}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.{
+  ApiPlatformOutboundSoapConnector,
+  CertexServiceConnector,
+  CrdlOrchestratorConnector,
+  ImportControlInboundSoapConnector,
+  SdesConnector
+}
 
 class ConfigurationModule extends Module {
 
@@ -33,7 +39,8 @@ class ConfigurationModule extends Module {
       bind[ApiPlatformOutboundSoapConnector.Config].toProvider[ApiPlatformOutboundSoapConnectorConfigProvider],
       bind[SdesConnector.Config].toProvider[SdesConnectorConfigProvider],
       bind[ImportControlInboundSoapConnector.Config].toProvider[ImportControlInboundSoapConnectorConfigProvider],
-      bind[CrdlOrchestratorConnector.Config].toProvider[CrdlOrchestratorConnectorConfigProvider]
+      bind[CrdlOrchestratorConnector.Config].toProvider[CrdlOrchestratorConnectorConfigProvider],
+      bind[CertexServiceConnector.Config].toProvider[CertexServiceConnectorConfigProvider]
     )
   }
 }
@@ -57,6 +64,18 @@ class CrdlOrchestratorConnectorConfigProvider @Inject() (val configuration: Conf
   override def get(): CrdlOrchestratorConnector.Config = {
     val url = baseUrl("crdl-orchestrator")
     CrdlOrchestratorConnector.Config(url)
+  }
+}
+
+@Singleton
+class CertexServiceConnectorConfigProvider @Inject() (val configuration: Configuration)
+    extends ServicesConfig(configuration)
+    with Provider[CertexServiceConnector.Config] {
+
+  override def get(): CertexServiceConnector.Config = {
+    val url  = baseUrl("certex-service")
+    val path = getConfString("certex-service.path", "cls/receive-ies-messages-from-eu/v1")
+    CertexServiceConnector.Config(url, path)
   }
 }
 
@@ -89,6 +108,10 @@ class SdesConnectorConfigProvider @Inject() (val configuration: Configuration)
       srn = getConfString("secure-data-exchange-proxy.crdl.srn", "CRDL-SRN-MISSING"),
       informationType = getConfString("secure-data-exchange-proxy.crdl.informationType", "CRDL-INFO-TYPE-MISSING")
     )
-    SdesConnector.Config(url, uploadPath, ics2, crdl)
+    val certex     = Certex(
+      srn = getConfString("secure-data-exchange-proxy.certex.srn", "CRDL-SRN-MISSING"),
+      informationType = getConfString("secure-data-exchange-proxy.certex.informationType", "CRDL-INFO-TYPE-MISSING")
+    )
+    SdesConnector.Config(url, uploadPath, ics2, crdl, certex)
   }
 }

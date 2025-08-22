@@ -21,18 +21,18 @@ import scala.xml.{Elem, Node, NodeSeq, Text}
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
-class CrdlAttachmentReplacingTransformer extends XmlTransformer {
+class CertexAttachmentReplacingTransformer extends XmlTransformer {
 
   def replaceAttachment: (NodeSeq, String) => NodeSeq = {
     (m, s) =>
       {
         def rewrite = new RewriteRule {
           override def transform(n: Node): Seq[Node] = n match {
-            case elem: Elem if elem.label == "ReceiveReferenceDataRequestResult" =>
+            case elem: Elem if elem.label == "pcaDocumentPdf" =>
               elem.copy(child = elem.child collect {
                 case Text(_) => Text(s)
               })
-            case n                                                               =>
+            case n                                            =>
               n
           }
         }
@@ -43,21 +43,30 @@ class CrdlAttachmentReplacingTransformer extends XmlTransformer {
   }
 }
 
-trait CrdlXml extends ApplicationLogger {
+trait CertexXml extends ApplicationLogger {
 
   def getBinaryAttachment(soapMessage: NodeSeq): NodeSeq = {
-    soapMessage \\ "ReceiveReferenceDataRequestResult"
+    soapMessage \\ "pcaDocumentPdf"
   }
 
   def fileIncluded(soapMessage: NodeSeq): Boolean = {
-    (soapMessage \\ "ReceiveReferenceDataRequestResult").nonEmpty
+    (soapMessage \\ "pcaDocumentPdf").nonEmpty
   }
 
-  def taskIdentifier(wholeMessage: NodeSeq): Option[String] = {
-    val taskIdentifier = wholeMessage \\ "TaskIdentifier"
-    taskIdentifier.map(n => n.text).headOption
+  def getMrn(soapMessage: NodeSeq): String = {
+    (soapMessage \\ "MRN") match {
+      case NodeSeq.Empty => ""
+      case n: NodeSeq    => n.text
+    }
   }
 
-  def xmlTransformer: XmlTransformer = new CrdlAttachmentReplacingTransformer()
+  def getMessageId(soapMessage: NodeSeq): Option[String] = {
+    (soapMessage \@ "messageId").trim match {
+      case "" => Option.empty
+      case m  => Some(m)
+    }
+  }
+
+  def xmlTransformer: XmlTransformer = new CertexAttachmentReplacingTransformer()
 
 }
