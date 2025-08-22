@@ -56,7 +56,7 @@ class CrdlOrchestratorConnectorConfigProvider @Inject() (val configuration: Conf
 
   override def get(): CrdlOrchestratorConnector.Config = {
     val url  = baseUrl("crdl-orchestrator")
-    val path = getConfString("path", "crdl/incoming")
+    val path = getConfString("crdl-orchestrator.path", "/crdl/incoming")
     CrdlOrchestratorConnector.Config(url, path)
   }
 }
