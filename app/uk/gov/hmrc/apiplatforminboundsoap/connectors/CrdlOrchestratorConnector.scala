@@ -37,7 +37,7 @@ class CrdlOrchestratorConnector @Inject() (httpClientV2: HttpClientV2, appConfig
     extends BaseConnector(httpClientV2) with ApplicationLogger {
 
   def postMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
-    postHttpRequest(soapRequest, headers, s"${appConfig.baseUrl}${appConfig.path}").map {
+    postHttpRequest(soapRequest, headers, s"${appConfig.baseUrl}/${appConfig.path}").map {
 
       case Right(response)                                        => SendSuccess(response.status)
       case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
