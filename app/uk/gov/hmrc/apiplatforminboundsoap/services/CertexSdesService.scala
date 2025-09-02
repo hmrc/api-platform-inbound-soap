@@ -27,14 +27,13 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.UuidGenerator
-import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexXml, XmlTransformer}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.CertexXml
 
 @Singleton
 class CertexSdesService @Inject() (
     appConfig: SdesConnector.Config,
     sdesConnector: SdesConnector,
-    uuidGenerator: UuidGenerator,
-    xmlTransformer: XmlTransformer
+    uuidGenerator: UuidGenerator
   )(implicit executionContext: ExecutionContext
   ) extends MessageService with CertexXml {
 
@@ -84,7 +83,7 @@ class CertexSdesService @Inject() (
       uuidMatch.findFirstMatchIn(messageId) match {
         case Some(m) => m.group(1)
         case None    =>
-          logger.warn(s"UUID not found in messageId $messageId so generating random one")
+          logger.warn(s"UUID not found in messageId $messageId so generating random one. Metadata property `messageId` will not be sent on SDES request")
           uuidGenerator.randomUuid()
       }
     }

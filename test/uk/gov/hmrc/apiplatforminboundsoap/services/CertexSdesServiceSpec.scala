@@ -64,7 +64,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     val uuidGenerator: StaticUuidGenerator  = new StaticUuidGenerator()
 
     val service: CertexSdesService =
-      new CertexSdesService(appConfigMock, sdesConnectorMock, uuidGenerator, xmlTransformer)
+      new CertexSdesService(appConfigMock, sdesConnectorMock, uuidGenerator)
 
     val sdesUrl      = "SDES url"
     val certexConfig = Certex(srn = "CERTEX SRN", informationType = "CERTEX info type")
@@ -84,7 +84,8 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
         "informationType" -> certexConfig.informationType,
         "filename"        -> "certex_ca49dfbe-c5d6-4cb3-b424-ddead6c002ad.pdf"
       )
-      val expectedMetadataProperties = Map.empty[String, String]
+      val expectedMetadataProperties =
+        Map[String, String]("MRN" -> "18PL12345678956540", "messageId" -> "CDCM|CTX|ca49dfbe-c5d6-4cb3-b424-ddead6c002ad", "documentSource" -> "certex")
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
 
@@ -125,10 +126,10 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedMetadata           = Map(
         "srn"             -> certexConfig.srn,
         "informationType" -> certexConfig.informationType,
-        "filename"        -> "certex_ca49dfbe-c5d6-4cb3-b424-ddead6c002ad.pdf"
+        "filename"        -> "certex_c23823ba-34cd-4d32-894a-0910e6007557.pdf"
       )
       val expectedMetadataProperties =
-        Map[String, String]("documentSource" -> "certex", "MRN" -> "18PL12345678956540")
+        Map[String, String]("MRN" -> "18PL12345678956540", "documentSource" -> "certex")
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
 
@@ -148,7 +149,8 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
         "informationType" -> certexConfig.informationType,
         "filename"        -> "certex_ca49dfbe-c5d6-4cb3-b424-ddead6c002ad.pdf"
       )
-      val expectedMetadataProperties = Map.empty[String, String]
+      val expectedMetadataProperties =
+        Map[String, String]("MRN" -> "18PL12345678956540", "messageId" -> "CDCM|CTX|ca49dfbe-c5d6-4cb3-b424-ddead6c002ad", "documentSource" -> "certex")
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = SendFailExternal("500 returned from SDES call due to some error", INTERNAL_SERVER_ERROR)
 
@@ -181,7 +183,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       verifyZeroInteractions(sdesConnectorMock)
     }
 
-    "generate random UUID for filename when messageId in message can't supply one" in new Setup {
+    "generate random UUID for filename when messageId in message is blank" in new Setup {
       val xmlBody: Elem              = readFromFile("certex/responseIES002-empty-messageId.xml")
       val expectedSdesUuid           = UUID.randomUUID().toString
       val expectedFilenameUuid       = uuidGenerator.randomUuid()
@@ -190,7 +192,28 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
         "informationType" -> certexConfig.informationType,
         "filename"        -> s"certex_$expectedFilenameUuid.pdf"
       )
-      val expectedMetadataProperties = Map.empty[String, String]
+      val expectedMetadataProperties = Map[String, String]("MRN" -> "18PL12345678956540", "documentSource" -> "certex")
+      val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
+      val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
+
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
+
+      val result = await(service.processMessage(xmlBody))
+
+      result shouldBe List(expectedServiceResult)
+      verify(sdesConnectorMock).postMessage(expectedSdesRequest)
+      bodyCaptor hasCaptured expectedSdesRequest
+    }
+    "generate random UUID for filename when messageId in message can't supply one" in new Setup {
+      val xmlBody: Elem              = readFromFile("certex/responseIES002-unexpected-messageid-format.xml")
+      val expectedSdesUuid           = UUID.randomUUID().toString
+      val expectedFilenameUuid       = uuidGenerator.randomUuid()
+      val expectedMetadata           = Map(
+        "srn"             -> certexConfig.srn,
+        "informationType" -> certexConfig.informationType,
+        "filename"        -> s"certex_$expectedFilenameUuid.pdf"
+      )
+      val expectedMetadataProperties = Map[String, String]("MRN" -> "18PL12345678956540", "documentSource" -> "certex", "messageId" -> "foobar")
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
 
