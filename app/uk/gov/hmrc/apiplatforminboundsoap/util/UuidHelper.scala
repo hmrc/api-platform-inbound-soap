@@ -18,13 +18,24 @@ package uk.gov.hmrc.apiplatforminboundsoap.util
 
 import java.util.UUID
 
-class UuidGenerator {
+class UuidHelper extends ApplicationLogger {
+
+  def isValidUuid(candidate: String): Boolean = {
+    try {
+      UUID.fromString(candidate)
+      true
+    } catch {
+      case _: Throwable =>
+        logger.warn(s"Provided UUID [$candidate] does not appear to be a valid UUID")
+        false
+    }
+  }
 
   def randomUuid(): String = {
     UUID.randomUUID().toString
   }
 }
 
-class StaticUuidGenerator extends UuidGenerator {
+class StaticUuidGenerator extends UuidHelper {
   override def randomUuid(): String = "c23823ba-34cd-4d32-894a-0910e6007557"
 }

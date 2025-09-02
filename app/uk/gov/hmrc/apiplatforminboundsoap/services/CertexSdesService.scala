@@ -26,14 +26,14 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.UuidGenerator
+import uk.gov.hmrc.apiplatforminboundsoap.util.UuidHelper
 import uk.gov.hmrc.apiplatforminboundsoap.xml.CertexXml
 
 @Singleton
 class CertexSdesService @Inject() (
     appConfig: SdesConnector.Config,
     sdesConnector: SdesConnector,
-    uuidGenerator: UuidGenerator
+    uuidHelper: UuidHelper
   )(implicit executionContext: ExecutionContext
   ) extends MessageService with CertexXml {
 
@@ -81,10 +81,13 @@ class CertexSdesService @Inject() (
     def uuidFromMessageId(messageId: String): String = {
       val uuidMatch: Regex = "CDCM\\|CTX\\|(.*)".r
       uuidMatch.findFirstMatchIn(messageId) match {
-        case Some(m) => m.group(1)
-        case None    =>
-          logger.warn(s"UUID not found in messageId $messageId so generating random one. Metadata property `messageId` will not be sent on SDES request")
-          uuidGenerator.randomUuid()
+        case Some(m) if uuidHelper.isValidUuid(m.group(1)) => m.group(1)
+        case Some(_)                                       =>
+          logger.warn(s"UUID in messageId $messageId is not valid so generating random one to include in `filename` metadata property. Metadata property `messageId` will be included in SDES request")
+          uuidHelper.randomUuid()
+        case None                                          =>
+          logger.warn(s"UUID not found in messageId $messageId so generating random one to include in `filename` metadata property. Metadata property `messageId` will be included in SDES request")
+          uuidHelper.randomUuid()
       }
     }
     def fileName(): String                           = {
@@ -92,7 +95,7 @@ class CertexSdesService @Inject() (
         case Some(m) => s"certex_${uuidFromMessageId(m)}.pdf"
         case None    =>
           logger.warn(s"Attribute messageId not found in message so generating random UUID for SDES filename")
-          s"certex_${uuidGenerator.randomUuid()}.pdf"
+          s"certex_${uuidHelper.randomUuid()}.pdf"
 
       }
     }

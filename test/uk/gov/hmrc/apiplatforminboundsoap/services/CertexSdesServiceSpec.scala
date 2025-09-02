@@ -225,5 +225,26 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
       bodyCaptor hasCaptured expectedSdesRequest
     }
+    "generate random UUID for filename when UUID from messageId in message is invalid" in new Setup {
+      val xmlBody: Elem              = readFromFile("certex/responseIES002-messageId-invalid-uuid.xml")
+      val expectedSdesUuid           = UUID.randomUUID().toString
+      val expectedFilenameUuid       = uuidGenerator.randomUuid()
+      val expectedMetadata           = Map(
+        "srn"             -> certexConfig.srn,
+        "informationType" -> certexConfig.informationType,
+        "filename"        -> s"certex_$expectedFilenameUuid.pdf"
+      )
+      val expectedMetadataProperties = Map[String, String]("MRN" -> "18PL12345678956540", "documentSource" -> "certex", "messageId" -> "CDCM|CTX|ding-dong-bell")
+      val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
+      val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
+
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
+
+      val result = await(service.processMessage(xmlBody))
+
+      result shouldBe List(expectedServiceResult)
+      verify(sdesConnectorMock).postMessage(expectedSdesRequest)
+      bodyCaptor hasCaptured expectedSdesRequest
+    }
   }
 }
