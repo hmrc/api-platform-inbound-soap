@@ -18,6 +18,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import java.util.UUID.randomUUID
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future.successful
 import scala.xml.Elem
 
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
@@ -34,6 +35,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCertexMessageService
 
 class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -41,7 +44,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOn
   trait Setup {
 
     val app: Application      = new GuiceApplicationBuilder()
-      .configure("passThroughEnabled" -> "false")
+      .configure("passThroughEnabled" -> "false", "microservice.services.certex-service.authToken" -> "auth")
       .build()
     val xRequestIdHeaderValue = randomUUID.toString()
 
@@ -57,9 +60,10 @@ class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOn
 
     private val passThroughModeAction = app.injector.instanceOf[PassThroughModeAction]
     private val verifyJwtTokenAction  = app.injector.instanceOf[VerifyJwtTokenAction]
+    val mockService                   = mock[InboundCertexMessageService]
 
     val controller                     =
-      new CertexMessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction)
+      new CertexMessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, mockService)
     val fakeRequest                    = FakeRequest("POST", "/certex/inbound").withHeaders(headersWithValidBearerToken)
     val fakeRequestPartlyUpperCasePath = FakeRequest("POST", "/CERTEX/inbound").withHeaders(headersWithValidBearerToken)
   }
@@ -67,6 +71,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOn
   "POST Certex message endpoint" should {
     "return 200 for all lower case path" in new Setup {
       val requestBody: Elem = <xml>foobar</xml>
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -75,10 +80,21 @@ class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOn
 
     "return 200 for part upper case path" in new Setup {
       val requestBody: Elem = <xml>foobar</xml>
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK)))
 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
       status(result) shouldBe OK
+    }
+
+    "return error when unsuccessful" in new Setup {
+      val requestBody: Elem = <xml>foobar</xml>
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", SERVICE_UNAVAILABLE)))
+
+      val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
+
+      status(result) shouldBe SERVICE_UNAVAILABLE
+      (contentAsJson(result) \ "error").as[String] shouldBe "some error"
     }
   }
 }

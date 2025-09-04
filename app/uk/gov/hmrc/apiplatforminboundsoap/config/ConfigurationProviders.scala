@@ -73,9 +73,10 @@ class CertexServiceConnectorConfigProvider @Inject() (val configuration: Configu
     with Provider[CertexServiceConnector.Config] {
 
   override def get(): CertexServiceConnector.Config = {
-    val url  = baseUrl("certex-service")
-    val path = getConfString("certex-service.path", "cls/receive-ies-messages-from-eu/v1")
-    CertexServiceConnector.Config(url, path)
+    val url       = baseUrl("certex-service")
+    val path      = getConfString("certex-service.path", "cls/receive-ies-messages-from-eu/v1")
+    val authToken = getString("microservice.services.certex-service.authToken")
+    CertexServiceConnector.Config(url, path, authToken)
   }
 }
 

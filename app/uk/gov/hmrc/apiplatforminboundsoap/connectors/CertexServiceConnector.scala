@@ -29,7 +29,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, 
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
 object CertexServiceConnector {
-  case class Config(baseUrl: String, path: String)
+  case class Config(baseUrl: String, path: String, authToken: String)
 }
 
 @Singleton

@@ -30,7 +30,7 @@ class Module extends AbstractModule {
     bind(classOf[JWTVerifier]).toProvider(classOf[JWTVerifierProvider])
     bind(classOf[AppConfig]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC())
-    bind(classOf[XmlTransformer]).annotatedWith(Names.named("crdl")) toInstance (new CrdlAttachmentReplacingTransformer())
-    bind(classOf[XmlTransformer]).annotatedWith(Names.named("certex")) toInstance (new CertexAttachmentReplacingTransformer())
+    bind(classOf[XmlTransformer]).annotatedWith(Names.named("crdl")) toInstance new CrdlAttachmentReplacingTransformer()
+    bind(classOf[XmlTransformer]).annotatedWith(Names.named("certex")) toInstance new CertexAttachmentReplacingTransformer()
   }
 }

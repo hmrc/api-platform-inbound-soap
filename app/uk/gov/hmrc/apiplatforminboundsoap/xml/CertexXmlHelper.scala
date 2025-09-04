@@ -50,7 +50,7 @@ trait CertexXml extends ApplicationLogger {
   }
 
   def fileIncluded(soapMessage: NodeSeq): Boolean = {
-    (soapMessage \\ "pcaDocumentPdf").nonEmpty
+    getBinaryAttachment(soapMessage).nonEmpty
   }
 
   def getMrn(soapMessage: NodeSeq): String = {

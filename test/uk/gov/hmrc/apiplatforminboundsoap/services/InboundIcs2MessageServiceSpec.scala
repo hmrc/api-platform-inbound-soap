@@ -89,7 +89,6 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
     "invoke SDESConnector when message contains embedded file attachment" in new Setup {
       val xmlBody          = readFromFile("ie4s03-v2.xml")
-      val binaryElement    = getBinaryElementsWithEmbeddedData(xmlBody)
       val forwardedXmlBody = readFromFile("post-sdes-processing/ie4s03-v2.xml")
 
       val forwardedHeaders = Seq[(String, String)](
@@ -218,7 +217,6 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
     "invoke SDESConnector only once when two binary elements are included but one has only a URI" in new Setup {
       val xmlBody          = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-with-uri-and-binaryAttachment-with-included-elements.xml")
-      val binaryElement    = getBinaryElementsWithEmbeddedData(xmlBody)
       val forwardedXmlBody = readFromFile("post-sdes-processing/ie4r02-v2-both-binaryFile-with-uri-and-binaryAttachment-with-included-elements.xml")
 
       val forwardedHeaders = Seq[(String, String)](
@@ -240,19 +238,8 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
     }
 
     "return fail status to caller and not forward message if any call to SDES fails when processing a message with 2 embedded files" in new Setup {
-      val xmlBody        = readFromFile("uriAndBinaryObject/ie4r02-v2-two-binaryAttachments-with-included-elements.xml")
-      val binaryElements = <urn:binaryAttachment>
-  <urn:filename>filename1.pdf</urn:filename>
-  <urn:MIME>application/pdf</urn:MIME>
-  <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
-  <urn:description>A PDFy sort of file</urn:description>
-</urn:binaryAttachment>
-  <urn:binaryAttachment>
-    <urn:filename>filename2.txt</urn:filename>
-    <urn:MIME>text/plain</urn:MIME>
-    <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
-    <urn:description>A texty sort of file</urn:description>
-  </urn:binaryAttachment>
+      val xmlBody = readFromFile("uriAndBinaryObject/ie4r02-v2-two-binaryAttachments-with-included-elements.xml")
+
       when(ics2SdesServiceMock.processMessage(refEq(xmlBody))(*)).thenReturn(successful(List(
         SdesSuccess("sdes-uuid"),
         SendFailExternal("some error", SERVICE_UNAVAILABLE)

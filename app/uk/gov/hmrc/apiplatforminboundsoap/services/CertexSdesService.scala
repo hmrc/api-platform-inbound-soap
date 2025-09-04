@@ -26,7 +26,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.UuidHelper
+import uk.gov.hmrc.apiplatforminboundsoap.util.{Base64Encoder, UuidHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.CertexXml
 
 @Singleton
@@ -35,13 +35,15 @@ class CertexSdesService @Inject() (
     sdesConnector: SdesConnector,
     uuidHelper: UuidHelper
   )(implicit executionContext: ExecutionContext
-  ) extends MessageService with CertexXml {
+  ) extends MessageService with CertexXml with Base64Encoder {
 
   override def getAttachment(wholeMessage: NodeSeq): Either[InvalidFormatResult, String] = {
     getBinaryAttachment(wholeMessage) match {
-      case attachment: NodeSeq if attachment.text.isBlank =>
+      case attachment: NodeSeq if attachment.text.isBlank    =>
         Left(InvalidFormatResult("Embedded attachment element pcaDocumentPdf is empty"))
-      case attachment: NodeSeq                            =>
+      case attachment: NodeSeq if !isBase64(attachment.text) =>
+        Left(InvalidFormatResult("Embedded attachment element pcaDocumentPdf is not valid base 64 data"))
+      case attachment: NodeSeq                               =>
         Right(attachment.text)
     }
   }
@@ -83,10 +85,10 @@ class CertexSdesService @Inject() (
       uuidMatch.findFirstMatchIn(messageId) match {
         case Some(m) if uuidHelper.isValidUuid(m.group(1)) => m.group(1)
         case Some(_)                                       =>
-          logger.warn(s"UUID in messageId $messageId is not valid so generating random one to include in `filename` metadata property. Metadata property `messageId` will be included in SDES request")
+          logger.warn(s"UUID in messageId `$messageId` is not valid so generating random one to include in `filename` metadata property. Metadata property `messageId` will be included in SDES request")
           uuidHelper.randomUuid()
         case None                                          =>
-          logger.warn(s"UUID not found in messageId $messageId so generating random one to include in `filename` metadata property. Metadata property `messageId` will be included in SDES request")
+          logger.warn(s"UUID not found in messageId `$messageId` so generating random one to include in `filename` metadata property. Metadata property `messageId` will be included in SDES request")
           uuidHelper.randomUuid()
       }
     }

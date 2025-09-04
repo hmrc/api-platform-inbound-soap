@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
+import java.time.Clock
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,20 +25,24 @@ import scala.xml.NodeSeq
 import com.google.inject.name.Named
 
 import play.api.http.Status.UNPROCESSABLE_ENTITY
+import play.api.http.{ContentTypes, MimeTypes}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
-import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
+import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, UuidHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexXml, XmlTransformer}
 
 @Singleton
-class InboundCrdlMessageService @Inject() (
-    crdlOrchestratorConnector: CrdlOrchestratorConnector,
-    sdesService: CrdlSdesService,
-    @Named("crdl") override val xmlTransformer: XmlTransformer
+class InboundCertexMessageService @Inject() (
+    certexServiceConnector: CertexServiceConnector,
+    sdesService: CertexSdesService,
+    uuidHelper: UuidHelper,
+    clock: Clock,
+    config: CertexServiceConnector.Config,
+    @Named("certex") override val xmlTransformer: XmlTransformer
   )(implicit ec: ExecutionContext
-  ) extends ApplicationLogger with CrdlXml {
+  ) extends ApplicationLogger with CertexXml with MimeTypes {
 
   def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
@@ -66,6 +71,12 @@ class InboundCrdlMessageService @Inject() (
 
   private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)] = {
     List(
+      "Accept"           -> MimeTypes.XML,
+      "Authorization"    -> config.authToken,
+      "Content-Type"     -> ContentTypes.XML,
+      "Date"             -> clock.instant().toString,
+      "source"           -> "MDTP",
+      "x-correlation-id" -> uuidHelper.randomUuid(),
       "x-files-included" -> fileIncluded(soapRequest).toString
     )
   }
@@ -76,6 +87,6 @@ class InboundCrdlMessageService @Inject() (
   }
 
   private def forwardMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
-    crdlOrchestratorConnector.postMessage(soapRequest, headers)
+    certexServiceConnector.postMessage(soapRequest, headers)
   }
 }
