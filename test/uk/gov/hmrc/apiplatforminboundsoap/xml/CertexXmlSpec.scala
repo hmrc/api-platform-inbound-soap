@@ -78,7 +78,7 @@ class CertexXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
       getMrn(xmlRequestBody) shouldBe ""
     }
 
-    "return None for MRN when element is absent" in {
+    "return empty string for MRN when element is absent" in {
       val xmlRequestBody: Elem = readFromFile("certex/responseIES002-missing-elements.xml")
       getMrn(xmlRequestBody) shouldBe ""
     }
@@ -89,7 +89,7 @@ class CertexXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
       val xmlRequestBody: Elem = readFromFile("certex/responseIES002.xml")
       getMessageId(xmlRequestBody) shouldBe Some("CDCM|CTX|ca49dfbe-c5d6-4cb3-b424-ddead6c002ad")
     }
-    "return empty string for message ID when element is absent" in {
+    "return empty Option for message ID when element is absent" in {
       val xmlRequestBody: Elem = readFromFile("certex/responseIES002-empty-elements.xml")
       getMessageId(xmlRequestBody) shouldBe Option.empty
     }
