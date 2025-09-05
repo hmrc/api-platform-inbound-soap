@@ -56,7 +56,7 @@ class CertexServiceConnectorISpec extends AnyWordSpec with Matchers with GuiceOn
 
   "postMessage" should {
 
-    "return success status when returned by the CERTEX orchestrator service" in new Setup {
+    "return success status when returned by the CERTEX service" in new Setup {
       primeStubForSuccess(requestBody, OK, path = targetPath)
 
       val result: SendResult = await(underTest.postMessage(requestBody, addedHeaders))
@@ -65,7 +65,7 @@ class CertexServiceConnectorISpec extends AnyWordSpec with Matchers with GuiceOn
       verifyRequestBody(requestBody, path = targetPath)
     }
 
-    "return error status returned by the CERTEX orchestrator service" in new Setup {
+    "return error status returned by the CERTEX service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
       primeStubForSuccess(requestBody, expectedStatus, path = targetPath)
 
@@ -74,7 +74,7 @@ class CertexServiceConnectorISpec extends AnyWordSpec with Matchers with GuiceOn
       result shouldBe SendFailExternal(s"POST of 'http://$externalWireMockHost:$externalWireMockPort$targetPath' returned $expectedStatus. Response body: ''", expectedStatus)
     }
 
-    "return error status when soap fault is returned by the internal service" in new Setup {
+    "return error status when soap fault is returned by the CERTEX service" in new Setup {
       val responseBody = "<Envelope><Body>foobar</Body></Envelope>"
       Seq(
         Fault.CONNECTION_RESET_BY_PEER -> "Connection reset",
