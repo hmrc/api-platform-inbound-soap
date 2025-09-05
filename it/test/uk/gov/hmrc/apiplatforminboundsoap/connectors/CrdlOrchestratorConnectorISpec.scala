@@ -38,6 +38,7 @@ class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with Guic
     with ExternalWireMockSupport with ApiPlatformOutboundSoapStub {
   override implicit lazy val app: Application = appBuilder.build()
   implicit val hc: HeaderCarrier              = HeaderCarrier()
+  val configTargetPath                        = "crdl/incoming"
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -45,14 +46,15 @@ class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with Guic
         "metrics.enabled"                              -> false,
         "auditing.enabled"                             -> false,
         "microservice.services.crdl-orchestrator.host" -> externalWireMockHost,
-        "microservice.services.crdl-orchestrator.port" -> externalWireMockPort
+        "microservice.services.crdl-orchestrator.port" -> externalWireMockPort,
+        "microservice.services.crdl-orchestrator.path" -> configTargetPath
       )
 
   trait Setup {
     val underTest: CrdlOrchestratorConnector = app.injector.instanceOf[CrdlOrchestratorConnector]
     val crdlRequestBody: Elem                = readFromFile("requests/crdl/crdl-request.xml")
-    val targetPath                           = "/crdl/incoming"
     val addedHeaders                         = Seq.empty
+    val wireMockTargetPath                   = s"/$configTargetPath"
 
     def readFromFile(fileName: String) = {
       XML.load(Source.fromResource(fileName).bufferedReader())
@@ -62,21 +64,21 @@ class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with Guic
   "postMessage" should {
 
     "return success status when returned by the CRDL orchestrator service" in new Setup {
-      primeStubForSuccess(crdlRequestBody, OK, path = targetPath)
+      primeStubForSuccess(crdlRequestBody, OK, path = wireMockTargetPath)
 
       val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
 
       result shouldBe SendSuccess(OK)
-      verifyRequestBody(crdlRequestBody, path = targetPath)
+      verifyRequestBody(crdlRequestBody, path = wireMockTargetPath)
     }
 
     "return error status returned by the CRDL orchestrator service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
-      primeStubForSuccess(crdlRequestBody, expectedStatus, path = targetPath)
+      primeStubForSuccess(crdlRequestBody, expectedStatus, path = wireMockTargetPath)
 
       val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
 
-      result shouldBe SendFailExternal(s"POST of 'http://$externalWireMockHost:$externalWireMockPort$targetPath' returned $expectedStatus. Response body: ''", expectedStatus)
+      result shouldBe SendFailExternal(s"POST of 'http://$externalWireMockHost:$externalWireMockPort/$configTargetPath' returned $expectedStatus. Response body: ''", expectedStatus)
     }
 
     "return error status when soap fault is returned by the internal service" in new Setup {
@@ -87,7 +89,7 @@ class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with Guic
         Fault.MALFORMED_RESPONSE_CHUNK -> "Remotely closed",
         Fault.RANDOM_DATA_THEN_CLOSE   -> "Remotely closed"
       ) foreach { input =>
-        primeStubForFault(crdlRequestBody, responseBody, input._1, targetPath)
+        primeStubForFault(crdlRequestBody, responseBody, input._1, wireMockTargetPath)
 
         val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
 

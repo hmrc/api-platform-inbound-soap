@@ -21,6 +21,17 @@ import scala.xml.{Elem, Node, NodeSeq, Text}
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
+/*abstract class XmlTransformer {
+  def replaceAttachment: (NodeSeq, String) => NodeSeq
+}*/
+
+class NoChangeTransformer extends XmlTransformer {
+
+  override def replaceAttachment: (NodeSeq, String) => NodeSeq = {
+    (n, _) => n
+  }
+}
+
 class CrdlAttachmentReplacingTransformer extends XmlTransformer {
 
   def replaceAttachment: (NodeSeq, String) => NodeSeq = {

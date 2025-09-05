@@ -62,8 +62,9 @@ class CrdlOrchestratorConnectorConfigProvider @Inject() (val configuration: Conf
     with Provider[CrdlOrchestratorConnector.Config] {
 
   override def get(): CrdlOrchestratorConnector.Config = {
-    val url = baseUrl("crdl-orchestrator")
-    CrdlOrchestratorConnector.Config(url)
+    val url  = baseUrl("crdl-orchestrator")
+    val path = getConfString("crdl-orchestrator.path", "crdl/incoming")
+    CrdlOrchestratorConnector.Config(url, path)
   }
 }
 
@@ -99,7 +100,7 @@ class SdesConnectorConfigProvider @Inject() (val configuration: Configuration)
 
   override def get(): SdesConnector.Config = {
     val url        = baseUrl("secure-data-exchange-proxy")
-    val uploadPath = s"$url/upload-attachment"
+    val uploadPath = getConfString("secure-data-exchange-proxy.uploadPath", "upload-attachment")
     val ics2       = Ics2(
       srn = getConfString("secure-data-exchange-proxy.ics2.srn", "ICS2-SRN-MISSING"),
       informationType = getConfString("secure-data-exchange-proxy.ics2.informationType", "ICS2-INFO-TYPE-MISSING"),

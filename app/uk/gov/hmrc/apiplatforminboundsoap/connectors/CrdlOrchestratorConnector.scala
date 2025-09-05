@@ -29,7 +29,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, 
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
 object CrdlOrchestratorConnector {
-  case class Config(baseUrl: String)
+  case class Config(baseUrl: String, path: String)
 }
 
 @Singleton
@@ -37,7 +37,8 @@ class CrdlOrchestratorConnector @Inject() (httpClientV2: HttpClientV2, appConfig
     extends BaseConnector(httpClientV2) with ApplicationLogger {
 
   def postMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
-    postHttpRequest(soapRequest, headers, s"${appConfig.baseUrl}/crdl/incoming").map {
+    postHttpRequest(soapRequest, headers, s"${appConfig.baseUrl}/${appConfig.path}").map {
+
       case Right(response)                                        => SendSuccess(response.status)
       case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode: $message")
