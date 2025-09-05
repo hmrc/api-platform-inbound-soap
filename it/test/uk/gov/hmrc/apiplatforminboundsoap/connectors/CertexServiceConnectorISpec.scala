@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
-import scala.io.Source
-import scala.xml.{Elem, XML}
+import scala.xml.Elem
 
 import com.github.tomakehurst.wiremock.http.Fault
 import org.scalatest.matchers.should.Matchers
@@ -34,54 +33,48 @@ import uk.gov.hmrc.http.test.ExternalWireMockSupport
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ApiPlatformOutboundSoapStub
 
-class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite
+class CertexServiceConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite
     with ExternalWireMockSupport with ApiPlatformOutboundSoapStub {
   override implicit lazy val app: Application = appBuilder.build()
   implicit val hc: HeaderCarrier              = HeaderCarrier()
-  val configTargetPath                        = "crdl/incoming"
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "metrics.enabled"                              -> false,
-        "auditing.enabled"                             -> false,
-        "microservice.services.crdl-orchestrator.host" -> externalWireMockHost,
-        "microservice.services.crdl-orchestrator.port" -> externalWireMockPort,
-        "microservice.services.crdl-orchestrator.path" -> configTargetPath
+        "metrics.enabled"                           -> false,
+        "auditing.enabled"                          -> false,
+        "microservice.services.certex-service.host" -> externalWireMockHost,
+        "microservice.services.certex-service.port" -> externalWireMockPort
       )
 
   trait Setup {
-    val underTest: CrdlOrchestratorConnector = app.injector.instanceOf[CrdlOrchestratorConnector]
-    val crdlRequestBody: Elem                = readFromFile("requests/crdl/crdl-request.xml")
-    val addedHeaders                         = Seq.empty
-    val wireMockTargetPath                   = s"/$configTargetPath"
-
-    def readFromFile(fileName: String) = {
-      XML.load(Source.fromResource(fileName).bufferedReader())
-    }
+    val underTest: CertexServiceConnector = app.injector.instanceOf[CertexServiceConnector]
+    val requestBody: Elem                 = <foo>bar</foo>
+    val targetPath                        = "/cls/receive-ies-messages-from-eu/v1"
+    val addedHeaders                      = Seq.empty
   }
 
   "postMessage" should {
 
-    "return success status when returned by the CRDL orchestrator service" in new Setup {
-      primeStubForSuccess(crdlRequestBody, OK, path = wireMockTargetPath)
+    "return success status when returned by the CERTEX service" in new Setup {
+      primeStubForSuccess(requestBody, OK, path = targetPath)
 
-      val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
+      val result: SendResult = await(underTest.postMessage(requestBody, addedHeaders))
 
       result shouldBe SendSuccess(OK)
-      verifyRequestBody(crdlRequestBody, path = wireMockTargetPath)
+      verifyRequestBody(requestBody, path = targetPath)
     }
 
-    "return error status returned by the CRDL orchestrator service" in new Setup {
+    "return error status returned by the CERTEX service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
-      primeStubForSuccess(crdlRequestBody, expectedStatus, path = wireMockTargetPath)
+      primeStubForSuccess(requestBody, expectedStatus, path = targetPath)
 
-      val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
+      val result: SendResult = await(underTest.postMessage(requestBody, addedHeaders))
 
-      result shouldBe SendFailExternal(s"POST of 'http://$externalWireMockHost:$externalWireMockPort/$configTargetPath' returned $expectedStatus. Response body: ''", expectedStatus)
+      result shouldBe SendFailExternal(s"POST of 'http://$externalWireMockHost:$externalWireMockPort$targetPath' returned $expectedStatus. Response body: ''", expectedStatus)
     }
 
-    "return error status when soap fault is returned by the internal service" in new Setup {
+    "return error status when soap fault is returned by the CERTEX service" in new Setup {
       val responseBody = "<Envelope><Body>foobar</Body></Envelope>"
       Seq(
         Fault.CONNECTION_RESET_BY_PEER -> "Connection reset",
@@ -89,9 +82,9 @@ class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with Guic
         Fault.MALFORMED_RESPONSE_CHUNK -> "Remotely closed",
         Fault.RANDOM_DATA_THEN_CLOSE   -> "Remotely closed"
       ) foreach { input =>
-        primeStubForFault(crdlRequestBody, responseBody, input._1, wireMockTargetPath)
+        primeStubForFault(requestBody, responseBody, input._1, targetPath)
 
-        val result: SendResult = await(underTest.postMessage(crdlRequestBody, addedHeaders))
+        val result: SendResult = await(underTest.postMessage(requestBody, addedHeaders))
 
         result shouldBe SendFailExternal(s"${input._2}", INTERNAL_SERVER_ERROR)
       }

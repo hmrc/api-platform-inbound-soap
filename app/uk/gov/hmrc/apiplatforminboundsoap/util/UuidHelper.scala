@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,26 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.util
 
-import java.util.Base64
-import scala.util.matching.Regex
+import java.util.UUID
 
-trait Base64Encoder {
-  def encode(toEncode: String): String = Base64.getEncoder.encodeToString(toEncode.getBytes)
+class UuidHelper extends ApplicationLogger {
 
-  def isBase64(candidate: String): Boolean = {
-    val pattern: Regex = "^[A-Za-z0-9+/]+={0,2}$".r
-    pattern.findFirstMatchIn(candidate) match {
-      case Some(r) if r.matched.length % 4 == 0 => true
-      case _ => false
+  def isValidUuid(candidate: String): Boolean = {
+    try {
+      UUID.fromString(candidate)
+      true
+    } catch {
+      case _: Throwable =>
+        logger.warn(s"Provided UUID [$candidate] does not appear to be a valid UUID")
+        false
     }
   }
+
+  def randomUuid(): String = {
+    UUID.randomUUID().toString
+  }
+}
+
+class StaticUuidGenerator extends UuidHelper {
+  override def randomUuid(): String = "c23823ba-34cd-4d32-894a-0910e6007557"
 }

@@ -16,34 +16,34 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
-import java.time.Clock
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.{sequence, successful}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.matching.Regex
 import scala.xml.NodeSeq
-
-import com.google.inject.name.Named
 
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
+import uk.gov.hmrc.apiplatforminboundsoap.util.{Base64Encoder, UuidHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.CertexXml
 
 @Singleton
-class CrdlSdesService @Inject() (
+class CertexSdesService @Inject() (
     appConfig: SdesConnector.Config,
     sdesConnector: SdesConnector,
-    clock: Clock,
-    @Named("crdl") override val xmlTransformer: XmlTransformer
+    uuidHelper: UuidHelper
   )(implicit executionContext: ExecutionContext
-  ) extends MessageService with CrdlXml {
+  ) extends MessageService with CertexXml with Base64Encoder {
 
   override def getAttachment(wholeMessage: NodeSeq): Either[InvalidFormatResult, String] = {
     getBinaryAttachment(wholeMessage) match {
-      case attachment: NodeSeq if attachment.text.isBlank =>
-        Left(InvalidFormatResult("Embedded attachment element ReceiveReferenceDataRequestResult is empty"))
-      case attachment: NodeSeq                            =>
+      case attachment: NodeSeq if attachment.text.isBlank    =>
+        Left(InvalidFormatResult("Embedded attachment element pcaDocumentPdf is empty"))
+      case attachment: NodeSeq if !isBase64(attachment.text) =>
+        Left(InvalidFormatResult("Embedded attachment element pcaDocumentPdf is not valid base 64 data"))
+      case attachment: NodeSeq                               =>
         Right(attachment.text)
     }
   }
@@ -80,20 +80,35 @@ class CrdlSdesService @Inject() (
   }
 
   override def buildMetadata(attachmentElement: NodeSeq): Map[String, String] = {
-    val fileName = taskIdentifier(attachmentElement) match {
-      case Some(i) => s"referencedata_${i}_${clock.instant.getEpochSecond}.txt.gz"
-      case None    =>
-        logger.warn("TaskIdentifier not found so omitting in SDES filename")
-        s"referencedata__${clock.instant.getEpochSecond}.txt.gz"
+    def uuidFromMessageId(messageId: String): String = {
+      val uuidMatch: Regex = "CDCM\\|CTX\\|(.*)".r
+      uuidMatch.findFirstMatchIn(messageId) match {
+        case Some(m) if uuidHelper.isValidUuid(m.group(1)) => m.group(1)
+        case Some(_)                                       =>
+          logger.warn(s"UUID in messageId `$messageId` is not valid so generating random one to include in `filename` metadata property. Metadata property `messageId` will be included in SDES request")
+          uuidHelper.randomUuid()
+        case None                                          =>
+          logger.warn(s"UUID not found in messageId `$messageId` so generating random one to include in `filename` metadata property. Metadata property `messageId` will be included in SDES request")
+          uuidHelper.randomUuid()
+      }
+    }
+    def fileName(): String                           = {
+      getMessageId(attachmentElement) match {
+        case Some(m) => s"certex_${uuidFromMessageId(m)}.pdf"
+        case None    =>
+          logger.warn(s"Attribute messageId not found in message so generating random UUID for SDES filename")
+          s"certex_${uuidHelper.randomUuid()}.pdf"
+
+      }
     }
     Map(
-      "srn" -> appConfig.crdl.srn,
-      "informationType" -> appConfig.crdl.informationType,
-      "filename"        -> fileName
+      "srn" -> appConfig.certex.srn,
+      "informationType" -> appConfig.certex.informationType,
+      "filename"        -> fileName()
     )
   }
 
   override def buildMetadataProperties(wholeMessage: NodeSeq, attachmentElement: NodeSeq): Map[String, String] = {
-    Map.empty[String, String]
+    Map[String, String]("MRN" -> getMrn(wholeMessage), "documentSource" -> "certex") ++ getMessageId(wholeMessage).map(m => "messageId" -> m)
   }
 }

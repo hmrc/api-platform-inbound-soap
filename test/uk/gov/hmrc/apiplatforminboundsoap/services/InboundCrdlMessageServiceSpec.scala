@@ -40,7 +40,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.xml.{AttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlAttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
 
 class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -59,7 +59,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
   trait Setup {
     val crdlSdesServiceMock: CrdlSdesService                     = mock[CrdlSdesService]
     val crdlOrchestratorConnectorMock: CrdlOrchestratorConnector = mock[CrdlOrchestratorConnector]
-    val workingXmlTransformer: XmlTransformer                    = new AttachmentReplacingTransformer()
+    val workingXmlTransformer: XmlTransformer                    = new CrdlAttachmentReplacingTransformer()
     val failingXmlTransformer: XmlTransformer                    = new NoChangeTransformer()
     val forwardedMessageCaptor                                   = ArgCaptor[NodeSeq]
     val wholeMessageCaptor                                       = ArgCaptor[NodeSeq]

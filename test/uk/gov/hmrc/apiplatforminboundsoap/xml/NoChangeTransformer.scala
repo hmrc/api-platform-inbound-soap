@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.util
+package uk.gov.hmrc.apiplatforminboundsoap.xml
 
-import java.util.Base64
-import scala.util.matching.Regex
+import scala.xml.NodeSeq
 
-trait Base64Encoder {
-  def encode(toEncode: String): String = Base64.getEncoder.encodeToString(toEncode.getBytes)
+/** This implementation of XmlTransform is used only in tests to assert that unchanged messages are not forwarded
+  */
+class NoChangeTransformer extends XmlTransformer {
 
-  def isBase64(candidate: String): Boolean = {
-    val pattern: Regex = "^[A-Za-z0-9+/]+={0,2}$".r
-    pattern.findFirstMatchIn(candidate) match {
-      case Some(r) if r.matched.length % 4 == 0 => true
-      case _ => false
-    }
+  override def replaceAttachment: (NodeSeq, String) => NodeSeq = {
+    (n, _) => n
   }
 }
