@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
-import java.time.Clock
+import java.time.format.DateTimeFormatter
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,7 +30,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, UuidHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, UuidHelper, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexXml, XmlTransformer}
 
 @Singleton
@@ -38,7 +38,7 @@ class InboundCertexMessageService @Inject() (
     certexServiceConnector: CertexServiceConnector,
     sdesService: CertexSdesService,
     uuidHelper: UuidHelper,
-    clock: Clock,
+    dtHelper: ZonedDateTimeHelper,
     config: CertexServiceConnector.Config,
     @Named("certex") override val xmlTransformer: XmlTransformer
   )(implicit ec: ExecutionContext
@@ -70,11 +70,14 @@ class InboundCertexMessageService @Inject() (
   }
 
   private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)] = {
+    val df   = DateTimeFormatter.RFC_1123_DATE_TIME
+    val date = dtHelper.now
+    val formattedDate = date.format(df)
     List(
       "Accept"           -> MimeTypes.XML,
       "Authorization"    -> config.authToken,
       "Content-Type"     -> ContentTypes.XML,
-      "Date"             -> clock.instant().toString,
+      "date"             -> formattedDate,
       "source"           -> "MDTP",
       "x-correlation-id" -> uuidHelper.randomUuid(),
       "x-files-included" -> fileIncluded(soapRequest).toString
