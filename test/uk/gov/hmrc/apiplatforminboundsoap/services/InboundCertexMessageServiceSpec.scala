@@ -62,7 +62,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
 
     val forwardedHeaders                                   = Seq[(String, String)](
       "Accept"           -> "application/xml",
-      "Authorization"    -> authToken,
+      "Authorization"    -> s"Bearer $authToken",
       "Content-Type"     -> "application/xml; charset=utf-8",
       "Date"             -> dateHeaderTime.toString,
       "source"           -> "MDTP",
