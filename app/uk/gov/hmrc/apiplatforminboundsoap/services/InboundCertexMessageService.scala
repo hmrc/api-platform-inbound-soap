@@ -72,7 +72,7 @@ class InboundCertexMessageService @Inject() (
   private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)] = {
     List(
       "Accept"           -> MimeTypes.XML,
-      "Authorization"    -> config.authToken,
+      "Authorization"    -> s"Bearer ${config.authToken}",
       "Content-Type"     -> ContentTypes.XML,
       "Date"             -> clock.instant().toString,
       "source"           -> "MDTP",
