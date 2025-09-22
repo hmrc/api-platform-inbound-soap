@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
-import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
@@ -41,7 +40,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.StaticUuidGenerator
+import uk.gov.hmrc.apiplatforminboundsoap.util.{StaticUuidGenerator, StaticZonedDTHelper, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexAttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
 
 class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
@@ -49,7 +48,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
-  val dateHeaderTime: Instant = Instant.parse("2020-01-02T03:04:05.006Z")
+  val dateHeaderValue: String = "Thu, 2 Jan 2020 03:04:05 GMT"
 
   val httpStatus: Int = Status.OK
 
@@ -64,7 +63,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       "Accept"           -> "application/xml",
       "Authorization"    -> s"Bearer $authToken",
       "Content-Type"     -> "application/xml; charset=utf-8",
-      "Date"             -> dateHeaderTime.toString,
+      "date"             -> dateHeaderValue,
       "source"           -> "MDTP",
       "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557"
     )
@@ -77,6 +76,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     val workingXmlTransformer: XmlTransformer              = new CertexAttachmentReplacingTransformer()
     val failingXmlTransformer: XmlTransformer              = new NoChangeTransformer()
     val staticUuidGenerator: StaticUuidGenerator           = new StaticUuidGenerator()
+    val staticZonedDTHelper: ZonedDateTimeHelper           = new StaticZonedDTHelper()
     val forwardedMessageCaptor                             = ArgCaptor[NodeSeq]
     val wholeMessageCaptor                                 = ArgCaptor[NodeSeq]
     val binaryElementsCaptor                               = ArgCaptor[NodeSeq]
@@ -90,7 +90,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
         certexServiceConnectorMock,
         certexSdesServiceMock,
         staticUuidGenerator,
-        Clock.fixed(dateHeaderTime, ZoneId.of("UTC")),
+        staticZonedDTHelper,
         configMock,
         workingXmlTransformer
       )
@@ -100,7 +100,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
         certexServiceConnectorMock,
         certexSdesServiceMock,
         staticUuidGenerator,
-        Clock.fixed(dateHeaderTime, ZoneId.of("UTC")),
+        staticZonedDTHelper,
         configMock,
         failingXmlTransformer
       )
