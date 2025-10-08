@@ -24,8 +24,8 @@ import scala.xml.NodeSeq
 
 import com.google.inject.name.Named
 
+import play.api.http.MimeTypes
 import play.api.http.Status.UNPROCESSABLE_ENTITY
-import play.api.http.{ContentTypes, MimeTypes}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
@@ -70,13 +70,13 @@ class InboundCertexMessageService @Inject() (
   }
 
   private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)] = {
-    val df   = DateTimeFormatter.RFC_1123_DATE_TIME
-    val date = dtHelper.now
+    val df            = DateTimeFormatter.RFC_1123_DATE_TIME
+    val date          = dtHelper.now
     val formattedDate = date.format(df)
     List(
       "Accept"           -> MimeTypes.XML,
       "Authorization"    -> s"Bearer ${config.authToken}",
-      "Content-Type"     -> ContentTypes.XML,
+      "Content-Type"     -> "application/xml; charset=UTF-8",
       "date"             -> formattedDate,
       "source"           -> "MDTP",
       "x-correlation-id" -> uuidHelper.randomUuid(),

@@ -27,10 +27,16 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 abstract class BaseConnector(httpClientV2: HttpClientV2)(implicit ec: ExecutionContext) {
 
   def postHttpRequest(soapRequest: NodeSeq, headers: Seq[(String, String)], forwardUrl: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+    def authHeaderVal = headers.filter(h => h._1 == "Authorization") match {
+      case h: List[(String, String)] if h.nonEmpty => h.head._2
+      case _                                       => ""
+
+    }
+
     httpClientV2.post(new URI(forwardUrl).toURL)
-      .withBody(soapRequest)
+      .setHeader("Authorization" -> authHeaderVal)
       .transform(_.addHttpHeaders(headers: _*))
+      .withBody(soapRequest)
       .execute[Either[UpstreamErrorResponse, HttpResponse]]
   }
-
 }

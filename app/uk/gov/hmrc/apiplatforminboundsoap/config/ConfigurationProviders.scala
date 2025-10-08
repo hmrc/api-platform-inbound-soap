@@ -111,8 +111,8 @@ class SdesConnectorConfigProvider @Inject() (val configuration: Configuration)
       informationType = getConfString("secure-data-exchange-proxy.crdl.informationType", "CRDL-INFO-TYPE-MISSING")
     )
     val certex     = Certex(
-      srn = getConfString("secure-data-exchange-proxy.certex.srn", "CRDL-SRN-MISSING"),
-      informationType = getConfString("secure-data-exchange-proxy.certex.informationType", "CRDL-INFO-TYPE-MISSING")
+      srn = getConfString("secure-data-exchange-proxy.certex.srn", "CERTEX-SRN-MISSING"),
+      informationType = getConfString("secure-data-exchange-proxy.certex.informationType", "CERTEX-INFO-TYPE-MISSING")
     )
     SdesConnector.Config(url, uploadPath, ics2, crdl, certex)
   }
