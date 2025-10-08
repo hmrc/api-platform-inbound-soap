@@ -1,13 +1,34 @@
 
 # api-platform-inbound-soap
 
-This service receives SOAP XML requests from the EU's CCN2 system and processes them according to their content.
-Messages can be broadly split into 3 types:
- - Confirmation: these are forwarded to ```api-platform-outbound-soap```
- - With embedded file: these have the embedded file removed and sent to SDES for virus scanning before forwarding to  ```import-control-inbound-proxy```
- - Everything else: forwarded on to  ```import-control-inbound-proxy```
+This service receives SOAP XML requests from the EU's CCN2 system and processes them according to their content. It services
+three areas of import-control concern: ICS2, CRDL and CERTEX.
 
-XML request bodies received at the CCN2 controller are validated by a filter to ensure that various parts of the body are present and meet expected criteria mainly related to length. 
+ICS2 is the most complex, having messages that can be broadly split into 3 types:
+ - Confirmation: these are forwarded to ```api-platform-outbound-soap```
+ - With embedded file: these have the embedded file removed and sent to SDES for virus scanning. 
+SDES returns a UUID in response to receiving a file to scan and this replaces the embedded file in the message forwarded to  ```import-control-inbound-proxy```
+ - Everything else: forwarded unchanged to  ```import-control-inbound-proxy```
+
+ICS2 XML request bodies received at the controller are validated by a filter to ensure that various parts of the body are present and meet expected criteria mainly related to length. 
+
+CRDL has, for the purposes of this service, 2 message types:
+ - those with attachments 
+ - those without
+
+As for ICS2, those with attachments have the embedded file removed and sent to SDES. 
+Both message types are forwarded to ```central-reference-data-inbound-orchestrator```. 
+
+CERTEX also has, for the purposes of this service, 2 message types:
+- those with attachments
+- those without
+
+Again those with attachments have the embedded file removed and sent to SDES.
+
+Both message types are forwarded, via proxy, to a service outside of MDTP.
+
+
+
 ### Licence
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
