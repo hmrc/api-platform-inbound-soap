@@ -19,6 +19,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 import scala.io.Source
 import scala.xml.{Elem, XML}
 
+import com.github.tomakehurst.wiremock.client.WireMock.{havingExactly, postRequestedFor, urlPathEqualTo, verify}
 import com.github.tomakehurst.wiremock.http.Fault
 import org.apache.pekko.stream.Materializer
 import org.scalatest.matchers.should.Matchers
@@ -78,6 +79,7 @@ class CertexControllerISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedRequestStatus
 
       verifyRequestBody(certexRequestBody.toString, forwardRequestPath)
+      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("Authorization", havingExactly("Bearer provided")))
       expectedForwardedHeaders.foreach(h => verifyHeader(h._1, h._2, path = forwardRequestPath))
     }
 

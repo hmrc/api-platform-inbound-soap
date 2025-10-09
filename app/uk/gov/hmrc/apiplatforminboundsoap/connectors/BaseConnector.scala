@@ -30,12 +30,11 @@ abstract class BaseConnector(httpClientV2: HttpClientV2)(implicit ec: ExecutionC
     def authHeaderVal = headers.filter(h => h._1 == "Authorization") match {
       case h: List[(String, String)] if h.nonEmpty => h.head._2
       case _                                       => ""
-
     }
 
     httpClientV2.post(new URI(forwardUrl).toURL)
       .setHeader("Authorization" -> authHeaderVal)
-      .transform(_.addHttpHeaders(headers: _*))
+      .transform(_.addHttpHeaders(headers.filterNot(h => h._1 == "Authorization"): _*))
       .withBody(soapRequest)
       .execute[Either[UpstreamErrorResponse, HttpResponse]]
   }
