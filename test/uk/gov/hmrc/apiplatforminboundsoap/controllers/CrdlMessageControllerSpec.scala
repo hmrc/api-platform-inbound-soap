@@ -45,7 +45,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
   trait Setup {
 
     val app: Application      = new GuiceApplicationBuilder()
-      .configure("passThroughEnabled" -> "false")
+      .configure("passThroughEnabled.CRDL" -> "false")
       .build()
     val xRequestIdHeaderValue = randomUUID.toString()
 

@@ -23,13 +23,16 @@ import play.api.Configuration
 @Singleton
 class AppConfig @Inject() (config: Configuration) {
 
-  val appName: String               = config.get[String]("appName")
-  val hmacSecret: String            = config.get[String]("hmacSecret")
-  val passThroughEnabled: Boolean   = config.get[Boolean]("passThroughEnabled")
-  val passThroughProtocol: String   = config.get[String]("passThroughProtocol")
-  val passThroughHost: String       = config.get[String]("passThroughHost")
-  val passThroughPort: Int          = config.get[Int]("passThroughPort")
-  val jwtIssuer: String             = config.get[String]("jwtIssuer")
-  val testForwardMessageUrl: String = config.get[String]("testForwardMessageUrl")
-  val proxyRequired: Boolean        = config.get[Boolean]("http-verbs.proxy.enabled")
+  val appName: String                   = config.get[String]("appName")
+  val hmacSecret: String                = config.get[String]("hmacSecret")
+  val passThroughEnabledIcs2: Boolean   = config.get[Boolean]("passThroughEnabled.ICS2")
+  val passThroughEnabledAck: Boolean    = config.get[Boolean]("passThroughEnabled.ACK")
+  val passThroughEnabledCrdl: Boolean   = config.get[Boolean]("passThroughEnabled.CRDL")
+  val passThroughEnabledCertex: Boolean = config.get[Boolean]("passThroughEnabled.CERTEX")
+  val passThroughProtocol: String       = config.get[String]("passThroughProtocol")
+  val passThroughHost: String           = config.get[String]("passThroughHost")
+  val passThroughPort: Int              = config.get[Int]("passThroughPort")
+  val jwtIssuer: String                 = config.get[String]("jwtIssuer")
+  val testForwardMessageUrl: String     = config.get[String]("testForwardMessageUrl")
+  val proxyRequired: Boolean            = config.get[Boolean]("http-verbs.proxy.enabled")
 }

@@ -27,7 +27,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
-import play.api.http.{MimeTypes, Status}
+import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
 import play.api.test.FakeRequest
@@ -37,7 +37,7 @@ import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
-class CertexControllerISpec extends AnyWordSpecLike with Matchers
+class CertexControllerPassThroughISpec extends AnyWordSpecLike with Matchers
     with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
 
   def readFromFile(fileName: String) = {
@@ -48,28 +48,29 @@ class CertexControllerISpec extends AnyWordSpecLike with Matchers
 
   override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
-      "metrics.enabled"                           -> false,
-      "auditing.enabled"                          -> false,
-      "passThroughEnabled.CERTEX"                 -> false,
-      "microservice.services.certex-service.host" -> externalWireMockHost,
-      "microservice.services.certex-service.port" -> externalWireMockPort
-//      "microservice.services.secure-data-exchange-proxy.host" -> externalWireMockHost,
-//      "microservice.services.secure-data-exchange-proxy.port" -> externalWireMockPort
+      "metrics.enabled"           -> false,
+      "auditing.enabled"          -> false,
+      "passThroughEnabled.CERTEX" -> true,
+      "passThroughProtocol"       -> "http",
+      "passThroughHost"           -> externalWireMockHost,
+      "passThroughPort"           -> externalWireMockPort
     ).build()
-  implicit val mat: Materializer            = fakeApplication().injector.instanceOf[Materializer]
 
-  val forwardRequestPath = "/cls/receive-ies-messages-from-eu/v1"
+  implicit val mat: Materializer = fakeApplication().injector.instanceOf[Materializer]
+
+  val forwardRequestPath = "/CERTEX/inbound"
   val receiveRequestPath = "/CERTEX/inbound"
   val fakeRequest        = FakeRequest("POST", receiveRequestPath)
 
+  private val authBearerJwt =
+    "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU"
+
   val expectedRequestHeaders = Headers(
-    "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU",
-    "Content-Type"  -> "application/xml"
+    "Authorization"    -> authBearerJwt,
+    "Content-Type"     -> "application/xml",
+    "Arbitrary-Header" -> "foobar"
   )
   val expectedSdesStatus     = Status.ACCEPTED
-
-  val expectedForwardedHeaders =
-    Seq[(String, String)]("Authorization" -> "Bearer provided", "Content-Type" -> "application/xml; charset=UTF-8", "Source" -> "MDTP", "Accept" -> MimeTypes.XML)
 
   val underTest: CertexMessageController = fakeApplication().injector.instanceOf[CertexMessageController]
   "message" should {
@@ -80,8 +81,12 @@ class CertexControllerISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedRequestStatus
 
       verifyRequestBody(certexRequestBody.toString, forwardRequestPath)
-      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("Authorization", havingExactly("Bearer provided")))
-      expectedForwardedHeaders.foreach(h => verifyHeader(h._1, h._2, path = forwardRequestPath))
+      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader(
+        "Authorization",
+        havingExactly(authBearerJwt)
+      ))
+      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader("Content-Type", havingExactly("application/xml")))
+      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader("Arbitrary-Header", havingExactly("foobar")))
     }
 
     "return downstream error responses to caller" in {
@@ -92,7 +97,7 @@ class CertexControllerISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedStatus
 
       verifyRequestBody(certexRequestBody.toString, forwardRequestPath)
-      expectedForwardedHeaders.foreach(h => verifyHeader(h._1, h._2, path = forwardRequestPath))
+      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("Content-Type", havingExactly("application/xml")))
     }
 
     "reject an non-XML message" in {

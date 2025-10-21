@@ -22,6 +22,7 @@ import scala.xml.{Elem, XML}
 import com.github.tomakehurst.wiremock.http.Fault
 import org.apache.pekko.stream.Materializer
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
@@ -37,7 +38,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
 class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
-    with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
+    with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub with TableDrivenPropertyChecks {
 
   def readFromFile(fileName: String) = {
     XML.load(Source.fromResource(fileName).bufferedReader())
@@ -66,12 +67,12 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
 
   override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
-      "metrics.enabled"     -> false,
-      "auditing.enabled"    -> false,
-      "passThroughEnabled"  -> true,
-      "passThroughProtocol" -> "http",
-      "passThroughHost"     -> externalWireMockHost,
-      "passThroughPort"     -> externalWireMockPort
+      "metrics.enabled"         -> false,
+      "auditing.enabled"        -> false,
+      "passThroughEnabled.ICS2" -> true,
+      "passThroughProtocol"     -> "http",
+      "passThroughHost"         -> externalWireMockHost,
+      "passThroughPort"         -> externalWireMockPort
     ).build()
 
   implicit val mat: Materializer = fakeApplication().injector.instanceOf[Materializer]
@@ -93,11 +94,24 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
       expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
     }
 
+    "handle an unknown path while in pass-through mode" in {
+      val expectedStatus         = Status.NOT_FOUND
+      val fakeRequestUnknownPath = FakeRequest("POST", "/foo/bar")
+
+      val expectedHeaders = Headers(
+        "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU",
+        "Content-Type"  -> "text/xml; charset=UTF-8"
+      )
+      primeStubForSuccess("OK", expectedStatus, path)
+      val result          = underTest.message()(fakeRequestUnknownPath.withBody(codRequestBody).withHeaders(expectedHeaders))
+      status(result) shouldBe expectedStatus
+    }
+
     "forward an XML message when Authorization header missing from request" in {
       val expectedStatus = Status.UNAUTHORIZED
 
       val receivedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
-      val expectedHeaders = Headers("Authorization" -> "", "Content-Type" -> "text/xml; charset=UTF-8")
+      val expectedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
       primeStubForSuccess(soapFaultResponse, expectedStatus, path)
       val result          = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(receivedHeaders))
 
@@ -107,11 +121,34 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
       expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
     }
 
+    "maintain the request Content-Type on forwarded message" in {
+      // note that text/plain and text/xml, after passing through http-verbs, have a charset added
+      val contentTypes = Table(
+        ("input", "output"),
+        ("application/xml", "application/xml"),
+        ("text/plain", "text/plain; charset=UTF-8"),
+        ("text/xml", "text/xml; charset=UTF-8")
+      )
+      forAll(contentTypes) { (c: String, o: String) =>
+        val expectedStatus = Status.OK
+
+        val receivedHeaders = Headers("Content-Type" -> c)
+        val expectedHeaders = Headers("Content-Type" -> o)
+        primeStubForSuccess(soapFaultResponse, expectedStatus, path)
+        val result          = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(receivedHeaders))
+
+        status(result) shouldBe expectedStatus
+        contentAsString(result) shouldEqual soapFaultResponse
+        verifyRequestBody(codRequestBody.toString(), path)
+        expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
+      }
+    }
+
     "return error responses to caller" in {
       val expectedStatus = Status.INTERNAL_SERVER_ERROR
 
-      val receivedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
-      val expectedHeaders = Headers("Authorization" -> "", "Content-Type" -> "text/xml; charset=UTF-8")
+      val receivedHeaders = Headers("Content-Type" -> "application/xml")
+      val expectedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
       primeStubForFault("Error", Fault.CONNECTION_RESET_BY_PEER, path)
       val result          = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(receivedHeaders))
       status(result) shouldBe expectedStatus

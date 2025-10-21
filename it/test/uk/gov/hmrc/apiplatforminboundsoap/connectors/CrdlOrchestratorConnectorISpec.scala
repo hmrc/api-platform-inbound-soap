@@ -52,7 +52,7 @@ class CrdlOrchestratorConnectorISpec extends AnyWordSpec with Matchers with Guic
 
   trait Setup {
     val underTest: CrdlOrchestratorConnector = app.injector.instanceOf[CrdlOrchestratorConnector]
-    val crdlRequestBody: Elem                = readFromFile("requests/crdl/crdl-request.xml")
+    val crdlRequestBody: Elem                = readFromFile("requests/crdl/crdl-request-with-attachment.xml")
     val addedHeaders                         = Seq.empty
     val wireMockTargetPath                   = s"/$configTargetPath"
 

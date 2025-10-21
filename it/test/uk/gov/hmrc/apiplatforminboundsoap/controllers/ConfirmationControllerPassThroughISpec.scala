@@ -46,12 +46,12 @@ class ConfirmationControllerPassThroughISpec extends AnyWordSpecLike with Matche
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
-      "metrics.enabled"     -> false,
-      "auditing.enabled"    -> false,
-      "passThroughProtocol" -> "http",
-      "passThroughEnabled"  -> true,
-      "passThroughHost"     -> externalWireMockHost,
-      "passThroughPort"     -> externalWireMockPort
+      "metrics.enabled"        -> false,
+      "auditing.enabled"       -> false,
+      "passThroughProtocol"    -> "http",
+      "passThroughEnabled.ACK" -> true,
+      "passThroughHost"        -> externalWireMockHost,
+      "passThroughPort"        -> externalWireMockPort
     ).build()
   implicit val mat: Materializer              = app.injector.instanceOf[Materializer]
 

@@ -48,14 +48,15 @@ class ConfirmationControllerISpec extends AnyWordSpecLike with Matchers
     .configure(
       "metrics.enabled"                                       -> false,
       "auditing.enabled"                                      -> false,
-      "passThroughEnabled"                                    -> false,
+      "passThroughEnabled.ACK"                                -> false,
       "microservice.services.api-platform-outbound-soap.host" -> externalWireMockHost,
       "microservice.services.api-platform-outbound-soap.port" -> externalWireMockPort
     ).build()
   implicit val mat: Materializer              = app.injector.instanceOf[Materializer]
 
-  val path        = "/acknowledgement"
-  val fakeRequest = FakeRequest("POST", path)
+  val receiveRequestPath = "/ccn2/acknowledgementV2"
+  val forwardPath        = "/acknowledgement"
+  val fakeRequest        = FakeRequest("POST", receiveRequestPath)
 
   val underTest: ConfirmationController = app.injector.instanceOf[ConfirmationController]
   "message" should {
@@ -67,12 +68,12 @@ class ConfirmationControllerISpec extends AnyWordSpecLike with Matchers
         "Content-Type"  -> "text/xml; charset=UTF-8"
       )
       val forwardedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
-      primeStubForSuccess("OK", expectedStatus, path)
+      primeStubForSuccess("OK", expectedStatus, forwardPath)
       val result           = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(requestHeaders))
       status(result) shouldBe expectedStatus
 
-      verifyRequestBody(codRequestBody.toString, path)
-      forwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
+      verifyRequestBody(codRequestBody.toString, forwardPath)
+      forwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = forwardPath))
     }
 
     "reject an non-XML message" in {

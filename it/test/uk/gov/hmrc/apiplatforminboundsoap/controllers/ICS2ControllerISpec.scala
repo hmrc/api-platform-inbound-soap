@@ -50,7 +50,7 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
     .configure(
       "metrics.enabled"                                                           -> false,
       "auditing.enabled"                                                          -> false,
-      "passThroughEnabled"                                                        -> false,
+      "passThroughEnabled.ICS2"                                                   -> false,
       "microservice.services.secure-data-exchange-proxy.ics2.encodeSdesReference" -> false,
       "microservice.services.import-control-inbound-soap.host"                    -> externalWireMockHost,
       "microservice.services.import-control-inbound-soap.port"                    -> externalWireMockPort,
@@ -60,8 +60,9 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
   implicit val mat: Materializer            = fakeApplication().injector.instanceOf[Materializer]
 
   val forwardRequestPath = "/import-control-inbound-soap"
+  val receiveRequestPath = "/ics2/NESRiskAnalysisBAS"
   val sdesPath           = "/upload-attachment"
-  val fakeRequest        = FakeRequest("POST", forwardRequestPath)
+  val fakeRequest        = FakeRequest("POST", receiveRequestPath)
 
   val expectedRequestHeaders   = Headers(
     "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU",
