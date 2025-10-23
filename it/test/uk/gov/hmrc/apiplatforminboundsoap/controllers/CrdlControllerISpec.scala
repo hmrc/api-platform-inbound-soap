@@ -52,7 +52,8 @@ class CrdlControllerISpec extends AnyWordSpecLike with Matchers
       "auditing.enabled"                             -> false,
       "passThroughEnabled.CRDL"                      -> false,
       "microservice.services.crdl-orchestrator.host" -> externalWireMockHost,
-      "microservice.services.crdl-orchestrator.port" -> externalWireMockPort
+      "microservice.services.crdl-orchestrator.port" -> externalWireMockPort,
+      "microservice.services.crdl-orchestrator.path" -> "central-reference-data-inbound-orchestrator"
     ).build()
 
   implicit val mat: Materializer = fakeApplication().injector.instanceOf[Materializer]
