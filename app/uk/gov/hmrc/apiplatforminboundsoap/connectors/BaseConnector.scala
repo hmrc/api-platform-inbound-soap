@@ -27,15 +27,17 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 abstract class BaseConnector(httpClientV2: HttpClientV2)(implicit ec: ExecutionContext) {
 
   def postHttpRequest(soapRequest: NodeSeq, headers: Seq[(String, String)], forwardUrl: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
-    def authHeaderVal = headers.filter(h => h._1 == "Authorization") match {
-      case h: List[(String, String)] if h.nonEmpty => h.head._2
-      case _                                       => ""
+    val httpClient = headers.filter(h => h._1 == "Authorization") match {
+      // if we have to add an Authorization header before forwarding we replace the one on the request here
+      case h: List[(String, String)] if h.nonEmpty =>
+        httpClientV2.post(new URI(forwardUrl).toURL)(hc)
+          .setHeader("Authorization" -> h.head._2)
+          .transform(_.addHttpHeaders(headers.filterNot(h => h._1 == "Authorization"): _*))
+// forward the request without the received Authorization header
+      case _                                       => httpClientV2.post(new URI(forwardUrl).toURL)(hc.copy(authorization = None))
+          .transform(_.addHttpHeaders(headers: _*))
     }
-
-    httpClientV2.post(new URI(forwardUrl).toURL)
-      .setHeader("Authorization" -> authHeaderVal)
-      .transform(_.addHttpHeaders(headers.filterNot(h => h._1 == "Authorization"): _*))
-      .withBody(soapRequest)
+    httpClient.withBody(soapRequest)
       .execute[Either[UpstreamErrorResponse, HttpResponse]]
   }
 }

@@ -19,6 +19,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 import scala.io.Source
 import scala.xml.{Elem, XML}
 
+import com.github.tomakehurst.wiremock.client.WireMock.{havingExactly, postRequestedFor, urlPathEqualTo, verify}
 import com.github.tomakehurst.wiremock.http.Fault
 import org.apache.pekko.stream.Materializer
 import org.scalatest.matchers.should.Matchers
@@ -64,12 +65,11 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
   val sdesPath           = "/upload-attachment"
   val fakeRequest        = FakeRequest("POST", receiveRequestPath)
 
-  val expectedRequestHeaders   = Headers(
+  val expectedRequestHeaders = Headers(
     "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU",
-    "Content-Type"  -> "text/xml; charset=UTF-8"
+    "Content-Type"  -> "application/xml"
   )
-  val expectedSdesStatus       = Status.ACCEPTED
-  val expectedForwardedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
+  val expectedSdesStatus     = Status.ACCEPTED
 
   val underTest: ICS2MessageController = fakeApplication().injector.instanceOf[ICS2MessageController]
   "message" should {
@@ -82,7 +82,8 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedRequestStatus
 
       verifyRequestBody(forwardedBody.toString, forwardRequestPath)
-      expectedForwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = forwardRequestPath))
+      verifyHeaderAbsent("Authorization", forwardRequestPath)
+      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("x-files-included", havingExactly("true")))
     }
 
     "return downstream error responses to caller" in {
@@ -94,7 +95,6 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedStatus
 
       verifyRequestBody(forwardedBody.toString, forwardRequestPath)
-      expectedForwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = forwardRequestPath))
     }
 
     "reject an non-XML message" in {

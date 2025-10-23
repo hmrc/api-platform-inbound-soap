@@ -81,12 +81,12 @@ class CertexControllerPassThroughISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedRequestStatus
 
       verifyRequestBody(certexRequestBody.toString, forwardRequestPath)
-      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader(
+      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader(
         "Authorization",
         havingExactly(authBearerJwt)
       ))
-      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader("Content-Type", havingExactly("application/xml")))
-      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader("Arbitrary-Header", havingExactly("foobar")))
+      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("Content-Type", havingExactly("application/xml")))
+      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("Arbitrary-Header", havingExactly("foobar")))
     }
 
     "return downstream error responses to caller" in {

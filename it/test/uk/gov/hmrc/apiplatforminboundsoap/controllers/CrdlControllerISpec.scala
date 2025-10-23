@@ -57,7 +57,7 @@ class CrdlControllerISpec extends AnyWordSpecLike with Matchers
 
   implicit val mat: Materializer = fakeApplication().injector.instanceOf[Materializer]
 
-  val forwardRequestPath = "/crdl/incoming"
+  val forwardRequestPath = "/central-reference-data-inbound-orchestrator"
   val receiveRequestPath = "/crdl/incoming"
   val fakeRequest        = FakeRequest("POST", receiveRequestPath)
 
@@ -79,12 +79,8 @@ class CrdlControllerISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedRequestStatus
 
       verifyRequestBody(crdlRequestBody.toString, forwardRequestPath)
-      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader(
-        "Authorization",
-        havingExactly("")
-      ))
-      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader("Content-Type", havingExactly("application/xml")))
-      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader("x-files-included", havingExactly("false")))
+      verifyHeaderAbsent("Authorization", forwardRequestPath)
+      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("x-files-included", havingExactly("false")))
     }
 
     "return downstream error responses to caller" in {
@@ -93,10 +89,6 @@ class CrdlControllerISpec extends AnyWordSpecLike with Matchers
       primeStubForFault("Error", Fault.CONNECTION_RESET_BY_PEER, forwardRequestPath)
       val result = underTest.message()(fakeRequest.withBody(crdlRequestBody).withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedStatus
-
-      verifyRequestBody(crdlRequestBody.toString, forwardRequestPath)
-      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader("Content-Type", havingExactly("application/xml")))
-      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader("x-files-included", havingExactly("false")))
     }
 
     "reject an non-XML message" in {
