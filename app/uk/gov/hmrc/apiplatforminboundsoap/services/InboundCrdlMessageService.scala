@@ -76,6 +76,6 @@ class InboundCrdlMessageService @Inject() (
   }
 
   private def forwardMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
-    crdlOrchestratorConnector.postMessage(soapRequest, headers)(hc)
+    crdlOrchestratorConnector.postMessage(soapRequest, headers)
   }
 }

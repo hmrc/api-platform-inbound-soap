@@ -37,7 +37,7 @@ import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
-class CertexControllerISpec extends AnyWordSpecLike with Matchers
+class CertexMessageControllerISpec extends AnyWordSpecLike with Matchers
     with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
 
   def readFromFile(fileName: String) = {
@@ -53,8 +53,6 @@ class CertexControllerISpec extends AnyWordSpecLike with Matchers
       "passThroughEnabled.CERTEX"                 -> false,
       "microservice.services.certex-service.host" -> externalWireMockHost,
       "microservice.services.certex-service.port" -> externalWireMockPort
-//      "microservice.services.secure-data-exchange-proxy.host" -> externalWireMockHost,
-//      "microservice.services.secure-data-exchange-proxy.port" -> externalWireMockPort
     ).build()
   implicit val mat: Materializer            = fakeApplication().injector.instanceOf[Materializer]
 
