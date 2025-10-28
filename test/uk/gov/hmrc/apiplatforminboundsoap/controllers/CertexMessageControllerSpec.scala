@@ -44,7 +44,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOn
   trait Setup {
 
     val app: Application      = new GuiceApplicationBuilder()
-      .configure("passThroughEnabled" -> "false", "microservice.services.certex-service.authToken" -> "auth")
+      .configure("passThroughEnabled.CERTEX" -> "false", "microservice.services.certex-service.authToken" -> "auth")
       .build()
     val xRequestIdHeaderValue = randomUUID.toString()
 

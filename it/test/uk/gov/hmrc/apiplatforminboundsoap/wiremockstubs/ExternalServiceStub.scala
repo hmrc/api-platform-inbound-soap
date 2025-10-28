@@ -48,4 +48,8 @@ trait ExternalServiceStub {
   def verifyHeader(headerName: String, headerValue: String, path: String = "/"): Unit = {
     verify(postRequestedFor(urlPathEqualTo(path)).withHeader(headerName, equalTo(headerValue)))
   }
+
+  def verifyHeaderAbsent(headerName: String, path: String = "/"): Unit = {
+    verify(postRequestedFor(urlPathEqualTo(path)).withoutHeader(headerName))
+  }
 }

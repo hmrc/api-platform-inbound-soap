@@ -48,14 +48,18 @@ class ConfirmationControllerISpec extends AnyWordSpecLike with Matchers
     .configure(
       "metrics.enabled"                                       -> false,
       "auditing.enabled"                                      -> false,
-      "passThroughEnabled"                                    -> false,
+      "passThroughEnabled.ACK"                                -> false,
       "microservice.services.api-platform-outbound-soap.host" -> externalWireMockHost,
       "microservice.services.api-platform-outbound-soap.port" -> externalWireMockPort
     ).build()
   implicit val mat: Materializer              = app.injector.instanceOf[Materializer]
 
-  val path        = "/acknowledgement"
-  val fakeRequest = FakeRequest("POST", path)
+  val receiveRequestPath = "/ccn2/acknowledgementV2"
+  val forwardPath        = "/acknowledgement"
+  val fakeRequest        = FakeRequest("POST", receiveRequestPath)
+
+  val authBearerJwt =
+    "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU"
 
   val underTest: ConfirmationController = app.injector.instanceOf[ConfirmationController]
   "message" should {
@@ -63,16 +67,17 @@ class ConfirmationControllerISpec extends AnyWordSpecLike with Matchers
       val expectedStatus = Status.OK
 
       val requestHeaders   = Headers(
-        "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU",
-        "Content-Type"  -> "text/xml; charset=UTF-8"
+        "Authorization" -> authBearerJwt,
+        "Content-Type"  -> "text/xml"
       )
       val forwardedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
-      primeStubForSuccess("OK", expectedStatus, path)
+      primeStubForSuccess("OK", expectedStatus, forwardPath)
       val result           = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(requestHeaders))
       status(result) shouldBe expectedStatus
 
-      verifyRequestBody(codRequestBody.toString, path)
-      forwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
+      verifyRequestBody(codRequestBody.toString, forwardPath)
+      verifyHeaderAbsent("Authorization", forwardPath)
+      forwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = forwardPath))
     }
 
     "reject an non-XML message" in {

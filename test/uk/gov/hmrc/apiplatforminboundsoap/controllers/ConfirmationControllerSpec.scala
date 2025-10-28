@@ -51,7 +51,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
   override def fakeApplication: Application = new GuiceApplicationBuilder()
-    .configure("passThroughEnabled" -> "false")
+    .configure("passThroughEnabled.ACK" -> "false")
     .build()
 
   trait Setup {

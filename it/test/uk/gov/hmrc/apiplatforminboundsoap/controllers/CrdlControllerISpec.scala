@@ -34,67 +34,62 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.crdl.CrdlMessageController
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
-class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
+class CrdlControllerISpec extends AnyWordSpecLike with Matchers
     with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
 
   def readFromFile(fileName: String) = {
     XML.load(Source.fromResource(fileName).bufferedReader())
   }
 
-  val ics2RequestBody: Elem = readFromFile("requests/ie4r02-v2.xml")
-  val forwardedBody: Elem   = readFromFile("requests/post-sdes-processing/ie4r02-v2-one-binary-attachment.xml")
+  val crdlRequestBody: Elem = readFromFile("requests/crdl/crdl-request-no-attachment.xml")
 
   override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
-      "metrics.enabled"                                                           -> false,
-      "auditing.enabled"                                                          -> false,
-      "passThroughEnabled.ICS2"                                                   -> false,
-      "microservice.services.secure-data-exchange-proxy.ics2.encodeSdesReference" -> false,
-      "microservice.services.import-control-inbound-soap.host"                    -> externalWireMockHost,
-      "microservice.services.import-control-inbound-soap.port"                    -> externalWireMockPort,
-      "microservice.services.secure-data-exchange-proxy.host"                     -> externalWireMockHost,
-      "microservice.services.secure-data-exchange-proxy.port"                     -> externalWireMockPort
+      "metrics.enabled"                              -> false,
+      "auditing.enabled"                             -> false,
+      "passThroughEnabled.CRDL"                      -> false,
+      "microservice.services.crdl-orchestrator.host" -> externalWireMockHost,
+      "microservice.services.crdl-orchestrator.port" -> externalWireMockPort,
+      "microservice.services.crdl-orchestrator.path" -> "central-reference-data-inbound-orchestrator"
     ).build()
-  implicit val mat: Materializer            = fakeApplication().injector.instanceOf[Materializer]
 
-  val forwardRequestPath = "/import-control-inbound-soap"
-  val receiveRequestPath = "/ics2/NESRiskAnalysisBAS"
-  val sdesPath           = "/upload-attachment"
+  implicit val mat: Materializer = fakeApplication().injector.instanceOf[Materializer]
+
+  val forwardRequestPath = "/central-reference-data-inbound-orchestrator"
+  val receiveRequestPath = "/crdl/incoming"
   val fakeRequest        = FakeRequest("POST", receiveRequestPath)
 
+  private val authBearerJwt =
+    "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU"
+
   val expectedRequestHeaders = Headers(
-    "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU",
+    "Authorization" -> authBearerJwt,
     "Content-Type"  -> "application/xml"
   )
   val expectedSdesStatus     = Status.ACCEPTED
 
-  val underTest: ICS2MessageController = fakeApplication().injector.instanceOf[ICS2MessageController]
+  val underTest: CrdlMessageController = fakeApplication().injector.instanceOf[CrdlMessageController]
   "message" should {
     "forward an XML message" in {
       val expectedRequestStatus = Status.OK
-
       primeStubForSuccess("OK", expectedRequestStatus, forwardRequestPath)
-      primeStubForSuccess("some-uuid-like-string", expectedSdesStatus, sdesPath)
-      val result = underTest.message()(fakeRequest.withBody(ics2RequestBody).withHeaders(expectedRequestHeaders))
+      val result                = underTest.message()(fakeRequest.withBody(crdlRequestBody).withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedRequestStatus
 
-      verifyRequestBody(forwardedBody.toString, forwardRequestPath)
+      verifyRequestBody(crdlRequestBody.toString, forwardRequestPath)
       verifyHeaderAbsent("Authorization", forwardRequestPath)
-      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("x-files-included", havingExactly("true")))
+      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("x-files-included", havingExactly("false")))
     }
 
     "return downstream error responses to caller" in {
       val expectedStatus = Status.INTERNAL_SERVER_ERROR
 
       primeStubForFault("Error", Fault.CONNECTION_RESET_BY_PEER, forwardRequestPath)
-      primeStubForSuccess("some-uuid-like-string", expectedSdesStatus, sdesPath)
-      val result = underTest.message()(fakeRequest.withBody(ics2RequestBody).withHeaders(expectedRequestHeaders))
+      val result = underTest.message()(fakeRequest.withBody(crdlRequestBody).withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedStatus
-
-      verifyRequestBody(forwardedBody.toString, forwardRequestPath)
     }
 
     "reject an non-XML message" in {

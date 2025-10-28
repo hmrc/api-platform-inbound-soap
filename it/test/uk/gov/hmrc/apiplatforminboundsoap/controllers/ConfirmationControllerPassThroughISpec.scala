@@ -19,6 +19,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 import scala.io.Source
 import scala.xml.{Elem, XML}
 
+import com.github.tomakehurst.wiremock.client.WireMock.{havingExactly, postRequestedFor, urlPathEqualTo, verify}
 import org.apache.pekko.stream.Materializer
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -46,17 +47,21 @@ class ConfirmationControllerPassThroughISpec extends AnyWordSpecLike with Matche
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
-      "metrics.enabled"     -> false,
-      "auditing.enabled"    -> false,
-      "passThroughProtocol" -> "http",
-      "passThroughEnabled"  -> true,
-      "passThroughHost"     -> externalWireMockHost,
-      "passThroughPort"     -> externalWireMockPort
+      "metrics.enabled"        -> false,
+      "auditing.enabled"       -> false,
+      "passThroughProtocol"    -> "http",
+      "passThroughEnabled.ACK" -> true,
+      "passThroughHost"        -> externalWireMockHost,
+      "passThroughPort"        -> externalWireMockPort
     ).build()
   implicit val mat: Materializer              = app.injector.instanceOf[Materializer]
 
-  val path        = "/ccn2/acknowledgementV2"
-  val fakeRequest = FakeRequest("POST", path)
+  val receiveRequestPath = "/ccn2/acknowledgementV2"
+  val forwardRequestPath = "/ccn2/acknowledgementV2"
+  val fakeRequest        = FakeRequest("POST", receiveRequestPath)
+
+  val authBearerJwt =
+    "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU"
 
   val underTest: ConfirmationController = app.injector.instanceOf[ConfirmationController]
   "message" should {
@@ -64,16 +69,20 @@ class ConfirmationControllerPassThroughISpec extends AnyWordSpecLike with Matche
       val expectedStatus = Status.OK
 
       val requestHeaders   = Headers(
-        "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU",
-        "Content-Type"  -> "text/xml; charset=UTF-8"
+        "Authorization" -> authBearerJwt,
+        "Content-Type"  -> "text/xml"
       )
       val forwardedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
-      primeStubForSuccess("OK", expectedStatus, path)
+      primeStubForSuccess("OK", expectedStatus, forwardRequestPath)
       val result           = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(requestHeaders))
       status(result) shouldBe expectedStatus
 
-      verifyRequestBody(codRequestBody.toString, path)
-      forwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
+      verifyRequestBody(codRequestBody.toString, forwardRequestPath)
+      verify(postRequestedFor(urlPathEqualTo(receiveRequestPath)).withHeader(
+        "Authorization",
+        havingExactly(authBearerJwt)
+      ))
+      forwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = forwardRequestPath))
     }
 
     "reject an non-XML message" in {
