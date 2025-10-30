@@ -67,7 +67,7 @@ class CertexMessageControllerISpec extends AnyWordSpecLike with Matchers
   val expectedSdesStatus     = Status.ACCEPTED
 
   val expectedForwardedHeaders =
-    Seq[(String, String)]("Authorization" -> "Bearer provided", "Content-Type" -> "application/xml; charset=UTF-8", "Source" -> "MDTP", "Accept" -> MimeTypes.XML)
+    Seq[(String, String)]("Authorization" -> "Bearer provided", "Content-Type" -> "application/xml;charset=utf-8", "Source" -> "MDTP", "Accept" -> MimeTypes.XML)
 
   val underTest: CertexMessageController = fakeApplication().injector.instanceOf[CertexMessageController]
   "message" should {
