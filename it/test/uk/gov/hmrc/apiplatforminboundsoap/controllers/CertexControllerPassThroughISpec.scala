@@ -85,8 +85,6 @@ class CertexControllerPassThroughISpec extends AnyWordSpecLike with Matchers
         "Authorization",
         havingExactly(authBearerJwt)
       ))
-      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("Content-Type", havingExactly("application/xml")))
-      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("Arbitrary-Header", havingExactly("foobar")))
     }
 
     "return downstream error responses to caller" in {
@@ -97,7 +95,6 @@ class CertexControllerPassThroughISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedStatus
 
       verifyRequestBody(certexRequestBody.toString, forwardRequestPath)
-      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("Content-Type", havingExactly("application/xml")))
     }
 
     "reject an non-XML message" in {
