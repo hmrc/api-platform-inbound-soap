@@ -63,7 +63,7 @@ class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: Ap
     val maybeAuthHeader                            = request.headers.headers.find(f => f._1.equalsIgnoreCase("Authorization"))
     passThroughForRoute match {
       case Right(passThrough) if passThrough =>
-        logger.info(s"In pass-through mode. Passing request on")
+        logger.info(s"In pass-through mode. Passing request on to path ${request.path}")
         val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         postAndReturn(s"$passThroughHost${request.path}", request.body.asInstanceOf[NodeSeq], maybeAuthHeader)(hc).map { httpResponse =>
           Some(Result(
@@ -88,13 +88,10 @@ class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: Ap
         case Some((h: String, v: String)) =>
           httpClientV2.post(url"$url")(hc)
             .setHeader((h, v))
-            .transform(_.addHttpHeaders(hc.otherHeaders: _*))
             .withBody(requestBody)
         case None                         =>
           httpClientV2.post(url"$url")(hc)
-            .transform(_.addHttpHeaders(hc.otherHeaders: _*))
             .withBody(requestBody)
-
       }
     }
     val httpClient                    = getHttpClient

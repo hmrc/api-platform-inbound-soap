@@ -121,29 +121,6 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
       expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
     }
 
-    "maintain the request Content-Type on forwarded message" in {
-      // note that text/plain and text/xml, after passing through http-verbs, have a charset added
-      val contentTypes = Table(
-        ("input", "output"),
-        ("application/xml", "application/xml"),
-        ("text/plain", "text/plain; charset=UTF-8"),
-        ("text/xml", "text/xml; charset=UTF-8")
-      )
-      forAll(contentTypes) { (c: String, o: String) =>
-        val expectedStatus = Status.OK
-
-        val receivedHeaders = Headers("Content-Type" -> c)
-        val expectedHeaders = Headers("Content-Type" -> o)
-        primeStubForSuccess(soapFaultResponse, expectedStatus, path)
-        val result          = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(receivedHeaders))
-
-        status(result) shouldBe expectedStatus
-        contentAsString(result) shouldEqual soapFaultResponse
-        verifyRequestBody(codRequestBody.toString(), path)
-        expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
-      }
-    }
-
     "return error responses to caller" in {
       val expectedStatus = Status.INTERNAL_SERVER_ERROR
 
