@@ -48,7 +48,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
-  val dateHeaderValue: String = "Thu, 2 Jan 2020 03:04:05 GMT"
+  val dateHeaderValue: String = "Thu, 02 Jan 2020 03:04:05 GMT"
 
   val httpStatus: Int = Status.OK
 

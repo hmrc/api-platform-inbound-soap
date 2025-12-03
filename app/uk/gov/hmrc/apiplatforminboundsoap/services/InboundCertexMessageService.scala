@@ -16,7 +16,9 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
@@ -70,7 +72,7 @@ class InboundCertexMessageService @Inject() (
   }
 
   private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)] = {
-    val df            = DateTimeFormatter.RFC_1123_DATE_TIME
+    val df            = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"))
     val date          = dtHelper.now
     val formattedDate = date.format(df)
     List(
