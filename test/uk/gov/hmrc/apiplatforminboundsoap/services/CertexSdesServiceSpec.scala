@@ -59,7 +59,6 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     val xmlHelper: Ics2XmlHelper            = mock[Ics2XmlHelper]
     val xmlTransformer: NoChangeTransformer = new NoChangeTransformer()
     val uuidGenerator: StaticUuidGenerator  = new StaticUuidGenerator()
-//    val certexUuidHelper: CertexUuidHelper  = new CertexUuidHelper()
 
     val service: CertexSdesService =
       new CertexSdesService(appConfigMock, sdesConnectorMock, uuidGenerator)
