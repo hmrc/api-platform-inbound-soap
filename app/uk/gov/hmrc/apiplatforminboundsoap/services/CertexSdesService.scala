@@ -19,23 +19,20 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.{sequence, successful}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.matching.Regex
 import scala.xml.NodeSeq
-
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.{Base64Encoder, UuidHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.util.{Base64Encoder, CertexUuidHelper, UuidGenerator}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.CertexXml
 
 @Singleton
 class CertexSdesService @Inject() (
     appConfig: SdesConnector.Config,
     sdesConnector: SdesConnector,
-    uuidHelper: UuidHelper
+    override val uuidGenerator: UuidGenerator
   )(implicit executionContext: ExecutionContext
-  ) extends MessageService with CertexXml with Base64Encoder {
+  ) extends CertexXml with CertexUuidHelper with Base64Encoder with MessageService {
 
   override def getAttachment(wholeMessage: NodeSeq): Either[InvalidFormatResult, String] = {
     getBinaryAttachment(wholeMessage) match {
@@ -80,24 +77,20 @@ class CertexSdesService @Inject() (
   }
 
   override def buildMetadata(attachmentElement: NodeSeq): Map[String, String] = {
-    def uuidFromMessageId(messageId: String): String = {
-      val uuidMatch: Regex = "CDCM\\|CTX\\|(.*)".r
-      uuidMatch.findFirstMatchIn(messageId) match {
-        case Some(m) if uuidHelper.isValidUuid(m.group(1)) => m.group(1)
-        case Some(_)                                       =>
-          logger.warn(s"UUID in messageId `$messageId` is not valid so generating random one to include in `filename` metadata property. Metadata property `messageId` will be included in SDES request")
-          uuidHelper.randomUuid()
-        case None                                          =>
-          logger.warn(s"UUID not found in messageId `$messageId` so generating random one to include in `filename` metadata property. Metadata property `messageId` will be included in SDES request")
-          uuidHelper.randomUuid()
+    def getUuidFromMessageId(messageId: String): String = {
+      uuidFromMessageId(messageId) match {
+        case Right(msgId)     => msgId
+        case Left(randomUuid) =>
+          logger.warn(s"UUID included in `filename` metadata property was randomly generated for SDES request")
+          randomUuid
       }
     }
-    def fileName(): String                           = {
+    def fileName(): String                              = {
       getMessageId(attachmentElement) match {
-        case Some(m) => s"certex_${uuidFromMessageId(m)}.pdf"
+        case Some(m) => s"certex_${getUuidFromMessageId(m)}.pdf"
         case None    =>
           logger.warn(s"Attribute messageId not found in message so generating random UUID for SDES filename")
-          s"certex_${uuidHelper.randomUuid()}.pdf"
+          s"certex_${uuidGenerator.generateRandomUuid}.pdf"
 
       }
     }

@@ -23,28 +23,25 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
-
 import com.google.inject.name.Named
-
 import play.api.http.MimeTypes
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, UuidHelper, ZonedDateTimeHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, CertexUuidHelper, UuidGenerator, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexXml, XmlTransformer}
 
 @Singleton
 class InboundCertexMessageService @Inject() (
     certexServiceConnector: CertexServiceConnector,
     sdesService: CertexSdesService,
-    uuidHelper: UuidHelper,
+    override val uuidGenerator: UuidGenerator,
     dtHelper: ZonedDateTimeHelper,
     config: CertexServiceConnector.Config,
     @Named("certex") override val xmlTransformer: XmlTransformer
   )(implicit ec: ExecutionContext
-  ) extends ApplicationLogger with CertexXml with MimeTypes {
+  ) extends ApplicationLogger with CertexXml with MimeTypes with CertexUuidHelper {
 
   def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
@@ -72,16 +69,32 @@ class InboundCertexMessageService @Inject() (
   }
 
   private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)] = {
-    val df            = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"))
-    val date          = dtHelper.now
-    val formattedDate = date.format(df)
+    val df               = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"))
+    val date             = dtHelper.now
+    val formattedDate    = date.format(df)
+    def getMessageIdUuid = {
+      def getUuidFromMessageId(messageId: String): String = {
+        uuidFromMessageId(messageId) match {
+          case Right(msgId)     => msgId
+          case Left(randomUuid) =>
+            logger.warn(s"UUID [$randomUuid] value of `x-correlation-id` header was randomly generated for forwarded request")
+            randomUuid
+        }
+      }
+      getMessageId(soapRequest) match {
+        case Some(m) => getUuidFromMessageId(m)
+        case None    =>
+          logger.warn("")
+          uuidGenerator.generateRandomUuid
+      }
+    }
     List(
-      "Accept"           -> MimeTypes.XML,
+      "Accept" -> MimeTypes.XML,
       "Authorization"    -> s"Bearer ${config.authToken}",
       "Content-Type"     -> "application/xml;charset=utf-8",
       "date"             -> formattedDate,
       "source"           -> "MDTP",
-      "x-correlation-id" -> uuidHelper.randomUuid(),
+      "x-correlation-id" -> getMessageIdUuid,
       "x-files-included" -> fileIncluded(soapRequest).toString
     )
   }

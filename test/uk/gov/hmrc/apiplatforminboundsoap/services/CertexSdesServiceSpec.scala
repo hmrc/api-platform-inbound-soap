@@ -22,19 +22,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.Elem
-
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import play.api.http.Status
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.Certex
 import uk.gov.hmrc.apiplatforminboundsoap.models._
@@ -62,6 +59,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     val xmlHelper: Ics2XmlHelper            = mock[Ics2XmlHelper]
     val xmlTransformer: NoChangeTransformer = new NoChangeTransformer()
     val uuidGenerator: StaticUuidGenerator  = new StaticUuidGenerator()
+//    val certexUuidHelper: CertexUuidHelper  = new CertexUuidHelper()
 
     val service: CertexSdesService =
       new CertexSdesService(appConfigMock, sdesConnectorMock, uuidGenerator)
@@ -195,7 +193,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     "generate random UUID for filename when messageId in message is blank" in new Setup {
       val xmlBody: Elem              = readFromFile("certex/responseIES002-empty-messageId.xml")
       val expectedSdesUuid           = UUID.randomUUID().toString
-      val expectedFilenameUuid       = uuidGenerator.randomUuid()
+      val expectedFilenameUuid       = uuidGenerator.generateRandomUuid
       val expectedMetadata           = Map(
         "srn"             -> certexConfig.srn,
         "informationType" -> certexConfig.informationType,
@@ -216,7 +214,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     "generate random UUID for filename when messageId in message can't supply one" in new Setup {
       val xmlBody: Elem              = readFromFile("certex/responseIES002-unexpected-messageid-format.xml")
       val expectedSdesUuid           = UUID.randomUUID().toString
-      val expectedFilenameUuid       = uuidGenerator.randomUuid()
+      val expectedFilenameUuid       = uuidGenerator.generateRandomUuid
       val expectedMetadata           = Map(
         "srn"             -> certexConfig.srn,
         "informationType" -> certexConfig.informationType,
@@ -238,7 +236,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     "generate random UUID for filename when UUID from messageId in message is invalid" in new Setup {
       val xmlBody: Elem              = readFromFile("certex/responseIES002-messageId-invalid-uuid.xml")
       val expectedSdesUuid           = UUID.randomUUID().toString
-      val expectedFilenameUuid       = uuidGenerator.randomUuid()
+      val expectedFilenameUuid       = uuidGenerator.generateRandomUuid
       val expectedMetadata           = Map(
         "srn"             -> certexConfig.srn,
         "informationType" -> certexConfig.informationType,
