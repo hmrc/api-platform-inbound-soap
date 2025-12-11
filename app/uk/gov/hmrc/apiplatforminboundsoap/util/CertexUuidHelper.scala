@@ -50,11 +50,13 @@ trait CertexUuidHelper extends ApplicationLogger {
     uuidMatch.findFirstMatchIn(messageId).map(m => m.group(1)) match {
       case Some(value) if uuidGenerator.isValidUuid(value) => Right(value)
       case Some(value)                                     =>
-        logger.warn(s"Supplied messageId $messageId yielded $value which is not a valid UUID so generating a random one")
-        Left(uuidGenerator.generateRandomUuid)
+        val randomUuid = uuidGenerator.generateRandomUuid
+        logger.warn(s"Supplied messageId $messageId yielded $value which is not a valid UUID so generating a random one [$randomUuid]")
+        Left(randomUuid)
       case None                                            =>
-        logger.warn(s"Supplied messageId $messageId did not yield a UUID so generating a random one")
-        Left(uuidGenerator.generateRandomUuid)
+        val randomUuid = uuidGenerator.generateRandomUuid
+        logger.warn(s"Supplied messageId $messageId did not yield a UUID so generating a random one [$randomUuid")
+        Left(randomUuid)
     }
   }
   def uuidGenerator: UuidGenerator
