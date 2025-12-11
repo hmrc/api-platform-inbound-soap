@@ -22,7 +22,7 @@ import com.auth0.jwt.interfaces.JWTVerifier
 import com.google.inject.AbstractModule
 import com.google.inject.name.Names
 
-import uk.gov.hmrc.apiplatforminboundsoap.util.{ZonedCurrentDTHelper, ZonedDateTimeHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.util.{RandomUuidGenerator, UuidGenerator, ZonedCurrentDTHelper, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexAttachmentReplacingTransformer, CrdlAttachmentReplacingTransformer, XmlTransformer}
 
 class Module extends AbstractModule {
@@ -32,6 +32,7 @@ class Module extends AbstractModule {
     bind(classOf[AppConfig]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC())
     bind(classOf[ZonedDateTimeHelper]).toInstance(new ZonedCurrentDTHelper())
+    bind(classOf[UuidGenerator]).toInstance(new RandomUuidGenerator())
     bind(classOf[XmlTransformer]).annotatedWith(Names.named("crdl")) toInstance new CrdlAttachmentReplacingTransformer()
     bind(classOf[XmlTransformer]).annotatedWith(Names.named("certex")) toInstance new CertexAttachmentReplacingTransformer()
   }

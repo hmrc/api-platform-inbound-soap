@@ -69,5 +69,4 @@ trait CertexXml extends ApplicationLogger {
   }
 
   def xmlTransformer: XmlTransformer = new CertexAttachmentReplacingTransformer()
-
 }
