@@ -23,10 +23,13 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
+
 import com.google.inject.name.Named
+
 import play.api.http.MimeTypes
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, CertexUuidHelper, UuidGenerator, ZonedDateTimeHelper}
@@ -84,7 +87,7 @@ class InboundCertexMessageService @Inject() (
       getMessageId(soapRequest) match {
         case Some(m) => getUuidFromMessageId(m)
         case None    =>
-          logger.warn("")
+          logger.warn("Unable to find messageId in provided XML")
           uuidGenerator.generateRandomUuid
       }
     }

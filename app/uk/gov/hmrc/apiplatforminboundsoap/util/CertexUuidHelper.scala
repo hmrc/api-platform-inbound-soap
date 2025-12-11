@@ -34,6 +34,7 @@ abstract class UuidGenerator {
 }
 
 class RandomUuidGenerator extends UuidGenerator {
+
   override def generateRandomUuid: String =
     UUID.randomUUID().toString
 }
@@ -43,6 +44,7 @@ class StaticUuidGenerator extends UuidGenerator {
 }
 
 trait CertexUuidHelper extends ApplicationLogger {
+
   def uuidFromMessageId(messageId: String): Either[String, String] = {
     val uuidMatch: Regex = "CDCM\\|CTX\\|(.*)".r
     uuidMatch.findFirstMatchIn(messageId).map(m => m.group(1)) match {

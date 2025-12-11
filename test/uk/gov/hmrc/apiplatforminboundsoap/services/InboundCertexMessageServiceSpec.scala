@@ -20,6 +20,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
+
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
@@ -31,10 +32,12 @@ import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.builder.{DiffBuilder, Input}
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
+
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.{StaticUuidGenerator, StaticZonedDTHelper, ZonedDateTimeHelper}
@@ -56,7 +59,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
   trait Setup {
     val authToken = "some-auth-token-value"
 
-    val forwardedHeaders                                     = Seq[(String, String)](
+    val forwardedHeaders = Seq[(String, String)](
       "Accept"        -> "application/xml",
       "Authorization" -> s"Bearer $authToken",
       "Content-Type"  -> "application/xml;charset=utf-8",
@@ -64,7 +67,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       "source"        -> "MDTP"
     )
 
-    val forwardedHeadersWithAttachment                       = forwardedHeaders ++ Map(
+    val forwardedHeadersWithAttachment = forwardedHeaders ++ Map(
       "x-correlation-id" -> "ca49dfbe-c5d6-4cb3-b424-ddead6c002ad",
       "x-files-included" -> "true"
     )
@@ -74,26 +77,26 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       "x-files-included" -> "true"
     )
 
-    val forwardedHeadersNoAttachment                         = forwardedHeaders ++ Map(
+    val forwardedHeadersNoAttachment                       = forwardedHeaders ++ Map(
       "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557",
       "x-files-included" -> "false"
     )
-    val certexSdesServiceMock: CertexSdesService             = mock[CertexSdesService]
-    val certexServiceConnectorMock: CertexServiceConnector   = mock[CertexServiceConnector]
-    val configMock: CertexServiceConnector.Config            = mock[CertexServiceConnector.Config]
+    val certexSdesServiceMock: CertexSdesService           = mock[CertexSdesService]
+    val certexServiceConnectorMock: CertexServiceConnector = mock[CertexServiceConnector]
+    val configMock: CertexServiceConnector.Config          = mock[CertexServiceConnector.Config]
     when(configMock.authToken).thenReturn(authToken)
-    val workingXmlTransformer: XmlTransformer                = new CertexAttachmentReplacingTransformer()
-    val failingXmlTransformer: XmlTransformer                = new NoChangeTransformer()
-    val staticUuidGenerator: StaticUuidGenerator             = new StaticUuidGenerator()
-    val staticZonedDTHelper: ZonedDateTimeHelper             = new StaticZonedDTHelper()
-    val forwardedMessageCaptor                               = ArgCaptor[NodeSeq]
-    val wholeMessageCaptor                                   = ArgCaptor[NodeSeq]
-    val binaryElementsCaptor                                 = ArgCaptor[NodeSeq]
-    val headerCaptor                                         = ArgCaptor[Seq[(String, String)]]
-    val sdesRequestHeaderCaptor                              = ArgCaptor[Seq[(String, String)]]
-    val xmlBodyWithAttachment                                = readFromFile("certex/responseIES002.xml")
-    val xmlBodyWithBadMsgId                                  = readFromFile("certex/responseIES002-messageId-invalid-uuid.xml")
-    val xmlBodyNoAttachment                                  = readFromFile("certex/certex-request-no-attachment.xml")
+    val workingXmlTransformer: XmlTransformer              = new CertexAttachmentReplacingTransformer()
+    val failingXmlTransformer: XmlTransformer              = new NoChangeTransformer()
+    val staticUuidGenerator: StaticUuidGenerator           = new StaticUuidGenerator()
+    val staticZonedDTHelper: ZonedDateTimeHelper           = new StaticZonedDTHelper()
+    val forwardedMessageCaptor                             = ArgCaptor[NodeSeq]
+    val wholeMessageCaptor                                 = ArgCaptor[NodeSeq]
+    val binaryElementsCaptor                               = ArgCaptor[NodeSeq]
+    val headerCaptor                                       = ArgCaptor[Seq[(String, String)]]
+    val sdesRequestHeaderCaptor                            = ArgCaptor[Seq[(String, String)]]
+    val xmlBodyWithAttachment                              = readFromFile("certex/responseIES002.xml")
+    val xmlBodyWithBadMsgId                                = readFromFile("certex/responseIES002-messageId-invalid-uuid.xml")
+    val xmlBodyNoAttachment                                = readFromFile("certex/certex-request-no-attachment.xml")
 
     val service: InboundCertexMessageService =
       new InboundCertexMessageService(
