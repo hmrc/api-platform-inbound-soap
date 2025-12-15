@@ -195,7 +195,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     "generate random UUID for filename when messageId in message is blank" in new Setup {
       val xmlBody: Elem              = readFromFile("certex/responseIES002-empty-messageId.xml")
       val expectedSdesUuid           = UUID.randomUUID().toString
-      val expectedFilenameUuid       = uuidGenerator.randomUuid()
+      val expectedFilenameUuid       = uuidGenerator.generateRandomUuid
       val expectedMetadata           = Map(
         "srn"             -> certexConfig.srn,
         "informationType" -> certexConfig.informationType,
@@ -216,7 +216,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     "generate random UUID for filename when messageId in message can't supply one" in new Setup {
       val xmlBody: Elem              = readFromFile("certex/responseIES002-unexpected-messageid-format.xml")
       val expectedSdesUuid           = UUID.randomUUID().toString
-      val expectedFilenameUuid       = uuidGenerator.randomUuid()
+      val expectedFilenameUuid       = uuidGenerator.generateRandomUuid
       val expectedMetadata           = Map(
         "srn"             -> certexConfig.srn,
         "informationType" -> certexConfig.informationType,
@@ -238,7 +238,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     "generate random UUID for filename when UUID from messageId in message is invalid" in new Setup {
       val xmlBody: Elem              = readFromFile("certex/responseIES002-messageId-invalid-uuid.xml")
       val expectedSdesUuid           = UUID.randomUUID().toString
-      val expectedFilenameUuid       = uuidGenerator.randomUuid()
+      val expectedFilenameUuid       = uuidGenerator.generateRandomUuid
       val expectedMetadata           = Map(
         "srn"             -> certexConfig.srn,
         "informationType" -> certexConfig.informationType,

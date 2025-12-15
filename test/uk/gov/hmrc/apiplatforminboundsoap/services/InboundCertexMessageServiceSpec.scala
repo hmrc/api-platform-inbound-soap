@@ -59,16 +59,28 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
   trait Setup {
     val authToken = "some-auth-token-value"
 
-    val forwardedHeaders                                   = Seq[(String, String)](
-      "Accept"           -> "application/xml",
-      "Authorization"    -> s"Bearer $authToken",
-      "Content-Type"     -> "application/xml;charset=utf-8",
-      "date"             -> dateHeaderValue,
-      "source"           -> "MDTP",
-      "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557"
+    val forwardedHeaders = Seq[(String, String)](
+      "Accept"        -> "application/xml",
+      "Authorization" -> s"Bearer $authToken",
+      "Content-Type"  -> "application/xml;charset=utf-8",
+      "date"          -> dateHeaderValue,
+      "source"        -> "MDTP"
     )
-    val forwardedHeadersWithAttachment                     = forwardedHeaders ++ Map("x-files-included" -> "true")
-    val forwardedHeadersNoAttachment                       = forwardedHeaders ++ Map("x-files-included" -> "false")
+
+    val forwardedHeadersWithAttachment = forwardedHeaders ++ Map(
+      "x-correlation-id" -> "ca49dfbe-c5d6-4cb3-b424-ddead6c002ad",
+      "x-files-included" -> "true"
+    )
+
+    val forwardedHeadersWithAttachmentAndRandomCorrelationId = forwardedHeaders ++ Map(
+      "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557",
+      "x-files-included" -> "true"
+    )
+
+    val forwardedHeadersNoAttachment                       = forwardedHeaders ++ Map(
+      "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557",
+      "x-files-included" -> "false"
+    )
     val certexSdesServiceMock: CertexSdesService           = mock[CertexSdesService]
     val certexServiceConnectorMock: CertexServiceConnector = mock[CertexServiceConnector]
     val configMock: CertexServiceConnector.Config          = mock[CertexServiceConnector.Config]
@@ -83,6 +95,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     val headerCaptor                                       = ArgCaptor[Seq[(String, String)]]
     val sdesRequestHeaderCaptor                            = ArgCaptor[Seq[(String, String)]]
     val xmlBodyWithAttachment                              = readFromFile("certex/responseIES002.xml")
+    val xmlBodyWithBadMsgId                                = readFromFile("certex/responseIES002-messageId-invalid-uuid.xml")
     val xmlBodyNoAttachment                                = readFromFile("certex/certex-request-no-attachment.xml")
 
     val service: InboundCertexMessageService =
@@ -139,6 +152,22 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       verify(certexSdesServiceMock).processMessage(xmlBodyWithAttachment)
       getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
       headerCaptor.value mustBe forwardedHeadersWithAttachment
+    }
+
+    "generate random UUID for x-correlation-id when message doesn't provide one" in new Setup {
+      val forwardedXmlBody = readFromFile("post-sdes-processing/certex/responseIES002-messageId-invalid-uuid.xml")
+
+      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(certexSdesServiceMock.processMessage(refEq(xmlBodyWithBadMsgId))(*)).thenReturn(successful(List(SdesSuccess(
+        "some-uuid-like-string"
+      ))))
+      val result = await(service.processInboundMessage(xmlBodyWithBadMsgId))
+
+      result shouldBe SendSuccess(OK)
+      verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
+      verify(certexSdesServiceMock).processMessage(xmlBodyWithBadMsgId)
+      getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
+      headerCaptor.value mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
     }
 
     "return fail status to caller and not forward message if call to SDES fails when processing a message with embedded file" in new Setup {
