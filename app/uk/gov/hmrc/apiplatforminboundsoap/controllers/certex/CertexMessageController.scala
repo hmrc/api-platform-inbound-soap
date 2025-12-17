@@ -26,7 +26,7 @@ import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCertexMessageService
 
 @Singleton()
@@ -43,6 +43,7 @@ class CertexMessageController @Inject() (
       inboundCertexMessageService.processInboundMessage(request.body) flatMap {
         case SendSuccess(status)               => successful(Status(status).as("application/soap+xml"))
         case SendFailExternal(message, status) => successful(Status(status)(Json.obj("error" -> message)).as("application/soap+xml"))
+        case SendNotAttempted(message)         => successful(Status(BAD_REQUEST)(Json.obj("error" -> message)).as("application/soap+xml"))
       }
   }
 }

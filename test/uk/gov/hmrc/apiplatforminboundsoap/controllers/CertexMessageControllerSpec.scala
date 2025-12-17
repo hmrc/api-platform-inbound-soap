@@ -35,7 +35,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCertexMessageService
 
 class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
@@ -87,7 +87,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOn
       status(result) shouldBe OK
     }
 
-    "return error when unsuccessful" in new Setup {
+    "return error when unsuccessful with failure in connector sending" in new Setup {
       val requestBody: Elem = <xml>foobar</xml>
       when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", SERVICE_UNAVAILABLE)))
 
@@ -95,6 +95,16 @@ class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOn
 
       status(result) shouldBe SERVICE_UNAVAILABLE
       (contentAsJson(result) \ "error").as[String] shouldBe "some error"
+    }
+
+    "return error when send not attempted due to detected error in message format" in new Setup {
+      val requestBody: Elem = <xml>foobar</xml>
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendNotAttempted("problem")))
+
+      val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      (contentAsJson(result) \ "error").as[String] shouldBe "problem"
     }
   }
 }
