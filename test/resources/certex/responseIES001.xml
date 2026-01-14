@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
+               xmlns:typ="http://certex.speed2.taxud.eu/CERTEX/types" xmlns:wsa="http://www.w3.org/2005/08/addressing"
+               xmlns:ccn2="http://ccn2.ec.eu/" xmlns:v11="http://certex.speed2.taxud.eu/verBase/v1_0">
+    <soap:Header>
+        <wsa:From>
+            <wsa:Address>partner:CCN2.Partner.XI.Customs.TAXUD/CERTEX.CONF</wsa:Address>
+        </wsa:From>
+        <wsa:To>partner:CCN2.Partner.EU.Customs.TAXUD/CERTEX.CONF</wsa:To>
+        <wsa:Action>CCN2.Service.Customs.EU.CERTEX.CERTEXServicesv2/processNAtoCERTEX</wsa:Action>
+        <wsa:MessageID>54f07dda-55bd-4f74-a850-86269599e3b8</wsa:MessageID>
+        <ccnm:MessageHeader xmlns:ccnm="http://ccn2.ec.eu/CCN2.Service.Platform.Common.Schema">
+            <ccnm:Version>1.0</ccnm:Version>
+            <ccnm:SendingDateAndTime>2026-01-13T15:55:00.078037979</ccnm:SendingDateAndTime>
+            <ccnm:MessageType>CCN2.Service.Customs.EU.CERTEX.CERTEXServicesv2/NAToCERTEXRequestMessage
+            </ccnm:MessageType>
+            <ccnm:RequestCoD>false</ccnm:RequestCoD>
+        </ccnm:MessageHeader>
+        <wsse:Security xmlns:soapEnvelope="http://www.w3.org/2003/05/soap-envelope"
+                       xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                       soapEnvelope:mustUnderstand="1">
+            <ns1:UsernameToken
+                    xmlns:ns1="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                    xmlns:ns4="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+                    ns4:Id="UsernameToken-8aec641c-9d50-43e8-bf3f-66d609fd4d87">
+                <ns1:Username>CLS_XI_CERTEX_TESTUSER</ns1:Username>
+                <ns1:Password
+                        Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">
+                    NI_CERTEX_P@ssW0rd
+                </ns1:Password>
+            </ns1:UsernameToken>
+        </wsse:Security>
+    </soap:Header>
+    <soap:Body>
+        <typ:CERTEX_GenericRequest>
+            <tns:requestIES001 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                               xmlns:ccoBase="http://certex.speed2.taxud.eu/verBase/v1_0"
+                               xmlns:tns="http://certex.speed2.taxud.eu/cco/v1_0"
+                               messageId="CDCM|CTX|54f07dda-55bd-4f74-a850-86269599e3b8" uniqPrefix="XI" msCode="XI"
+                               xsdVersion="5.1" serviceType="ASYNC">
+                <tns:supportingDocument>
+                    <ccoBase:referenceNumber>CHEDPP.BE.2024.0000347</ccoBase:referenceNumber>
+                    <ccoBase:type>C085</ccoBase:type>
+                </tns:supportingDocument>
+                <tns:competentCustomsOffice>
+                    <ccoBase:ccoReferenceNumber>BE200011</ccoBase:ccoReferenceNumber>
+                </tns:competentCustomsOffice>
+                <tns:customsDeclarationReferenceNumber>
+                    <ccoBase:MRN>20RB54321678956540</ccoBase:MRN>
+                </tns:customsDeclarationReferenceNumber>
+                <tns:consignmentItem>
+                    <ccoBase:declarationGoodsItemNumber>1</ccoBase:declarationGoodsItemNumber>
+                    <ccoBase:supportingDocument>
+                        <ccoBase:documentLineItemNumber>1</ccoBase:documentLineItemNumber>
+                    </ccoBase:supportingDocument>
+                    <ccoBase:commodityCode>
+                        <ccoBase:harmonizedSystemSubheadingCode>010632</ccoBase:harmonizedSystemSubheadingCode>
+                    </ccoBase:commodityCode>
+                    <ccoBase:netMass>0</ccoBase:netMass>
+                    <ccoBase:supplementaryUnits>200</ccoBase:supplementaryUnits>
+                    <ccoBase:measurementUnitCode>NAR</ccoBase:measurementUnitCode>
+                    <ccoBase:requestedProcedure>40</ccoBase:requestedProcedure>
+                </tns:consignmentItem>
+                <tns:sendingDate>2026-01-15T12:13:02</tns:sendingDate>
+                <tns:quantityManagementIndication>1</tns:quantityManagementIndication>
+                <tns:transformationIndication>IM</tns:transformationIndication>
+                <tns:pdfGeneration>
+                    <ccoBase:PDFGenerationIndication>0</ccoBase:PDFGenerationIndication>
+                </tns:pdfGeneration>
+                <tns:pushIndication>
+                    <ccoBase:pushMarker>0</ccoBase:pushMarker>
+                </tns:pushIndication>
+            </tns:requestIES001>
+        </typ:CERTEX_GenericRequest>
+    </soap:Body>
+</soap:Envelope>
