@@ -1,0 +1,340 @@
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+    <soap12-env:Header xmlns:soap12-env="http://www.w3.org/2003/05/soap-envelope">
+        <To xmlns="http://www.w3.org/2005/08/addressing">partner:CCN2.Partner.XI.Customs.TAXUD/CERTEX.CONF</To>
+        <Action soap12-env:mustUnderstand="true" xmlns="http://www.w3.org/2005/08/addressing">
+            CCN2.Service.Customs.EU.CERTEX.CERTEXServicesv2/processCERTEXtoNA
+        </Action>
+        <From xmlns="http://www.w3.org/2005/08/addressing">
+            <Address>partner:CCN2.Partner.EU.Customs.TAXUD/CERTEX.CONF</Address>
+        </From>
+        <ReplyTo xmlns="http://www.w3.org/2005/08/addressing">
+            <Address>partner:CCN2.Partner.EU.Customs.TAXUD/CERTEX.CONF</Address>
+        </ReplyTo>
+        <FaultTo xmlns="http://www.w3.org/2005/08/addressing">
+            <Address>partner:CCN2.Partner.EU.Customs.TAXUD/CERTEX.CONF</Address>
+        </FaultTo>
+        <MessageID xmlns="http://www.w3.org/2005/08/addressing">c9061549-31f8-48e7-ae18-0b21a2169770</MessageID>
+        <mk:MessageHeader xmlns:mk="http://ccn2.ec.eu/CCN2.Service.Platform.Common.Schema">
+            <mk:Version>1.0</mk:Version>
+            <mk:CorrelationId>cid:8301dc3d-c1fa-4ae6-b932-71f4cc40f0e5</mk:CorrelationId>
+            <mk:SendingDateAndTime>2026-01-13T16:55:03.068+01:00</mk:SendingDateAndTime>
+            <mk:MessageType>'CCN2.Service.Customs.EU.CERTEX.CERTEXServicesv2/processCERTEXtoNA'</mk:MessageType>
+            <mk:MessageExpirationTimestamp>2026-01-13T16:58:04Z</mk:MessageExpirationTimestamp>
+            <mk:RequestCoD>false</mk:RequestCoD>
+        </mk:MessageHeader>
+        <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+            <wsu:Timestamp wsu:Id="Id-0001768319884766-ffffffff9783d372-1"
+                           xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                <wsu:Created>2026-01-13T15:58:04Z</wsu:Created>
+                <wsu:Expires>2026-01-13T16:13:04Z</wsu:Expires>
+            </wsu:Timestamp>
+            <wsse:BinarySecurityToken wsu:Id="Id-0001768319884767-ffffffff9adc3bbb-1"
+                                      ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"
+                                      EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary"
+                                      xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                MIIJGzCCBwOgAwIBAgIUfQXHYHlA3O3a4XV6SmBnCbPKuiIwDQYJKoZIhvcNAQELBQAwgaYxJjAk
+                BgkqhkiG9w0BCQEWF3RheHVkLWxpc29AZWMuZXVyb3BhLmV1MRkwFwYDVQQDDBBERyBUQVhVRCBQ
+                Uk9EIENBMREwDwYDVQQLDAhERyBUQVhVRDEcMBoGA1UECgwTRXVyb3BlYW4gQ29tbWlzc2lvbjER
+                MA8GA1UEBwwIQnJ1c3NlbHMxEDAOBgNVBAgMB0JlbGdpdW0xCzAJBgNVBAYTAkJFMB4XDTI1MTAz
+                MDEyNDAwM1oXDTI2MTIwMTEyNDAwMlowgZAxHDAaBgNVBAMME3Mycy5jb25mLmNjbjIudGF4dWQx
+                ETAPBgNVBAsMCERHIFRBWFVEMQ0wCwYDVQQLDARDQ04yMRwwGgYDVQQKDBNFdXJvcGVhbiBDb21t
+                aXNzaW9uMREwDwYDVQQHDAhCcnVzc2VsczEQMA4GA1UECAwHQmVsZ2l1bTELMAkGA1UEBhMCQkUw
+                ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDHabWLRIiZKtqYU05oo4jODuB7L5PW0bRj
+                Dl+Lyjos87R5V3t642NaWnP9EDE/KviIrBvXQnh9+DCIiZMVlNQSNDiRgobJdWhG+iC4nrHfTW+V
+                9DkPVkFasTaM43t7lexcmhddXqVyx2QsLYw44cPB6grZKtv1OqwzQS35VbjUygBIFHVXW0FCEmaf
+                nwnsgYmJjKfEPIQXrT+mBw/SPE55u8JTo4ilfCoUWzjdDa95fR0c6W0oRvFlaRXdPM/VWwcZA3vY
+                rL/EsOgbDpUctxdesHpFfYqrOk/yj/AHbS4mtJFZfBKwKlAx4VBI1dmBnA5yQz1hrTvjeVrjDFgM
+                xV4TAgMBAAGjggRTMIIETzAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFIfTNrctjsG+zmTs2/4R
+                OgfQFNKaMIGOBggrBgEFBQcBAQSBgTB/MEQGCCsGAQUFBzAChjhodHRwOi8vcGtpLnRheHVkLnNl
+                cnZpY2VzLmVjLmV1cm9wYS5ldS9kZ3RheHVkcHJvZGNhLmNydDA3BggrBgEFBQcwAYYraHR0cDov
+                L3BraS50YXh1ZC5zZXJ2aWNlcy5lYy5ldXJvcGEuZXUvb2NzcDCCAvIGA1UdEQSCAukwggLlghNz
+                MnMuY29uZi5jY24yLnRheHVkghZhdC1zMnMuY29uZi5jY24yLnRheHVkghZiZS1zMnMuY29uZi5j
+                Y24yLnRheHVkghZiZy1zMnMuY29uZi5jY24yLnRheHVkghZjeS1zMnMuY29uZi5jY24yLnRheHVk
+                ghZjei1zMnMuY29uZi5jY24yLnRheHVkghZkZS1zMnMuY29uZi5jY24yLnRheHVkghZkay1zMnMu
+                Y29uZi5jY24yLnRheHVkghZlZS1zMnMuY29uZi5jY24yLnRheHVkghZlcy1zMnMuY29uZi5jY24y
+                LnRheHVkghZmaS1zMnMuY29uZi5jY24yLnRheHVkghZmci1zMnMuY29uZi5jY24yLnRheHVkghZn
+                Yi1zMnMuY29uZi5jY24yLnRheHVkghZ1ay1zMnMuY29uZi5jY24yLnRheHVkghZnci1zMnMuY29u
+                Zi5jY24yLnRheHVkghZlbC1zMnMuY29uZi5jY24yLnRheHVkghZoci1zMnMuY29uZi5jY24yLnRh
+                eHVkghZodS1zMnMuY29uZi5jY24yLnRheHVkghZpZS1zMnMuY29uZi5jY24yLnRheHVkghZpdC1z
+                MnMuY29uZi5jY24yLnRheHVkghZsdC1zMnMuY29uZi5jY24yLnRheHVkghZsdS1zMnMuY29uZi5j
+                Y24yLnRheHVkghZsdi1zMnMuY29uZi5jY24yLnRheHVkghZtdC1zMnMuY29uZi5jY24yLnRheHVk
+                ghZubC1zMnMuY29uZi5jY24yLnRheHVkghZwbC1zMnMuY29uZi5jY24yLnRheHVkghZwdC1zMnMu
+                Y29uZi5jY24yLnRheHVkghZyby1zMnMuY29uZi5jY24yLnRheHVkghZzZS1zMnMuY29uZi5jY24y
+                LnRheHVkghZzaS1zMnMuY29uZi5jY24yLnRheHVkghZzay1zMnMuY29uZi5jY24yLnRheHVkMB0G
+                A1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcDATBJBgNVHR8EQjBAMD6gPKA6hjhodHRwOi8vcGtp
+                LnRheHVkLnNlcnZpY2VzLmVjLmV1cm9wYS5ldS9kZ3RheHVkcHJvZGNhLmNybDAdBgNVHQ4EFgQU
+                WMzDyym7OSHpRO7txRGxoWLP8+MwDgYDVR0PAQH/BAQDAgTwMA0GCSqGSIb3DQEBCwUAA4ICAQCB
+                K7DnN9YR6V1jv2wm3VKi4jXy1+Vl6KR4ddbP3Aa6etiJ/QjRTDjVgRPsTcffWleXAXNK2d1WbiUp
+                tw3cI72tfwK1fKskpYxL3OB3N0aZupap60kQTTmypZY/QDCf7JMUJRyS0NSpO8GVNppxzpePBIfW
+                qJY257WRgrPxpRwNJa4o1VsZiUdwRq/DEelLq0bjnwwySZOnaNKOCxJHrOukiJ81ZSPjdC73aE20
+                Hobtknu1eS7OoAC+yqN431PMOsXJ9oGI3jM72Booc/K6pmQBDR+Ew5IQ7Q7uLNGtjE6b4JlDJXUd
+                I5Sj/N5LtbRcH7EUGEA7GeLOwmb0xNtanXf+31hSOSytVCYa2xCjNAuHrmW8E1vD/KnwqFfaw38+
+                fqGTNd/3lnYI2V0LUilgV9jFCWA7eJUHzxQVVLBX3uummlTNq8BbCfCcAeKg6dfHTkEsH1L2d1vz
+                zXxSDDoGdp+4JWxsSYmRs0cdjNwy9L0adD2i9hqqBCRSf4sv92w2eYqohQWZ85iKLPYLOTY0ii03
+                vUpspuwemE2LRz9dSldkFAKNBBE2508RNP7ptb096DZSo61TdQnKEMRnp/WvYynmuqyMUmH7qgQB
+                mILvEaTf5hnk5wmHhU9hBdmq72uu4fNNxU6g1/d2fC2Wnde60CNpE0J9qb+viuDMzDPyZYKK+w==
+            </wsse:BinarySecurityToken>
+            <saml:Assertion ID="Id-8c6b6669aaf599b84ab5d647-1" IssueInstant="2026-01-13T15:58:04Z" Version="2.0"
+                            xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">
+                <saml:Issuer Format="urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName">
+                    CN=users,CN=security,DC=ccn2,DC=eu
+                </saml:Issuer>
+                <saml:Subject>
+                    <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">EU_CERTEX_User
+                    </saml:NameID>
+                    <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:sender-vouches"/>
+                </saml:Subject>
+                <saml:Conditions NotBefore="2026-01-13T15:53:04Z" NotOnOrAfter="2026-01-13T16:08:04Z"/>
+                <saml:AuthnStatement AuthnInstant="2026-01-13T15:58:04Z">
+                    <saml:AuthnContext>
+                        <saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:Password
+                        </saml:AuthnContextClassRef>
+                    </saml:AuthnContext>
+                </saml:AuthnStatement>
+                <saml:AttributeStatement>
+                    <saml:Attribute Name="uid" NameFormat="urn:vordel:attribute:1.0">
+                        <saml:AttributeValue>EU_CERTEX_User</saml:AttributeValue>
+                    </saml:Attribute>
+                    <saml:Attribute Name="c" NameFormat="urn:vordel:attribute:1.0">
+                        <saml:AttributeValue>EU</saml:AttributeValue>
+                    </saml:Attribute>
+                    <saml:Attribute Name="role" NameFormat="urn:vordel:attribute:1.0">
+                        <saml:AttributeValue>CCN2.Role.CERTEX.EURole</saml:AttributeValue>
+                    </saml:Attribute>
+                    <saml:Attribute Name="partnername" NameFormat="urn:vordel:attribute:1.0">
+                        <saml:AttributeValue>CCN2.Partner.EU.Customs.TAXUD</saml:AttributeValue>
+                    </saml:Attribute>
+                </saml:AttributeStatement>
+            </saml:Assertion>
+            <dsig:Signature Id="Id-0001768319884767-ffffffff9adc3bbb-2" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">
+                <dsig:SignedInfo>
+                    <dsig:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                    <dsig:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+                    <dsig:Reference URI="#Id-0001768319884767-ffffffff9adc3bbb-1">
+                        <dsig:Transforms>
+                            <dsig:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                        </dsig:Transforms>
+                        <dsig:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                        <dsig:DigestValue>ro5/hWbsSvX83sK55K2repZB5nmOQACJvMb3JI1Ssmo=</dsig:DigestValue>
+                    </dsig:Reference>
+                    <dsig:Reference URI="#Id-0001768319884766-ffffffff9783d372-1">
+                        <dsig:Transforms>
+                            <dsig:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                        </dsig:Transforms>
+                        <dsig:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                        <dsig:DigestValue>OZjyzp4W5LFajJjM3ZYE4xtkwPdMMBj58iSDutv3n20=</dsig:DigestValue>
+                    </dsig:Reference>
+                    <dsig:Reference URI="#Id-8c6b6669aaf599b84ab5d647-1">
+                        <dsig:Transforms>
+                            <dsig:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                        </dsig:Transforms>
+                        <dsig:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                        <dsig:DigestValue>DrAcww/KAmwgCFZ41JERgPmw/VDhTiMp2XmCWuhjSH4=</dsig:DigestValue>
+                    </dsig:Reference>
+                </dsig:SignedInfo>
+                <dsig:SignatureValue>pXgUrJQ/KrHPxCBRuoGeIfXW7WHwEoXqT+BQzEskZ9majAZjP1cWHJF2pkC6gcNc
+                    5cWGsIPYEEoKsX/mJcwffPMNEQ1r4OjeumShxgz3JiSXzgTEhgSqAatRrduMyPOx
+                    wtALVU/Wk63V2A5yl5BoBTrn1BN/jDZwbxV7CkO/NTPKW7OAq+JqJUYtjR83zNWB
+                    Ay6gXbjXwhvnyxqh0V0tb37iU8Zv4FGTS7d9ra8ajUs4B46gD3NxlibX/8JzYJui
+                    rfFy7zuhMfozkQDvnBzX01gUc2eK3AbMzC2mUhxtvPauaJt8/K9rPAXSZlpDfDtZ MNR9OcW5AuSmhVhS4/5TBg==
+                </dsig:SignatureValue>
+                <dsig:KeyInfo Id="Id-0001768319884767-ffffffff9adc3bbb-3">
+                    <wsse:SecurityTokenReference wsu:Id="Id-0001768319884767-ffffffff9adc3bbb-4"
+                                                 xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                        <wsse:Reference URI="#Id-0001768319884767-ffffffff9adc3bbb-1"
+                                        ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"/>
+                    </wsse:SecurityTokenReference>
+                </dsig:KeyInfo>
+            </dsig:Signature>
+        </wsse:Security>
+    </soap12-env:Header>
+    <soap:Body>
+        <typ:CERTEX_GenericCallback xmlns:typ="http://certex.speed2.taxud.eu/CERTEX/types"
+                                    xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+            <responseIES002 messageId="CDCM|CTX|54f07dda-55bd-4f74-a850-86269599e3b8" uniqPrefix="XI"
+                            xmlns="http://certex.speed2.taxud.eu/cco/v1_0"
+                            xmlns:ns24="http://certex.speed2.taxud.eu/verBase/v1_0">
+                <relevantProcessedPcaInformation>
+                    <ns24:supportingDocument>
+                        <ns24:referenceNumber>CHEDPP.BE.2024.0000347</ns24:referenceNumber>
+                        <ns24:type>C085</ns24:type>
+                    </ns24:supportingDocument>
+                    <ns24:competentCustomsOffice>
+                        <ns24:ccoReferenceNumber>BE200011</ns24:ccoReferenceNumber>
+                    </ns24:competentCustomsOffice>
+                    <ns24:customsDeclarationReferenceNumber>
+                        <ns24:MRN>20RB54321678956540</ns24:MRN>
+                    </ns24:customsDeclarationReferenceNumber>
+                    <ns24:sendingDate>2026-01-15T12:13:02</ns24:sendingDate>
+                    <ns24:status>309</ns24:status>
+                    <ns24:certexInformationResult>03</ns24:certexInformationResult>
+                    <ns24:reservationResult>0</ns24:reservationResult>
+                    <ns24:reasonForReservationFailure>03</ns24:reasonForReservationFailure>
+                    <ns24:reservationFailureCI>
+                        <ns24:goodsItemNumber>1</ns24:goodsItemNumber>
+                        <ns24:documentLineItemNumber>1</ns24:documentLineItemNumber>
+                    </ns24:reservationFailureCI>
+                    <ns24:quantityManagementIndication>1</ns24:quantityManagementIndication>
+                    <ns24:consignmentItem>
+                        <ns24:commodityCode>
+                            <ns24:harmonizedSystemSubheadingCode>080550</ns24:harmonizedSystemSubheadingCode>
+                            <ns24:combinedNomenclatureCode>10</ns24:combinedNomenclatureCode>
+                        </ns24:commodityCode>
+                        <ns24:quantities>
+                            <ns24:quantity>800</ns24:quantity>
+                            <ns24:measurementUnitCode>KGM</ns24:measurementUnitCode>
+                        </ns24:quantities>
+                        <ns24:documentPackages>
+                            <ns24:typeOfPackages>BG</ns24:typeOfPackages>
+                            <ns24:numberOfPackages>8</ns24:numberOfPackages>
+                        </ns24:documentPackages>
+                        <ns24:documentLineItemNumber>1</ns24:documentLineItemNumber>
+                        <ns24:countryOfOrigin>RU</ns24:countryOfOrigin>
+                    </ns24:consignmentItem>
+                    <ns24:totalQuantities>
+                        <ns24:totalQuantity>800</ns24:totalQuantity>
+                        <ns24:totalMeasurementUnitCode>KGM</ns24:totalMeasurementUnitCode>
+                    </ns24:totalQuantities>
+                    <ns24:documentTotalPackages>
+                        <ns24:typeOfPackages>BG</ns24:typeOfPackages>
+                        <ns24:numberOfPackages>8</ns24:numberOfPackages>
+                    </ns24:documentTotalPackages>
+                    <ns24:pcaDocumentInformation>
+                        <ns24:chedRelevantInformation>
+                            <ns24:issueDateTime>2024-07-29T09:07:47</ns24:issueDateTime>
+                            <ns24:importerChed>
+                                <ns24:name>MacDOfj89 Co</ns24:name>
+                                <ns24:streetAndNumber>Banat Street 8</ns24:streetAndNumber>
+                                <ns24:country>LV</ns24:country>
+                                <ns24:postcode>LV-2167</ns24:postcode>
+                                <ns24:city>Mārupe</ns24:city>
+                            </ns24:importerChed>
+                            <ns24:countryOfDestinationChed>LV</ns24:countryOfDestinationChed>
+                            <ns24:BCPCode>BECERTEX</ns24:BCPCode>
+                            <ns24:operatorResponsibleForConsignment>
+                                <ns24:name>COOPERATIVEAX35 SRL</ns24:name>
+                                <ns24:addressOfOperator>
+                                    <ns24:postcodeCode>LV-2136</ns24:postcodeCode>
+                                    <ns24:lineOne>Generaal Charles 55</ns24:lineOne>
+                                    <ns24:cityName>Vangaži</ns24:cityName>
+                                    <ns24:countryID>LV</ns24:countryID>
+                                </ns24:addressOfOperator>
+                            </ns24:operatorResponsibleForConsignment>
+                            <ns24:meansOfTransportChed>
+                                <ns24:means>30</ns24:means>
+                                <ns24:identification>N/A</ns24:identification>
+                                <ns24:modeOfTransportAtBorder>3</ns24:modeOfTransportAtBorder>
+                            </ns24:meansOfTransportChed>
+                        </ns24:chedRelevantInformation>
+                    </ns24:pcaDocumentInformation>
+                    <ns24:quantityManagementSummary>
+                        <ns24:availableQuantities>
+                            <ns24:commodityCode>
+                                <ns24:harmonizedSystemSubheadingCode>080550</ns24:harmonizedSystemSubheadingCode>
+                                <ns24:combinedNomenclatureCode>10</ns24:combinedNomenclatureCode>
+                            </ns24:commodityCode>
+                            <ns24:supportingDocument>
+                                <ns24:measurementUnitAndQualifier>KGM</ns24:measurementUnitAndQualifier>
+                                <ns24:quantity>789</ns24:quantity>
+                                <ns24:documentLineItemNumber>1</ns24:documentLineItemNumber>
+                            </ns24:supportingDocument>
+                        </ns24:availableQuantities>
+                        <ns24:consumedQuantities>
+                            <ns24:goodsItemNumber>1</ns24:goodsItemNumber>
+                            <ns24:commodityCode>
+                                <ns24:harmonizedSystemSubheadingCode>020714</ns24:harmonizedSystemSubheadingCode>
+                                <ns24:combinedNomenclatureCode>20</ns24:combinedNomenclatureCode>
+                            </ns24:commodityCode>
+                            <ns24:competentCustomsOffice>
+                                <ns24:ccoReferenceNumber>AT100000</ns24:ccoReferenceNumber>
+                            </ns24:competentCustomsOffice>
+                            <ns24:MRN>25ATGUXG8Q6FOSN0R7</ns24:MRN>
+                            <ns24:sendingDate>2025-12-19T15:19:46</ns24:sendingDate>
+                            <ns24:supportingDocument>
+                                <ns24:measurementUnitAndQualifier>KGM</ns24:measurementUnitAndQualifier>
+                                <ns24:quantity>11</ns24:quantity>
+                                <ns24:documentLineItemNumber>1</ns24:documentLineItemNumber>
+                            </ns24:supportingDocument>
+                        </ns24:consumedQuantities>
+                    </ns24:quantityManagementSummary>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>01</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>07</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>40</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>42</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>43</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>44</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>45</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>46</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>48</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>51</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>53</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>61</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>63</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>68</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:requested>71</ns24:requested>
+                        <ns24:previous>00</ns24:previous>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:transitDeclaration>T</ns24:transitDeclaration>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:transitDeclaration>T1</ns24:transitDeclaration>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:documentAcceptedProcedure>
+                        <ns24:transitDeclaration>TIR</ns24:transitDeclaration>
+                    </ns24:documentAcceptedProcedure>
+                    <ns24:pushActive>false</ns24:pushActive>
+                    <ns24:customEntities>
+                        <ns24:customEntity>
+                            <ns24:name>CountryOfExport_Dispatch</ns24:name>
+                            <ns24:value>RU</ns24:value>
+                        </ns24:customEntity>
+                    </ns24:customEntities>
+                </relevantProcessedPcaInformation>
+            </responseIES002>
+        </typ:CERTEX_GenericCallback>
+    </soap:Body>
+</soap:Envelope>

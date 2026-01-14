@@ -85,17 +85,29 @@ class CertexXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
   }
 
   "getMessageId" should {
-    "get message ID when one exists as an attribute" in {
-      val xmlRequestBody: Elem = readFromFile("certex/responseIES002.xml")
-      getMessageId(xmlRequestBody) shouldBe Some("CDCM|CTX|ca49dfbe-c5d6-4cb3-b424-ddead6c002ad")
+    "for IES002" should {
+      "get message ID when one exists as an attribute in prolog" in {
+        val xmlRequestBody: Elem = readFromFile("certex/responseIES002.xml")
+        getMessageId(xmlRequestBody) shouldBe Some("CDCM|CTX|ca49dfbe-c5d6-4cb3-b424-ddead6c002ad")
+      }
+      "get message ID when one exists as an element" in {
+        val xmlRequestBody: Elem = readFromFile("certex/responseIES002_msgId_elem.xml")
+        getMessageId(xmlRequestBody) shouldBe Some("CDCM|CTX|6e99d0b3-be91-412b-91d8-3b9d95faef45")
+      }
+      "get message ID when one exists as an attribute of an element" in {
+        val xmlRequestBody: Elem = readFromFile("certex/responseIES002_msgId_body_attribute.xml")
+        getMessageId(xmlRequestBody) shouldBe Some("CDCM|CTX|54f07dda-55bd-4f74-a850-86269599e3b8")
+      }
+      "return empty Option for message ID when element is absent" in {
+        val xmlRequestBody: Elem = readFromFile("certex/responseIES002-empty-elements.xml")
+        getMessageId(xmlRequestBody) shouldBe Option.empty
+      }
     }
-    "get message ID when one exists as an element" in {
-      val xmlRequestBody: Elem = readFromFile("certex/responseIES002_msgId_elem.xml")
-      getMessageId(xmlRequestBody) shouldBe Some("CDCM|CTX|6e99d0b3-be91-412b-91d8-3b9d95faef45")
-    }
-    "return empty Option for message ID when element is absent" in {
-      val xmlRequestBody: Elem = readFromFile("certex/responseIES002-empty-elements.xml")
-      getMessageId(xmlRequestBody) shouldBe Option.empty
-    }
+    "for IES001" should {
+      "get message ID when one exists as an attribute in prolog" in {
+        val xmlRequestBody: Elem = readFromFile("certex/responseIES001.xml")
+        getMessageId(xmlRequestBody) shouldBe Some("CDCM|CTX|54f07dda-55bd-4f74-a850-86269599e3b8")
+      }
+      }
   }
 }
