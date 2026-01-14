@@ -62,7 +62,6 @@ trait CertexXml extends ApplicationLogger {
 
   def getMessageId(soapMessage: NodeSeq): Option[String] = {
     ((soapMessage \\ "@messageId").text.trim, soapMessage \\ "messageId") match {
-//    ((soapMessage \@ "messageId").trim, soapMessage \\ "messageId") match {
       case (_, n: NodeSeq) if n != NodeSeq.Empty => Some(n.text)
       case (m, _) if m.nonEmpty                  => Some(m)
       case (_, _)                                => Option.empty
