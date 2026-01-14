@@ -86,7 +86,7 @@ class CertexXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
 
   "getMessageId" should {
     "for IES002" should {
-      "get message ID when one exists as an attribute in prolog" in {
+      "get message ID when one exists as an attribute in top-level element" in {
         val xmlRequestBody: Elem = readFromFile("certex/responseIES002.xml")
         getMessageId(xmlRequestBody) shouldBe Some("CDCM|CTX|ca49dfbe-c5d6-4cb3-b424-ddead6c002ad")
       }
@@ -108,6 +108,6 @@ class CertexXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
         val xmlRequestBody: Elem = readFromFile("certex/responseIES001.xml")
         getMessageId(xmlRequestBody) shouldBe Some("CDCM|CTX|54f07dda-55bd-4f74-a850-86269599e3b8")
       }
-      }
+    }
   }
 }
