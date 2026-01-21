@@ -46,10 +46,10 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
     val xRequestIdHeaderValue      = randomUUID.toString
 
     val headers                           = Headers(
-      "Host"          -> "localhost",
-      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU",
-      "x-request-id"  -> xRequestIdHeaderValue,
-      "Content-Type"  -> "text/xml"
+      "Host"              -> "localhost",
+      "Authorization"     -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU",
+      "http_x_request_id" -> xRequestIdHeaderValue,
+      "Content-Type"      -> "text/xml"
     )
     private val verifyJwtTokenAction      = app.injector.instanceOf[VerifyJwtTokenAction]
     private val soapMessageValidateAction = app.injector.instanceOf[SoapMessageValidateAction]
@@ -78,7 +78,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
        |            <soap:Reason>
        |                <soap:Text xml:lang="en">$reason</soap:Text>
        |            </soap:Reason>
-       |            <soap:Node>public-soap-proxy</soap:Node>
+       |            <soap:Node>api-platform-inbound-soap</soap:Node>
        |            <soap:Detail>
        |                <RequestId>$requestId</RequestId>
        |            </soap:Detail>

@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
-import java.util.UUID.randomUUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
@@ -28,10 +27,6 @@ import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.xmlunit.builder.DiffBuilder
-import org.xmlunit.builder.DiffBuilder.compare
-import org.xmlunit.diff.DefaultNodeMatcher
-import org.xmlunit.diff.ElementSelectors.byName
 
 import play.api.Application
 import play.api.http.Status
@@ -46,7 +41,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{Acknowledg
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 
-class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
@@ -55,12 +50,11 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
     .build()
 
   trait Setup {
-    val xRequestIdHeaderValue = randomUUID.toString
 
     val headers = Headers(
-      "Host"         -> "localhost",
-      "x-request-id" -> xRequestIdHeaderValue,
-      "Content-Type" -> "text/xml"
+      "Host"              -> "localhost",
+      "http_x_request_id" -> xRequestIdHeaderValue,
+      "Content-Type"      -> "text/xml"
     )
 
     val validBearerToken =
@@ -130,25 +124,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
   "POST acknowledgement endpoint with invalid request body" should {
     "return 400 for missing Action element" in new Setup {
       val codRequestBodyMissingAction: Elem = readFromFile("acknowledgement/requests/cod_request_missing_action.xml")
-      val expectedSoapMessage               =
-        s"""<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
-           |<soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
-           |<soap:Body>
-           |<soap:Fault>
-           |<soap:Code>
-           |<soap:Value>soap:400</soap:Value>
-           |</soap:Code>
-           |<soap:Reason>
-           |<soap:Text xml:lang="en">Element SOAP Header Action is missing</soap:Text>
-           |</soap:Reason>
-           |<soap:Node>public-soap-proxy</soap:Node>
-           |<soap:Detail>
-           |<RequestId>$xRequestIdHeaderValue</RequestId>
-           |</soap:Detail>
-           |</soap:Fault>
-           |</soap:Body>
-           |</soap:Envelope>
-           |""".stripMargin
+      val expectedSoapMessage               = expectedSoapResponse("Element SOAP Header Action is missing")
       val fakeRequest                       = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken, "Content-Type" -> "application/soap+xml"))
         .withBody(codRequestBodyMissingAction)
@@ -160,56 +136,21 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
 
     "return 400 for empty Action element" in new Setup {
       val codRequestBodyMissingAction: Elem = readFromFile("acknowledgement/requests/cod_request_empty_action.xml")
-      val expectedSoapMessage               =
-        s"""<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
-           |<soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
-           |<soap:Body>
-           |<soap:Fault>
-           |<soap:Code>
-           |<soap:Value>soap:400</soap:Value>
-           |</soap:Code>
-           |<soap:Reason>
-           |<soap:Text xml:lang="en">SOAP Header Action should contain / character but does not
-           |Value of element SOAP Header Action is too short</soap:Text>
-           |</soap:Reason>
-           |<soap:Node>public-soap-proxy</soap:Node>
-           |<soap:Detail>
-           |<RequestId>$xRequestIdHeaderValue</RequestId>
-           |</soap:Detail>
-           |</soap:Fault>
-           |</soap:Body>
-           |</soap:Envelope>
-           |""".stripMargin
+      val expectedSoapMessage               = expectedSoapResponse("""SOAP Header Action should contain / character but does not
+                                                       |Value of element SOAP Header Action is too short""".stripMargin)
       val fakeRequest                       = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken, "Content-Type" -> "application/soap+xml"))
         .withBody(codRequestBodyMissingAction)
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().getDifferences.forEach(println)
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return 400 for empty MessageID element" in new Setup {
       val codRequestBodyMissingAction: Elem = readFromFile("acknowledgement/requests/cod_request_empty_messageid.xml")
-      val expectedSoapMessage               =
-        s"""<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
-           |<soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
-           |<soap:Body>
-           |<soap:Fault>
-           |<soap:Code>
-           |<soap:Value>soap:400</soap:Value>
-           |</soap:Code>
-           |<soap:Reason>
-           |<soap:Text xml:lang="en">Value of element SOAP Header MessageID is too short</soap:Text>
-           |</soap:Reason>
-           |<soap:Node>public-soap-proxy</soap:Node>
-           |<soap:Detail>
-           |<RequestId>$xRequestIdHeaderValue</RequestId>
-           |</soap:Detail>
-           |</soap:Fault>
-           |</soap:Body>
-           |</soap:Envelope>
-           |""".stripMargin
+      val expectedSoapMessage               = expectedSoapResponse("Value of element SOAP Header MessageID is too short")
       val fakeRequest                       = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken, "Content-Type" -> "application/soap+xml"))
         .withBody(codRequestBodyMissingAction)
@@ -263,14 +204,5 @@ class ConfirmationControllerSpec extends AnyWordSpec with Matchers with GuiceOne
       verify(mockOutboundConnector).postMessage(*)(*)
       xmlRequestCaptor hasCaptured coeRequestBody
     }
-  }
-
-  private def getXmlDiff(actual: String, expected: String): DiffBuilder = {
-    compare(expected)
-      .withTest(actual)
-      .withNodeMatcher(new DefaultNodeMatcher(byName))
-      .checkForIdentical
-      .ignoreComments
-      .ignoreWhitespace
   }
 }

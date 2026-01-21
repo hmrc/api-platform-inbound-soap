@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
-import java.util.UUID.randomUUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
-import scala.io.Source
-import scala.xml.{Elem, XML}
+import scala.xml.Elem
 
 import org.mockito.captor.{ArgCaptor, Captor}
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
@@ -40,7 +38,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundIcs2MessageService
 
-class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
@@ -49,12 +47,11 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       .configure("passThroughEnabled.ICS2" -> "false")
       .build()
     val incomingMessageServiceMock = mock[InboundIcs2MessageService]
-    val xRequestIdHeaderValue      = randomUUID.toString()
 
     val commonHeaders = Headers(
-      "Host"         -> "localhost",
-      "x-request-id" -> xRequestIdHeaderValue,
-      "Content-Type" -> "text/xml"
+      "Host"              -> "localhost",
+      "http_x_request_id" -> xRequestIdHeaderValue,
+      "Content-Type"      -> "text/xml"
     )
 
     val headersWithValidBearerToken = commonHeaders.add(
@@ -75,30 +72,6 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     val controller  =
       new ICS2MessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
     val fakeRequest = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headersWithValidBearerToken)
-
-    def readFromFile(fileName: String) = {
-      XML.load(Source.fromResource(fileName).bufferedReader())
-    }
-  }
-
-  private def getExpectedSoapFault(statusCode: Int, reason: String, requestId: String) = {
-    s"""<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
-       |    <soap:Header xmlns:soap="http://www.w3.org/2003/05/soap-envelope"></soap:Header>
-       |    <soap:Body>
-       |        <soap:Fault>
-       |            <soap:Code>
-       |                <soap:Value>soap:$statusCode</soap:Value>
-       |            </soap:Code>
-       |            <soap:Reason>
-       |                <soap:Text xml:lang="en">$reason</soap:Text>
-       |            </soap:Reason>
-       |            <soap:Node>public-soap-proxy</soap:Node>
-       |            <soap:Detail>
-       |                <RequestId>$requestId</RequestId>
-       |            </soap:Detail>
-       |        </soap:Fault>
-       |    </soap:Body>
-       |</soap:Envelope>""".stripMargin
   }
 
   "POST CCN2 message endpoint " should {
@@ -177,65 +150,73 @@ class ICS2MessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val expectedStatus                 = PRECONDITION_FAILED
+      val expectedSoapMessage            = expectedSoapResponse("some error", expectedStatus)
 
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
-      (contentAsJson(result) \ "error").as[String] shouldBe "some error"
-      status(result) shouldBe PRECONDITION_FAILED
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      status(result) shouldBe expectedStatus
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
       xmlRequestCaptor hasCaptured requestBody
       isTestCaptor hasCaptured false
     }
 
     "return 400 when MIME element is too long and referralRequestReference is too long" in new Setup {
-      val requestBody: Elem = readFromFile("ie4r02-v2-too-long--mime-and-referralRequest-Reference-elements.xml")
+      val requestBody: Elem   = readFromFile("ie4r02-v2-too-long--mime-and-referralRequest-Reference-elements.xml")
+      val expectedSoapMessage = expectedSoapResponse("Value of element referralRequestReference is too long\nValue of element MIME is too long")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Value of element referralRequestReference is too long\nValue of element MIME is too long", xRequestIdHeaderValue)
+
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
     "return 400 when includedBinaryObject element is blank" in new Setup {
-      val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-blank-includedBinaryObject-element.xml")
+      val requestBody: Elem   = readFromFile("uriAndBinaryObject/ie4r02-v2-blank-includedBinaryObject-element.xml")
+      val expectedSoapMessage = expectedSoapResponse("Value of element includedBinaryObject is not valid base 64 data")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Value of element includedBinaryObject is not valid base 64 data", xRequestIdHeaderValue)
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
     "return 400 when includedBinaryObject element is not base 64 data" in new Setup {
-      val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-includedBinaryObject-element-not-base64.xml")
+      val requestBody: Elem   = readFromFile("uriAndBinaryObject/ie4r02-v2-includedBinaryObject-element-not-base64.xml")
+      val expectedSoapMessage = expectedSoapResponse("Value of element includedBinaryObject is not valid base 64 data")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Value of element includedBinaryObject is not valid base 64 data", xRequestIdHeaderValue)
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
     "return 400 when uri element is too short" in new Setup {
-      val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-too-short-uri-element.xml")
+      val requestBody: Elem   = readFromFile("uriAndBinaryObject/ie4r02-v2-too-short-uri-element.xml")
+      val expectedSoapMessage = expectedSoapResponse("Value of element URI is too short")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Value of element URI is too short", xRequestIdHeaderValue)
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       verifyZeroInteractions(incomingMessageServiceMock)
     }
 
     "return 400 when action element is missing" in new Setup {
-      val requestBody: Elem = readFromFile("action/ie4r02-v2-missing-action-element.xml")
+      val requestBody: Elem   = readFromFile("action/ie4r02-v2-missing-action-element.xml")
+      val expectedSoapMessage = expectedSoapResponse("Element SOAP Header Action is missing")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      contentAsString(result) shouldBe getExpectedSoapFault(400, "Element SOAP Header Action is missing", xRequestIdHeaderValue)
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       verifyZeroInteractions(incomingMessageServiceMock)
     }
   }

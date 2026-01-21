@@ -17,7 +17,8 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future.successful
 import scala.xml.NodeSeq
 
 import play.api.mvc.{Action, ControllerComponents}
@@ -41,10 +42,10 @@ class ConfirmationController @Inject() (
   def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction andThen messageValidateAction).async(parse.xml) { implicit request =>
     apiPlatformOutboundSoapConnector.postMessage(request.body) flatMap {
       case SendSuccess(status)               =>
-        Future.successful(Status(status).as("application/soap+xml"))
+        successful(Status(status).as("application/soap+xml"))
       case SendFailExternal(message, status) =>
         logger.warn(s"Sending message failed with status code $status: $message")
-        Future.successful(new Status(status).as("application/soap+xml"))
+        successful(new Status(status).as("application/soap+xml"))
     }
   }
 }

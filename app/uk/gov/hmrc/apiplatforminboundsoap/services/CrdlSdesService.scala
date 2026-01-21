@@ -28,6 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.util.Base64Encoder
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
 
 @Singleton
@@ -37,13 +38,18 @@ class CrdlSdesService @Inject() (
     clock: Clock,
     @Named("crdl") override val xmlTransformer: XmlTransformer
   )(implicit executionContext: ExecutionContext
-  ) extends MessageService with CrdlXml {
+  ) extends MessageService with CrdlXml with Base64Encoder {
 
   override def getAttachment(wholeMessage: NodeSeq): Either[InvalidFormatResult, String] = {
     getBinaryAttachment(wholeMessage) match {
-      case attachment: NodeSeq if attachment.text.isBlank =>
+      case attachment: NodeSeq if attachment.text.isBlank    =>
+        logger.error("***********\n\tblank")
         Left(InvalidFormatResult("Embedded attachment element ReceiveReferenceDataRequestResult is empty"))
-      case attachment: NodeSeq                            =>
+      case attachment: NodeSeq if !isBase64(attachment.text) =>
+        logger.error("***********\n\tnot base 64")
+        Left(InvalidFormatResult("Embedded attachment element ReceiveReferenceDataRequestResult is not valid base 64 data"))
+      case attachment: NodeSeq                               =>
+        logger.error("***********\n\tall OK")
         Right(attachment.text)
     }
   }

@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
-import java.util.UUID.randomUUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.xml.Elem
@@ -38,20 +37,19 @@ import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageContro
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCertexMessageService
 
-class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
 
-    val app: Application      = new GuiceApplicationBuilder()
+    val app: Application = new GuiceApplicationBuilder()
       .configure("passThroughEnabled.CERTEX" -> "false", "microservice.services.certex-service.authToken" -> "auth")
       .build()
-    val xRequestIdHeaderValue = randomUUID.toString()
 
     val commonHeaders = Headers(
-      "Host"         -> "localhost",
-      "x-request-id" -> xRequestIdHeaderValue,
-      "Content-Type" -> "text/xml"
+      "Host"              -> "localhost",
+      "http_x_request_id" -> xRequestIdHeaderValue,
+      "Content-Type"      -> "text/xml"
     )
 
     val headersWithValidBearerToken = commonHeaders.add(
@@ -88,23 +86,25 @@ class CertexMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOn
     }
 
     "return error when unsuccessful with failure in connector sending" in new Setup {
-      val requestBody: Elem = <xml>foobar</xml>
+      val requestBody: Elem   = <xml>foobar</xml>
+      val expectedSoapMessage = expectedSoapResponse("some error", SERVICE_UNAVAILABLE)
       when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", SERVICE_UNAVAILABLE)))
 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
       status(result) shouldBe SERVICE_UNAVAILABLE
-      (contentAsJson(result) \ "error").as[String] shouldBe "some error"
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return error when send not attempted due to detected error in message format" in new Setup {
-      val requestBody: Elem = <xml>foobar</xml>
+      val requestBody: Elem   = <xml>foobar</xml>
+      val expectedSoapMessage = expectedSoapResponse("problem")
       when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendNotAttempted("problem")))
 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      (contentAsJson(result) \ "error").as[String] shouldBe "problem"
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
 }
