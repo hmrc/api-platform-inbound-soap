@@ -43,13 +43,10 @@ class CrdlSdesService @Inject() (
   override def getAttachment(wholeMessage: NodeSeq): Either[InvalidFormatResult, String] = {
     getBinaryAttachment(wholeMessage) match {
       case attachment: NodeSeq if attachment.text.isBlank    =>
-        logger.error("***********\n\tblank")
         Left(InvalidFormatResult("Embedded attachment element ReceiveReferenceDataRequestResult is empty"))
       case attachment: NodeSeq if !isBase64(attachment.text) =>
-        logger.error("***********\n\tnot base 64")
         Left(InvalidFormatResult("Embedded attachment element ReceiveReferenceDataRequestResult is not valid base 64 data"))
       case attachment: NodeSeq                               =>
-        logger.error("***********\n\tall OK")
         Right(attachment.text)
     }
   }
