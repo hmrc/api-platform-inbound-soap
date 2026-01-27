@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
-import java.util.UUID.randomUUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
-import scala.io.Source
-import scala.xml.{Elem, XML}
+import scala.xml.Elem
 
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
@@ -36,23 +34,22 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.crdl.CrdlMessageController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCrdlMessageService
 
-class CrdlMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
 
-    val app: Application      = new GuiceApplicationBuilder()
+    val app: Application = new GuiceApplicationBuilder()
       .configure("passThroughEnabled.CRDL" -> "false")
       .build()
-    val xRequestIdHeaderValue = randomUUID.toString()
 
     val commonHeaders = Headers(
-      "Host"         -> "localhost",
-      "x-request-id" -> xRequestIdHeaderValue,
-      "Content-Type" -> "text/xml"
+      "Host"              -> "localhost",
+      "http_x_request_id" -> xRequestIdHeaderValue,
+      "Content-Type"      -> "text/xml"
     )
 
     val headersWithValidBearerToken = commonHeaders.add(
@@ -68,10 +65,6 @@ class CrdlMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     val fakeRequest = FakeRequest("POST", "/crdl/incoming").withHeaders(headersWithValidBearerToken)
   }
 
-  def readFromFile(fileName: String) = {
-    XML.load(Source.fromResource(fileName).bufferedReader())
-  }
-
   "POST CRDL message endpoint" should {
     "return success when connector returns success" in new Setup {
       val requestBody: Elem = readFromFile("crdl/crdl-request-no-attachment.xml")
@@ -83,12 +76,24 @@ class CrdlMessageControllerSpec extends AnyWordSpec with Matchers with GuiceOneA
     }
 
     "return failure when connector returns failure" in new Setup {
-      val requestBody: Elem = readFromFile("crdl/crdl-request-no-attachment.xml")
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", SERVICE_UNAVAILABLE)))
-      val result            = controller.message()(fakeRequest.withBody(requestBody))
+      val requestBody: Elem   = readFromFile("crdl/crdl-request-no-attachment.xml")
+      val expectedStatus      = SERVICE_UNAVAILABLE
+      val expectedSoapMessage = expectedSoapResponse("some error", expectedStatus)
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", expectedStatus)))
+      val result              = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe SERVICE_UNAVAILABLE
-      (contentAsJson(result) \ "error").as[String] shouldBe "some error"
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+    }
+
+    "return failure when message is found to be invalid" in new Setup {
+      val requestBody: Elem   = readFromFile("crdl/crdl-request-no-attachment.xml")
+      val expectedSoapMessage = expectedSoapResponse("some error")
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendNotAttempted("some error")))
+      val result              = controller.message()(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
 }

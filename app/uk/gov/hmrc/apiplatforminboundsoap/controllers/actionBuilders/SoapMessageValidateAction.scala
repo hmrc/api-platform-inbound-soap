@@ -30,7 +30,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2RequestValidator
 
 @Singleton
 class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
-    extends ActionFilter[Request] with HttpErrorFunctions with Ics2RequestValidator with ValidateAction {
+    extends ActionFilter[Request] with HttpErrorFunctions with Ics2RequestValidator with SoapErrorResponse {
 
   override def executionContext: ExecutionContext = ec
 
@@ -41,8 +41,8 @@ class SoapMessageValidateAction @Inject() ()(implicit ec: ExecutionContext)
     verifyElements(body) match {
       case Right(_)                      => successful(None)
       case Left(e: NonEmptyList[String]) =>
-        val requestId = request.headers.get("x-request-id").getOrElse("requestId not known")
-        returnErrorResponse(e, requestId)
+        val requestId = request.headers.get("http_x_request_id").getOrElse("requestId not known")
+        successful(Some(returnErrorResponse(e, requestId)))
     }
   }
 }

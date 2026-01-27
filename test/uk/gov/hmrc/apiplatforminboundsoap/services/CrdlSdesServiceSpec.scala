@@ -135,6 +135,15 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       verifyZeroInteractions(sdesConnectorMock)
     }
 
+    "not make a call to SDES when message attachment is not base 64 data" in new Setup {
+      val xmlBody: Elem = readFromFile("crdl/crdl-request-attachment-not-base64.xml")
+
+      val result = await(service.processMessage(xmlBody))
+
+      result shouldBe List(SendNotAttempted("Embedded attachment element ReceiveReferenceDataRequestResult is not valid base 64 data"))
+      verifyZeroInteractions(sdesConnectorMock)
+    }
+
     "omit TaskIdentifier from SDES metadata header where not found in message" in new Setup {
       val xmlBody: Elem              = readFromFile("crdl/crdl-request-no-task-identifer.xml")
       val expectedSdesUuid           = UUID.randomUUID().toString

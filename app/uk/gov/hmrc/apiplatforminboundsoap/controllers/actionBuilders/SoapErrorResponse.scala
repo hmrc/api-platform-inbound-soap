@@ -16,16 +16,14 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders
 
-import scala.concurrent.Future.successful
-
 import cats.data.NonEmptyList
 
-import play.api.http.Status.BAD_REQUEST
-import play.api.mvc.Results.BadRequest
+import play.api.mvc.Result
+import play.api.mvc.Results.Status
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
-trait ValidateAction extends ApplicationLogger {
+trait SoapErrorResponse extends ApplicationLogger {
 
   def createSoapErrorResponse(statusCode: Int, reason: String, requestId: String) = {
     s"""<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
@@ -38,7 +36,7 @@ trait ValidateAction extends ApplicationLogger {
        |            <soap:Reason>
        |                <soap:Text xml:lang="en">$reason</soap:Text>
        |            </soap:Reason>
-       |            <soap:Node>public-soap-proxy</soap:Node>
+       |            <soap:Node>api-platform-inbound-soap</soap:Node>
        |            <soap:Detail>
        |                <RequestId>$requestId</RequestId>
        |            </soap:Detail>
@@ -47,16 +45,14 @@ trait ValidateAction extends ApplicationLogger {
        |</soap:Envelope>""".stripMargin
   }
 
-  def mapErrorsToString(errorList: NonEmptyList[String], problem: String): String = {
+  private def mapErrorsToString(errorList: NonEmptyList[String], result: String = ""): String = {
     val flatListErrors: List[String] = errorList.toList
-    flatListErrors.map(problemDescription => s"$problemDescription$problem").mkString("\n")
+    flatListErrors.map(problemDescription => s"$problemDescription$result").mkString("\n")
   }
 
-  def returnErrorResponse(errors: NonEmptyList[String], requestId: String) = {
-    val statusCode = BAD_REQUEST
-    logger.warn(s"RequestID: $requestId")
-    logger.warn(mapErrorsToString(errors, " caused message to be rejected"))
-    successful(Some(BadRequest(createSoapErrorResponse(statusCode, mapErrorsToString(errors, ""), requestId))
-      .as("application/soap+xml")))
+  def returnErrorResponse(errors: NonEmptyList[String], requestId: String, status: Int = 400): Result = {
+    logger.warn(s"""For http_x_request_id $requestId: ${mapErrorsToString(errors, " caused message to be rejected")}""")
+
+    Status(status)(createSoapErrorResponse(status, mapErrorsToString(errors), requestId)).as("application/soap+xml")
   }
 }

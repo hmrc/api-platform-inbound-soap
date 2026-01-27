@@ -21,11 +21,12 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future.successful
 import scala.xml.NodeSeq
 
-import play.api.libs.json.Json
+import cats.data.NonEmptyList
+
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapErrorResponse, SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundIcs2MessageService
 
@@ -37,15 +38,16 @@ class ICS2MessageController @Inject() (
     soapMessageValidateAction: SoapMessageValidateAction,
     incomingMessageService: InboundIcs2MessageService
   )(implicit ec: ExecutionContext
-  ) extends BackendController(cc) {
+  ) extends BackendController(cc) with SoapErrorResponse {
 
   def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
     implicit request =>
+      val requestId = request.headers.get("http_x_request_id").getOrElse("unable to obtain http_x_request_id")
       incomingMessageService.processInboundMessage(request.body) flatMap {
         case SendSuccess(status)               =>
           successful(Status(status).as("application/soap+xml"))
         case SendFailExternal(message, status) =>
-          successful(Status(status)(Json.obj("error" -> message)).as("application/soap+xml"))
+          successful(returnErrorResponse(NonEmptyList.one(message), requestId, status))
       }
   }
 }

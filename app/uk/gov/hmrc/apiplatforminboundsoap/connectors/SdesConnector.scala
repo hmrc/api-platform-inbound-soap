@@ -40,7 +40,7 @@ object SdesConnector {
 
 @Singleton
 class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: SdesConnector.Config)(implicit ec: ExecutionContext) extends ApplicationLogger {
-  val requiredHeaders: Seq[(String, String)] = Seq("Content-Type" -> "application/octet-stream", "User-Agent" -> "public-soap-proxy")
+  val requiredHeaders: Seq[(String, String)] = Seq("Content-Type" -> "application/octet-stream")
 
   def postMessage(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[SendResult] = {
     postHttpRequest(sdesRequest).map {
