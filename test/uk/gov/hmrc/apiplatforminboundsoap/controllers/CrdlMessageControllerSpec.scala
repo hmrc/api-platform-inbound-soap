@@ -68,7 +68,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
   "POST CRDL message endpoint" should {
     "return success when connector returns success" in new Setup {
       val requestBody: Elem = readFromFile("crdl/crdl-request-no-attachment.xml")
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
       val result            = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK

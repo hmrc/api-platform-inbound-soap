@@ -43,7 +43,7 @@ class CertexMessageController @Inject() (
     implicit request =>
       val requestId = request.headers.get("http_x_request_id").getOrElse("unable to obtain http_x_request_id")
       inboundCertexMessageService.processInboundMessage(request.body) flatMap {
-        case SendSuccess(status)               => successful(Status(status).as("application/soap+xml"))
+        case SendSuccess(status, body)         => successful(Status(status)(body).as("application/soap+xml"))
         case SendFailExternal(message, status) =>
           successful(returnErrorResponse(NonEmptyList.one(message), requestId, status))
         case SendNotAttempted(message)         =>

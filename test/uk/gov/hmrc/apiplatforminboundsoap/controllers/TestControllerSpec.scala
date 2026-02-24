@@ -92,7 +92,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(ACCEPTED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(ACCEPTED, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 

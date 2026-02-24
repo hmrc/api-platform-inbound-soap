@@ -44,7 +44,7 @@ class ImportControlInboundSoapConnector @Inject() (httpClientV2: HttpClientV2, a
         logger.warn(s"Sending message failed with status code $statusCode: $message")
         SendFailExternal(message, statusCode)
       case Right(httpResponse: HttpResponse)                      =>
-        SendSuccess(httpResponse.status)
+        SendSuccess(httpResponse.status, httpResponse.body)
     }
       .recoverWith {
         case NonFatal(e) =>

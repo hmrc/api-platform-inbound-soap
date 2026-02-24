@@ -45,6 +45,7 @@ class CertexMessageControllerISpec extends AnyWordSpecLike with Matchers
   }
 
   val certexRequestBody: Elem = readFromFile("requests/certex/certex-request-no-attachment.xml")
+  val responseBody            = <xml>response</xml>
 
   override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
@@ -73,13 +74,21 @@ class CertexMessageControllerISpec extends AnyWordSpecLike with Matchers
   "message" should {
     "forward an XML message" in {
       val expectedRequestStatus = Status.OK
-      primeStubForSuccess("OK", expectedRequestStatus, forwardRequestPath)
+      primeStubForXMLSuccess(certexRequestBody, responseBody, expectedRequestStatus, forwardRequestPath)
       val result                = underTest.message()(fakeRequest.withBody(certexRequestBody).withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedRequestStatus
 
       verifyRequestBody(certexRequestBody.toString, forwardRequestPath)
       verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("Authorization", havingExactly("Bearer provided")))
       expectedForwardedHeaders.foreach(h => verifyHeader(h._1, h._2, path = forwardRequestPath))
+    }
+
+    "return any response body" in {
+      val expectedRequestStatus = Status.OK
+      primeStubForXMLSuccess(certexRequestBody, responseBody, expectedRequestStatus, forwardRequestPath)
+      val result                = underTest.message()(fakeRequest.withBody(certexRequestBody).withHeaders(expectedRequestHeaders))
+      status(result) shouldBe expectedRequestStatus
+      contentAsString(result) shouldBe responseBody.mkString
     }
 
     "return downstream error responses to caller" in {

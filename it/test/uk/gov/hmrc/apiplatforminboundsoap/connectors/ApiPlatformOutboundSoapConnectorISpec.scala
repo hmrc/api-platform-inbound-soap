@@ -51,6 +51,7 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
   trait Setup {
     val underTest: ApiPlatformOutboundSoapConnector = app.injector.instanceOf[ApiPlatformOutboundSoapConnector]
     val codRequestBody: Elem                        = readFromFile("acknowledgement-requests/cod_request.xml")
+    val responseBody: Elem                          = <xml>response</xml>
     val expectedHeaders                             = forwardedHeaders(codRequestBody)
     val acknowledgementPath                         = "/acknowledgement"
 
@@ -64,37 +65,36 @@ class ApiPlatformOutboundSoapConnectorISpec extends AnyWordSpec with Matchers wi
   "postMessage" should {
 
     "return success status (for COD) when returned by the outbound soap service" in new Setup {
-      primeStubForSuccess(codRequestBody, OK, path = acknowledgementPath)
+      primeStubForSuccess(codRequestBody, responseBody, OK, path = acknowledgementPath)
 
       val result: SendResult = await(underTest.postMessage(codRequestBody))
 
-      result shouldBe SendSuccess(OK)
+      result shouldBe SendSuccess(OK, responseBody.mkString)
       verifyRequestBody(codRequestBody, path = acknowledgementPath)
       verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2, path = acknowledgementPath)
     }
 
     "return error status returned by the outbound soap service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
-      primeStubForSuccess(codRequestBody, expectedStatus, path = acknowledgementPath)
+      primeStubForSuccess(codRequestBody, responseBody, expectedStatus, path = acknowledgementPath)
 
       val result: SendResult = await(underTest.postMessage(codRequestBody))
 
       result shouldBe SendFailExternal(
-        s"POST of 'http://$externalWireMockHost:$externalWireMockPort$acknowledgementPath' returned $expectedStatus. Response body: ''",
+        s"POST of 'http://$externalWireMockHost:$externalWireMockPort$acknowledgementPath' returned $expectedStatus. Response body: '${responseBody.mkString}'",
         expectedStatus
       )
       verifyHeader(expectedHeaders.head._1, expectedHeaders.head._2, path = acknowledgementPath)
     }
 
     "return error status when soap fault is returned by the outbound soap service" in new Setup {
-      val responseBody = "<Envelope><Body>foobar</Body></Envelope>"
       Seq(
         Fault.CONNECTION_RESET_BY_PEER -> "Connection reset",
         Fault.EMPTY_RESPONSE           -> "Remotely closed",
         Fault.MALFORMED_RESPONSE_CHUNK -> "Remotely closed",
         Fault.RANDOM_DATA_THEN_CLOSE   -> "Remotely closed"
       ) foreach { input =>
-        primeStubForFault(codRequestBody, responseBody, input._1, path = acknowledgementPath)
+        primeStubForFault(codRequestBody, responseBody.toString(), input._1, path = acknowledgementPath)
 
         val result: SendResult = await(underTest.postMessage(codRequestBody))
 

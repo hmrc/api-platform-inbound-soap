@@ -45,6 +45,7 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
   }
 
   val codRequestBody: Elem = readFromFile("requests/ie4r02-v2.xml")
+  val responseBody: Elem   = <xml>response</xml>
 
   val soapFaultResponse =
     """<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
@@ -86,11 +87,11 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
       val expectedStatus = Status.OK
 
       val expectedHeaders = Headers("Authorization" -> "Bearer blah", "Content-Type" -> "text/xml; charset=UTF-8")
-      primeStubForSuccess("OK", expectedStatus, path)
+      primeStubForXMLSuccess(codRequestBody, responseBody, expectedStatus, path)
       val result          = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(expectedHeaders))
       status(result) shouldBe expectedStatus
 
-      verifyRequestBody(codRequestBody.toString(), path)
+      verifyRequestBody(codRequestBody.mkString, path)
       expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
     }
 
@@ -102,7 +103,7 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
         "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU",
         "Content-Type"  -> "text/xml; charset=UTF-8"
       )
-      primeStubForSuccess("OK", expectedStatus, path)
+      primeStubForXMLSuccess(codRequestBody, responseBody, expectedStatus, path)
       val result          = underTest.message()(fakeRequestUnknownPath.withBody(codRequestBody).withHeaders(expectedHeaders))
       status(result) shouldBe expectedStatus
     }
@@ -117,7 +118,7 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
 
       status(result) shouldBe expectedStatus
       contentAsString(result) shouldEqual soapFaultResponse
-      verifyRequestBody(codRequestBody.toString(), path)
+      verifyRequestBody(codRequestBody.mkString, path)
       expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
     }
 
@@ -130,7 +131,7 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
       val result          = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(receivedHeaders))
       status(result) shouldBe expectedStatus
 
-      verifyRequestBody(codRequestBody.toString(), path)
+      verifyRequestBody(codRequestBody.mkString, path)
       expectedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = path))
     }
 

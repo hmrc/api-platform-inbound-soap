@@ -69,7 +69,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
   "POST Certex message endpoint" should {
     "return 200 for all lower case path" in new Setup {
       val requestBody: Elem = <xml>foobar</xml>
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -78,7 +78,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
 
     "return 200 for part upper case path" in new Setup {
       val requestBody: Elem = <xml>foobar</xml>
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 

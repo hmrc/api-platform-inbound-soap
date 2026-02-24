@@ -76,11 +76,11 @@ class CertexControllerPassThroughISpec extends AnyWordSpecLike with Matchers
   "message" should {
     "forward an XML message" in {
       val expectedRequestStatus = Status.OK
-      primeStubForSuccess("OK", expectedRequestStatus, forwardRequestPath)
+      primeStubForXMLSuccess(certexRequestBody, <xml>response</xml>, expectedRequestStatus, forwardRequestPath)
       val result                = underTest.message()(fakeRequest.withBody(certexRequestBody).withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedRequestStatus
 
-      verifyRequestBody(certexRequestBody.toString, forwardRequestPath)
+      verifyXMLRequestBody(certexRequestBody, forwardRequestPath)
       verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader(
         "Authorization",
         havingExactly(authBearerJwt)
@@ -94,7 +94,7 @@ class CertexControllerPassThroughISpec extends AnyWordSpecLike with Matchers
       val result = underTest.message()(fakeRequest.withBody(certexRequestBody).withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedStatus
 
-      verifyRequestBody(certexRequestBody.toString, forwardRequestPath)
+      verifyRequestBody(certexRequestBody.mkString, forwardRequestPath)
     }
 
     "reject an non-XML message" in {

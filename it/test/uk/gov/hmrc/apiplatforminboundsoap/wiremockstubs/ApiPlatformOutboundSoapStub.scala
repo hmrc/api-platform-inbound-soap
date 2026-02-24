@@ -24,12 +24,13 @@ import com.github.tomakehurst.wiremock.stubbing.StubMapping
 
 trait ApiPlatformOutboundSoapStub {
 
-  def primeStubForSuccess(body: Elem, responseStatus: Int, path: String = "/") = {
+  def primeStubForSuccess(body: Elem, response: Elem, responseStatus: Int, path: String = "/") = {
     stubFor(
       post(urlEqualTo(path))
         .withRequestBody(equalToXml(body.mkString))
         .willReturn(
           aResponse()
+            .withBody(response.mkString)
             .withStatus(responseStatus)
         )
     )

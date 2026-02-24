@@ -44,6 +44,7 @@ class ConfirmationControllerPassThroughISpec extends AnyWordSpecLike with Matche
   }
 
   val codRequestBody: Elem = readFromFile("acknowledgement-requests/cod_request.xml")
+  val responseBody: Elem   = <xml>response</xml>
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
@@ -73,7 +74,7 @@ class ConfirmationControllerPassThroughISpec extends AnyWordSpecLike with Matche
         "Content-Type"  -> "text/xml"
       )
       val forwardedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
-      primeStubForSuccess("OK", expectedStatus, forwardRequestPath)
+      primeStubForXMLSuccess(codRequestBody, responseBody, expectedStatus, forwardRequestPath)
       val result           = underTest.message()(fakeRequest.withBody(codRequestBody).withHeaders(requestHeaders))
       status(result) shouldBe expectedStatus
 

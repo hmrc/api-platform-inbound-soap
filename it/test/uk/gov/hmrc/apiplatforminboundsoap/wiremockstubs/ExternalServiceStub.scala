@@ -16,17 +16,29 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs
 
+import scala.xml.Elem
+
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.Fault
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 
 trait ExternalServiceStub {
 
+  def primeStubForXMLSuccess(requestBody: Elem, responseBody: Elem, responseStatus: Int, path: String = "/"): StubMapping = {
+    stubFor(post(urlPathEqualTo(path))
+      .withRequestBody(equalToXml(requestBody.mkString))
+      .willReturn(
+        aResponse()
+          .withBody(responseBody.mkString)
+          .withStatus(responseStatus)
+      ))
+  }
+
   def primeStubForSuccess(responseBody: String, responseStatus: Int, path: String = "/"): StubMapping = {
     stubFor(post(urlPathEqualTo(path))
       .willReturn(
         aResponse()
-          .withBody(responseBody)
+          .withBody(responseBody.mkString)
           .withStatus(responseStatus)
       ))
   }
@@ -40,7 +52,12 @@ trait ExternalServiceStub {
       ))
   }
 
-  def verifyRequestBody(expectedRequestBody: String, path: String = "/"): Unit = {
+  def verifyXMLRequestBody(expectedRequestBody: Elem, path: String = "/"): Unit = {
+    verify(postRequestedFor(urlPathEqualTo(path))
+      .withRequestBody(equalTo(expectedRequestBody.mkString)))
+  }
+
+  def verifyRequestBody(expectedRequestBody: String, path: String = "/"): Unit  = {
     verify(postRequestedFor(urlPathEqualTo(path))
       .withRequestBody(equalTo(expectedRequestBody)))
   }

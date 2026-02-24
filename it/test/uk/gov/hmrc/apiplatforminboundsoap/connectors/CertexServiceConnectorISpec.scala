@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
-import scala.xml.Elem
-
 import com.github.tomakehurst.wiremock.http.Fault
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -31,10 +29,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.ExternalWireMockSupport
 
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ApiPlatformOutboundSoapStub
+import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
 class CertexServiceConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite
-    with ExternalWireMockSupport with ApiPlatformOutboundSoapStub {
+    with ExternalWireMockSupport with ExternalServiceStub {
   override implicit lazy val app: Application = appBuilder.build()
   implicit val hc: HeaderCarrier              = HeaderCarrier()
 
@@ -49,7 +47,8 @@ class CertexServiceConnectorISpec extends AnyWordSpec with Matchers with GuiceOn
 
   trait Setup {
     val underTest: CertexServiceConnector = app.injector.instanceOf[CertexServiceConnector]
-    val requestBody: Elem                 = <foo>bar</foo>
+    val requestBody                       = <foo>bar</foo>
+    val responseBody                      = <zim>job</zim>
     val targetPath                        = "/cls/receive-ies-messages-from-eu/v1"
     val addedHeaders                      = Seq.empty
   }
@@ -57,32 +56,34 @@ class CertexServiceConnectorISpec extends AnyWordSpec with Matchers with GuiceOn
   "postMessage" should {
 
     "return success status when returned by the CERTEX service" in new Setup {
-      primeStubForSuccess(requestBody, OK, path = targetPath)
+      primeStubForXMLSuccess(requestBody, responseBody, OK, path = targetPath)
 
       val result: SendResult = await(underTest.postMessage(requestBody, addedHeaders))
 
-      result shouldBe SendSuccess(OK)
-      verifyRequestBody(requestBody, path = targetPath)
+      result shouldBe SendSuccess(OK, responseBody.mkString)
+      verifyXMLRequestBody(requestBody, path = targetPath)
     }
 
     "return error status returned by the CERTEX service" in new Setup {
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
-      primeStubForSuccess(requestBody, expectedStatus, path = targetPath)
+      primeStubForXMLSuccess(requestBody, responseBody, expectedStatus, path = targetPath)
 
       val result: SendResult = await(underTest.postMessage(requestBody, addedHeaders))
 
-      result shouldBe SendFailExternal(s"POST of 'http://$externalWireMockHost:$externalWireMockPort$targetPath' returned $expectedStatus. Response body: ''", expectedStatus)
+      result shouldBe SendFailExternal(
+        s"POST of 'http://$externalWireMockHost:$externalWireMockPort$targetPath' returned $expectedStatus. Response body: '${responseBody.mkString}'",
+        expectedStatus
+      )
     }
 
     "return error status when soap fault is returned by the CERTEX service" in new Setup {
-      val responseBody = "<Envelope><Body>foobar</Body></Envelope>"
       Seq(
         Fault.CONNECTION_RESET_BY_PEER -> "Connection reset",
         Fault.EMPTY_RESPONSE           -> "Remotely closed",
         Fault.MALFORMED_RESPONSE_CHUNK -> "Remotely closed",
         Fault.RANDOM_DATA_THEN_CLOSE   -> "Remotely closed"
       ) foreach { input =>
-        primeStubForFault(requestBody, responseBody, input._1, targetPath)
+        primeStubForFault(requestBody.mkString, input._1, targetPath)
 
         val result: SendResult = await(underTest.postMessage(requestBody, addedHeaders))
 
