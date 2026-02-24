@@ -38,7 +38,7 @@ trait ExternalServiceStub {
     stubFor(post(urlPathEqualTo(path))
       .willReturn(
         aResponse()
-          .withBody(responseBody.mkString)
+          .withBody(responseBody)
           .withStatus(responseStatus)
       ))
   }
@@ -57,7 +57,7 @@ trait ExternalServiceStub {
       .withRequestBody(equalTo(expectedRequestBody.mkString)))
   }
 
-  def verifyRequestBody(expectedRequestBody: String, path: String = "/"): Unit  = {
+  def verifyRequestBody(expectedRequestBody: String, path: String = "/"): Unit = {
     verify(postRequestedFor(urlPathEqualTo(path))
       .withRequestBody(equalTo(expectedRequestBody)))
   }
