@@ -79,7 +79,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -93,7 +93,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-uri-instead-of-includedBinaryObject-element.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -107,7 +107,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -121,7 +121,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -135,7 +135,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
       val requestBody: Elem              = readFromFile("ie4n09-v2.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 

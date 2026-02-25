@@ -41,8 +41,8 @@ class ConfirmationController @Inject() (
 
   def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction andThen messageValidateAction).async(parse.xml) { implicit request =>
     apiPlatformOutboundSoapConnector.postMessage(request.body) flatMap {
-      case SendSuccess(status)               =>
-        successful(Status(status).as("application/soap+xml"))
+      case SendSuccess(status, body)         =>
+        successful(Status(status)(body).as("application/soap+xml"))
       case SendFailExternal(message, status) =>
         logger.warn(s"Sending message failed with status code $status: $message")
         successful(new Status(status).as("application/soap+xml"))

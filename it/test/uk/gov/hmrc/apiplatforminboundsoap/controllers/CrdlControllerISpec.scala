@@ -45,6 +45,7 @@ class CrdlControllerISpec extends AnyWordSpecLike with Matchers
   }
 
   val crdlRequestBody: Elem = readFromFile("requests/crdl/crdl-request-no-attachment.xml")
+  val responseBody: Elem    = <xml>response</xml>
 
   override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
@@ -75,7 +76,7 @@ class CrdlControllerISpec extends AnyWordSpecLike with Matchers
   "message" should {
     "forward an XML message" in {
       val expectedRequestStatus = Status.OK
-      primeStubForSuccess("OK", expectedRequestStatus, forwardRequestPath)
+      primeStubForXMLSuccess(crdlRequestBody, responseBody, expectedRequestStatus, forwardRequestPath)
       val result                = underTest.message()(fakeRequest.withBody(crdlRequestBody).withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedRequestStatus
 

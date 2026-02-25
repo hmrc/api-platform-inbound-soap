@@ -46,6 +46,7 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
 
   val ics2RequestBody: Elem = readFromFile("requests/ie4r02-v2.xml")
   val forwardedBody: Elem   = readFromFile("requests/post-sdes-processing/ie4r02-v2-one-binary-attachment.xml")
+  val responseBody: Elem    = <xml>response</xml>
 
   override def fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
@@ -76,12 +77,12 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
     "forward an XML message" in {
       val expectedRequestStatus = Status.OK
 
-      primeStubForSuccess("OK", expectedRequestStatus, forwardRequestPath)
+      primeStubForXMLSuccess(forwardedBody, responseBody, expectedRequestStatus, forwardRequestPath)
       primeStubForSuccess("some-uuid-like-string", expectedSdesStatus, sdesPath)
       val result = underTest.message()(fakeRequest.withBody(ics2RequestBody).withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedRequestStatus
 
-      verifyRequestBody(forwardedBody.toString, forwardRequestPath)
+      verifyRequestBody(forwardedBody.mkString, forwardRequestPath)
       verifyHeaderAbsent("Authorization", forwardRequestPath)
       verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("x-files-included", havingExactly("true")))
     }
@@ -94,7 +95,7 @@ class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
       val result = underTest.message()(fakeRequest.withBody(ics2RequestBody).withHeaders(expectedRequestHeaders))
       status(result) shouldBe expectedStatus
 
-      verifyRequestBody(forwardedBody.toString, forwardRequestPath)
+      verifyRequestBody(forwardedBody.mkString, forwardRequestPath)
     }
 
     "reject an non-XML message" in {

@@ -85,11 +85,11 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
   "processInboundMessage" should {
     "return success when connector returns success" in new Setup {
-      when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = await(service.processInboundMessage(xmlBodyNoAttachment))
 
-      result shouldBe SendSuccess(OK)
+      result shouldBe SendSuccess(OK, "some body")
       verify(crdlOrchestratorConnectorMock).postMessage(xmlBodyNoAttachment, forwardedHeadersNoAttachment)
       forwardedMessageCaptor hasCaptured xmlBodyNoAttachment
       headerCaptor hasCaptured forwardedHeadersNoAttachment
@@ -98,13 +98,13 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     "invoke SDESConnector when message contains embedded file attachment" in new Setup {
       val forwardedXmlBody = readFromFile("post-sdes-processing/crdl/crdl-request-well-formed.xml")
 
-      when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
       when(crdlSdesServiceMock.processMessage(refEq(xmlBodyWithAttachment))(*)).thenReturn(successful(List(SdesSuccess(
         "some-uuid-like-string"
       ))))
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
-      result shouldBe SendSuccess(OK)
+      result shouldBe SendSuccess(OK, "some body")
       verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
       verify(crdlSdesServiceMock).processMessage(xmlBodyWithAttachment)
       getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false

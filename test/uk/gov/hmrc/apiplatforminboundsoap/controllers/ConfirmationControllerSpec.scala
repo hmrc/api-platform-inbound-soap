@@ -167,7 +167,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
         .withHeaders(headers.add(validBearerToken))
         .withBody(codRequestBody)
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK
@@ -182,7 +182,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK

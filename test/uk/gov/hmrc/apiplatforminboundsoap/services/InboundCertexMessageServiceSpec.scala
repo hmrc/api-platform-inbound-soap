@@ -128,11 +128,11 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
 
   "processInboundMessage" should {
     "return success when connector returns success" in new Setup {
-      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = await(service.processInboundMessage(xmlBodyNoAttachment))
 
-      result shouldBe SendSuccess(OK)
+      result shouldBe SendSuccess(OK, "some body")
       verify(certexServiceConnectorMock).postMessage(xmlBodyNoAttachment, forwardedHeadersNoAttachment)
       forwardedMessageCaptor hasCaptured xmlBodyNoAttachment
       headerCaptor hasCaptured forwardedHeadersNoAttachment
@@ -141,13 +141,13 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     "invoke SDESConnector when message contains embedded file attachment" in new Setup {
       val forwardedXmlBody = readFromFile("post-sdes-processing/certex/forwarded-responseIES002.xml")
 
-      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
       when(certexSdesServiceMock.processMessage(refEq(xmlBodyWithAttachment))(*)).thenReturn(successful(List(SdesSuccess(
         "some-uuid-like-string"
       ))))
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
-      result shouldBe SendSuccess(OK)
+      result shouldBe SendSuccess(OK, "some body")
       verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
       verify(certexSdesServiceMock).processMessage(xmlBodyWithAttachment)
       getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
@@ -157,13 +157,13 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     "generate random UUID for x-correlation-id when message doesn't provide one" in new Setup {
       val forwardedXmlBody = readFromFile("post-sdes-processing/certex/responseIES002-messageId-invalid-uuid.xml")
 
-      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK)))
+      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
       when(certexSdesServiceMock.processMessage(refEq(xmlBodyWithBadMsgId))(*)).thenReturn(successful(List(SdesSuccess(
         "some-uuid-like-string"
       ))))
       val result = await(service.processInboundMessage(xmlBodyWithBadMsgId))
 
-      result shouldBe SendSuccess(OK)
+      result shouldBe SendSuccess(OK, "some body")
       verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
       verify(certexSdesServiceMock).processMessage(xmlBodyWithBadMsgId)
       getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
