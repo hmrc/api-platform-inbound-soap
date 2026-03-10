@@ -45,7 +45,7 @@ class CertexXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
     "replace contents of pcaDocumentPdf element with provided replacement" in {
       val xmlRequestBody: Elem             = readFromFile("certex/responseIES002.xml")
       val xmlRequestAfterReplacement: Elem = readFromFile("post-sdes-processing/certex/forwarded-responseIES002.xml")
-      val afterTransformation              = xmlTransformer.replaceAttachment(xmlRequestBody, "some-uuid-like-string")
+      val afterTransformation              = xmlTransformer.replaceAttachment(xmlRequestBody, "THIS WONT BE PRESENT")
       getXmlDiff(afterTransformation, xmlRequestAfterReplacement).build().hasDifferences shouldBe false
     }
   }
