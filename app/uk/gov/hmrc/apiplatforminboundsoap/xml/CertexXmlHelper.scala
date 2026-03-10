@@ -17,7 +17,7 @@
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import scala.xml.transform.{RewriteRule, RuleTransformer}
-import scala.xml.{Elem, Node, NodeSeq, Text}
+import scala.xml.{Elem, Node, NodeSeq}
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
@@ -28,12 +28,8 @@ class CertexAttachmentReplacingTransformer extends XmlTransformer {
       {
         def rewrite = new RewriteRule {
           override def transform(n: Node): Seq[Node] = n match {
-            case elem: Elem if elem.label == "pcaDocumentPdf" =>
-              elem.copy(child = elem.child collect {
-                case Text(_) => Text(s)
-              })
-            case n                                            =>
-              n
+            case elem: Elem if elem.label == "pcaDocumentPdf" => NodeSeq.Empty
+            case n                                            => n
           }
         }
 

@@ -160,7 +160,7 @@
          <ns24:documentAcceptedProcedure>
             <ns24:transitDeclaration>TIR</ns24:transitDeclaration>
          </ns24:documentAcceptedProcedure>
-         <ns24:pcaDocumentPdf>some-uuid-like-string</ns24:pcaDocumentPdf>
+         
          <ns24:pushActive>false</ns24:pushActive>
       </relevantProcessedPcaInformation>
       <processingResult>processedSuccessfullyDataReturned</processingResult>
