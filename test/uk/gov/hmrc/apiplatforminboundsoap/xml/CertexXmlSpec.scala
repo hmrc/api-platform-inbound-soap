@@ -73,6 +73,11 @@ class CertexXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite w
       getMrn(xmlRequestBody) shouldBe "18PL12345678956540"
     }
 
+    "get correct MRN where more than one exists" in {
+      val xmlRequestBody: Elem = readFromFile("certex/responseIES002-multipleMRN.xml")
+      getMrn(xmlRequestBody) shouldBe "26GB32W14JKTL8YAR0"
+    }
+
     "return empty string for MRN when element is empty" in {
       val xmlRequestBody: Elem = readFromFile("certex/responseIES002-empty-elements.xml")
       getMrn(xmlRequestBody) shouldBe ""
