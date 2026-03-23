@@ -50,7 +50,7 @@ trait CertexXml extends ApplicationLogger {
   }
 
   def getMrn(soapMessage: NodeSeq): String = {
-    (soapMessage \\ "MRN") match {
+    soapMessage \\ "customsDeclarationReferenceNumber" \ "MRN" match {
       case NodeSeq.Empty => ""
       case n: NodeSeq    => n.text
     }
