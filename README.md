@@ -1,6 +1,34 @@
 
 # api-platform-inbound-soap
 
+The following shows the processing of a SOAP message containing an attachment 
+```mermaid
+sequenceDiagram
+    CCN2->>Scrubbing Centre:  SOAP request
+    Scrubbing Centre->>api-platform-inbound-soap: SOAP request with JWT Auth header
+    api-platform-inbound-soap->>api-platform-inbound-soap: validate JWT
+    api-platform-inbound-soap->>api-platform-inbound-soap: extract attachment
+    api-platform-inbound-soap->>SDES: send attachment
+    SDES-->>api-platform-inbound-soap: return UUID 
+    api-platform-inbound-soap->>api-platform-inbound-soap: replace attachment element with UUID 
+    api-platform-inbound-soap->>api-platform-inbound-soap: add headers
+    api-platform-inbound-soap->>final-consumer: send modified SOAP request
+    final-consumer-->>api-platform-inbound-soap: response status with optional body
+    api-platform-inbound-soap-->>CCN2: response status with optional body
+```
+    
+The following shows the processing of a SOAP message with no attachment 
+```mermaid
+sequenceDiagram
+    CCN2->>Scrubbing Centre:  SOAP request
+    Scrubbing Centre->>api-platform-inbound-soap: SOAP request with JWT Auth header
+    api-platform-inbound-soap->>api-platform-inbound-soap: validate JWT
+    api-platform-inbound-soap->>api-platform-inbound-soap: add headers
+    api-platform-inbound-soap->>final-consumer: send modified SOAP request
+    final-consumer-->>api-platform-inbound-soap: response status with optional body
+    api-platform-inbound-soap-->>CCN2: response status with optional body
+```
+    
 This service receives SOAP XML requests from the EU's CCN2 system and processes them according to their content. It services
 three areas of import-control concern: ICS2, CRDL and CERTEX.
 
