@@ -16,23 +16,25 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers.eori
 
-import cats.data.NonEmptyList
-import play.api.mvc.{Action, ControllerComponents}
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapErrorResponse, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.{InboundCertexMessageService, InboundEoriMessageService}
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future.successful
 import scala.xml.NodeSeq
 
+import cats.data.NonEmptyList
+
+import play.api.mvc.{Action, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapErrorResponse, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundEoriMessageService
+
 @Singleton()
-class EoriMessageController @Inject()(
+class EoriMessageController @Inject() (
     cc: ControllerComponents,
     verifyJwtTokenAction: VerifyJwtTokenAction,
-    inboundEoriMessageService: InboundEoriMessageService,
+    inboundEoriMessageService: InboundEoriMessageService
   )(implicit ec: ExecutionContext
   ) extends BackendController(cc) with SoapErrorResponse {
 

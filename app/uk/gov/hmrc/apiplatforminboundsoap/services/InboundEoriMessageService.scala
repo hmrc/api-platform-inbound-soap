@@ -16,16 +16,6 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
-import com.google.inject.name.Named
-import play.api.http.MimeTypes
-import play.api.http.Status.OK
-import play.api.http.Status.UNPROCESSABLE_ENTITY
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, CertexUuidHelper, UuidGenerator, ZonedDateTimeHelper}
-import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexXml, XmlTransformer}
-import uk.gov.hmrc.http.HeaderCarrier
-
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -34,11 +24,19 @@ import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
+import play.api.http.MimeTypes
+import play.api.http.Status.OK
+import uk.gov.hmrc.http.HeaderCarrier
+
+import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, CertexUuidHelper, UuidGenerator, ZonedDateTimeHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.CertexXml
+
 @Singleton
-class InboundEoriMessageService @Inject()(
+class InboundEoriMessageService @Inject() (
 //    certexServiceConnector: CertexServiceConnector,
     override val uuidGenerator: UuidGenerator,
-    dtHelper: ZonedDateTimeHelper,
+    dtHelper: ZonedDateTimeHelper
 //    config: CertexServiceConnector.Config
   )(implicit ec: ExecutionContext
   ) extends ApplicationLogger with CertexXml with MimeTypes with CertexUuidHelper {
@@ -100,8 +98,6 @@ class InboundEoriMessageService @Inject()(
       "x-files-included" -> fileIncluded(soapRequest).toString
     )
   }
-
-
 
   /*private def forwardMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     certexServiceConnector.postMessage(soapRequest, headers)
