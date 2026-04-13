@@ -1,0 +1,100 @@
+/*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.apiplatforminboundsoap.controllers
+
+import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.Headers
+import play.api.test.Helpers._
+import play.api.test.{FakeRequest, Helpers}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.eori.EoriMessageController
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.services.{InboundCertexMessageService, InboundEoriMessageService}
+import uk.gov.hmrc.http.HeaderCarrier
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future.successful
+import scala.xml.Elem
+
+class EoriMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+  implicit val hc: HeaderCarrier = HeaderCarrier()
+
+  trait Setup {
+
+    val app: Application = new GuiceApplicationBuilder()
+      .configure("microservice.services.certex-service.authToken" -> "auth")
+      .build()
+
+    val commonHeaders = Headers(
+      "Host"              -> "localhost",
+      "x_request_id" -> xRequestIdHeaderValue,
+      "Content-Type"      -> "text/xml"
+    )
+
+    val headersWithValidBearerToken = commonHeaders.add(
+      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU"
+    )
+
+    private val verifyJwtTokenAction  = app.injector.instanceOf[VerifyJwtTokenAction]
+    val mockService                   = mock[InboundEoriMessageService]
+
+    val controller                     =
+      new EoriMessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, mockService)
+    val fakeRequest                    = FakeRequest("POST", "/eori/dataChangeEvents").withHeaders(headersWithValidBearerToken)
+  }
+
+  "POST Certex message endpoint" should {
+    "return 200 for successful request" in new Setup {
+      val requestBody: Elem = <xml>foobar</xml>
+      val responseBody: String = "<xml>some response body</xml>"
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK, responseBody)))
+
+      val result = controller.message()(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe OK
+      contentAsString(result) shouldBe responseBody
+    }
+
+    "return error when unsuccessful with failure in connector sending" in new Setup {
+      val requestBody: Elem   = <xml>foobar</xml>
+      val expectedSoapMessage = expectedSoapResponse("some error", SERVICE_UNAVAILABLE)
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", SERVICE_UNAVAILABLE)))
+
+      val result = controller.message()(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe SERVICE_UNAVAILABLE
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+    }
+
+    "return error when send not attempted due to detected error in message format" in new Setup {
+      val requestBody: Elem   = <xml>foobar</xml>
+      val expectedSoapMessage = expectedSoapResponse("problem")
+      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendNotAttempted("problem")))
+
+      val result = controller.message()(fakeRequest.withBody(requestBody))
+
+      status(result) shouldBe BAD_REQUEST
+      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+    }
+  }
+}
