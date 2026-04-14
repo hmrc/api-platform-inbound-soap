@@ -64,10 +64,10 @@ class EoriMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     val fakeRequest = FakeRequest("POST", "/eori/dataChangeEvents").withHeaders(headersWithValidBearerToken)
   }
 
-  "POST Certex message endpoint" should {
+  "POST EORI message endpoint" should {
     "return 200 for successful request" in new Setup {
       val requestBody: Elem    = <xml>foobar</xml>
-      val responseBody: String = "<xml>some response body</xml>"
+      val responseBody: String = <xml>some response body</xml>.text
       when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK, responseBody)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
