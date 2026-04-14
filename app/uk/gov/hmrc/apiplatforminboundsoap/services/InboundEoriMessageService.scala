@@ -23,83 +23,46 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
-
 import play.api.http.MimeTypes
 import play.api.http.Status.OK
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, CertexUuidHelper, UuidGenerator, ZonedDateTimeHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, CertexUuidHelper, RandomUuidGenerator, UuidGenerator, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.CertexXml
 
 @Singleton
 class InboundEoriMessageService @Inject() (
-//    certexServiceConnector: CertexServiceConnector,
-    override val uuidGenerator: UuidGenerator,
-    dtHelper: ZonedDateTimeHelper
-//    config: CertexServiceConnector.Config
+                                            eoriServiceConnector: EoriServiceConnector,
+                                            uuidGenerator: RandomUuidGenerator,
+                                            dtHelper: ZonedDateTimeHelper,
+                                            config: EoriServiceConnector.Config
   )(implicit ec: ExecutionContext
-  ) extends ApplicationLogger with CertexXml with MimeTypes with CertexUuidHelper {
+  ) extends ApplicationLogger with MimeTypes {
 
   def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
-    val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
+    val extraHeaders: Seq[(String, String)] = buildHeadersToAppend()
 
-//    if (fileIncluded(wholeMessage)) {
-//      sendToSdesThenForwardMessage(wholeMessage, extraHeaders)
-//    } else {
-//      forwardMessage(wholeMessage, extraHeaders)
-//    }
-
-    successful(SendSuccess(OK, wholeMessage.toString()))
+    forwardMessage(wholeMessage, extraHeaders)
   }
 
-//  private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
-//    sdesService.processMessage(wholeMessage) flatMap {
-//      sendResults: Seq[SendResult] =>
-//        sendResults.find(r => r.isInstanceOf[SendFail]) match {
-//          case Some(value) => successful(value)
-//          case None        => processSdesResults(wholeMessage, sendResults.asInstanceOf[List[SdesSuccess]]) match {
-//              case Right(xml) => forwardMessage(xml, extraHeaders)
-//              case Left(_)    =>
-//                logger.warn(s"Failed to replace embedded attachment for $wholeMessage")
-//                successful(SendFailExternal(s"Failed to replace embedded attachment for $wholeMessage", UNPROCESSABLE_ENTITY))
-//            }
-//        }
-//    }
-//  }
-
-  private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)] = {
+  private def buildHeadersToAppend(): Seq[(String, String)] = {
     val df               = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"))
     val date             = dtHelper.now
     val formattedDate    = date.format(df)
-    def getMessageIdUuid = {
-      def getUuidFromMessageId(messageId: String): String = {
-        uuidFromMessageId(messageId) match {
-          case Right(msgId)     => msgId
-          case Left(randomUuid) =>
-            logger.warn(s"UUID [$randomUuid] value of `x-correlation-id` header was randomly generated for forwarded request")
-            randomUuid
-        }
-      }
-      getMessageId(soapRequest) match {
-        case Some(m) => getUuidFromMessageId(m)
-        case None    =>
-          logger.warn("Unable to find messageId in provided XML")
-          uuidGenerator.generateRandomUuid
-      }
-    }
+
     List(
       "Accept" -> MimeTypes.XML,
-//      "Authorization"    -> s"Bearer ${config.authToken}",
-      "Content-Type"     -> "application/xml;charset=utf-8",
+      "Authorization"    -> s"Bearer ${config.authToken}",
+      "Content-Type"     -> "application/xml; charset=UTF-8",
       "date"             -> formattedDate,
       "source"           -> "MDTP",
-      "x-correlation-id" -> getMessageIdUuid,
-      "x-files-included" -> fileIncluded(soapRequest).toString
+      "x-correlation-id" -> uuidGenerator.generateRandomUuid,
+      "x-files-included" -> "no"
     )
   }
 
-  /*private def forwardMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
-    certexServiceConnector.postMessage(soapRequest, headers)
-  }*/
+  private def forwardMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
+    eoriServiceConnector.postMessage(soapRequest, headers)
+  }
 }

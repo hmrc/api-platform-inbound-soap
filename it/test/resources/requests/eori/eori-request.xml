@@ -1,0 +1,129 @@
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+    <soap12-env:Header xmlns:soap12-env="http://www.w3.org/2003/05/soap-envelope">
+        <To xmlns="http://www.w3.org/2005/08/addressing">partner:CCN2.Partner.BE.Customs.TAXUD/CERTEX.FAT</To>
+        <Action soap12-env:mustUnderstand="true" xmlns="http://www.w3.org/2005/08/addressing">CCN2.Service.Customs.EU.CERTEX.CERTEXServices/processCERTEXtoNA</Action>
+        <From xmlns="http://www.w3.org/2005/08/addressing">
+            <Address>partner:CCN2.Partner.EU.Customs.TAXUD/CERTEX.FAT</Address>
+        </From>
+        <ReplyTo xmlns="http://www.w3.org/2005/08/addressing">
+            <Address>partner:CCN2.Partner.EU.Customs.TAXUD/CERTEX.FAT</Address>
+        </ReplyTo>
+        <FaultTo xmlns="http://www.w3.org/2005/08/addressing">
+            <Address>partner:CCN2.Partner.EU.Customs.TAXUD/CERTEX.FAT</Address>
+        </FaultTo>
+        <MessageID xmlns="http://www.w3.org/2005/08/addressing">7f6724fb-2505-4c00-8f33-2c51aa11c24b</MessageID>
+        <mk:MessageHeader xmlns:mk="http://ccn2.ec.eu/CCN2.Service.Platform.Common.Schema">
+            <mk:Version>1.0</mk:Version>
+            <mk:CorrelationId>cid:a993ae76-4666-4b63-893d-84055f991343</mk:CorrelationId>
+            <mk:SendingDateAndTime>2022-03-11T15:57:17.636+01:00</mk:SendingDateAndTime>
+            <mk:MessageType>'CCN2.Service.Customs.EU.CERTEX.CERTEXServices/processCERTEXtoNA'</mk:MessageType>
+            <mk:MessageExpirationTimestamp>2022-03-11T16:57:17Z</mk:MessageExpirationTimestamp>
+            <mk:RequestCoD>false</mk:RequestCoD>
+        </mk:MessageHeader>
+        <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+            <wsu:Timestamp wsu:Id="Id-0001647010637721-ffffffffd16caccb-1" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                <wsu:Created>2022-03-11T14:57:17Z</wsu:Created>
+                <wsu:Expires>2022-03-12T15:58:17Z</wsu:Expires>
+            </wsu:Timestamp>
+            <wsse:BinarySecurityToken wsu:Id="Id-0001647010637722-000000001a12f5fc-1" ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3" EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">MIIDOTCCAiGgAwIBAgIEHokpHTANBgkqhkiG9w0BAQsFADBNMRIwEAYKCZImiZPyLGQBGRYCZXUx
+                FDASBgoJkiaJk/IsZAEZFgRjY24yMREwDwYDVQQDEwhzZWN1cml0eTEOMAwGA1UEAxMFdXNlcnMw
+                HhcNMTUwODEwMTIzNTA4WhcNMjUwNTA5MTIzNTA4WjBNMRIwEAYKCZImiZPyLGQBGRYCZXUxFDAS
+                BgoJkiaJk/IsZAEZFgRjY24yMREwDwYDVQQDEwhzZWN1cml0eTEOMAwGA1UEAxMFdXNlcnMwggEi
+                MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCpBRF4YMDMmdOewpuYA/iAMI9r3hHZAGAC8wD+
+                w5DBjnGsMmqV4v/UIgIKxHf/IQ6Nqm+fJv7d7TWDz8ABMmKd2BqxgGDBQQAZI6ABkvoPvPkVMloW
+                M2k45PAkWBMkRPm/vxmUl4/e+UtMeerAQ4GsmFSbK0xYupyefW+EkCpHJoMYmzCEssvV78o0IAra
+                54q3ywP6J36IES69Nx1ohVS5KsI9gsyXtdUjaYuEvd6J+qI1HF0etRTF3AbUJTa7nA5IByDVq4zK
+                /rwemFhOqfSDsTZiUl1DFKYAVcjZPgWWZKGCvS7m//Qtj2fBQTjKzroS6jdr1dx653hOFgooOW7d
+                AgMBAAGjITAfMB0GA1UdDgQWBBROJhW88Ka4YtQDgInUiXfctdNh6DANBgkqhkiG9w0BAQsFAAOC
+                AQEABR2nNcVDRA0FoeiEKopcDKtw8RQloAA9ikFG8HGHJidTQGjn+QWc5VBZpq2KU4DTaBBibIAB
+                4Aa00Kp2rXFzvezl4QcPbwJbAMV2joYf6FrFDd8QGNz9R2vCmvb4nUJN86b0GEoMfS9f94Rpkxwe
+                1C1IhS7e/+2rHiqZoQXZ8YGvprkIixlJ/vjBfnLoc4Ax8LllG+xXxh2sFf9BqevxDkmxMi2wJO2x
+                tH6re83jYfTXhya0quCSG7QDCk6LkJMSmJz4RoXKa7md1tfgZN3E6kx+8LdAxiOY7J3xqqIf8mbK
+                /mhOq5m42u0jSevCKpV5THK5GK8Un9GHgzjedh6tOA==</wsse:BinarySecurityToken>
+            <saml:Assertion ID="Id-4d632b6292c3776637806515-1" IssueInstant="2022-03-11T14:57:17Z" Version="2.0" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">
+                <saml:Issuer Format="urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName">CN=users,CN=security,DC=ccn2,DC=eu</saml:Issuer>
+                <saml:Subject>
+                    <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">EU_CERTEX_User</saml:NameID>
+                    <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:sender-vouches"/>
+                </saml:Subject>
+                <saml:Conditions NotBefore="2022-03-11T14:52:17Z" NotOnOrAfter="2022-03-11T15:07:17Z"/>
+                <saml:AuthnStatement AuthnInstant="2022-03-11T14:57:17Z">
+                    <saml:AuthnContext>
+                        <saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:Password</saml:AuthnContextClassRef>
+                    </saml:AuthnContext>
+                </saml:AuthnStatement>
+                <saml:AttributeStatement>
+                    <saml:Attribute Name="uid" NameFormat="urn:vordel:attribute:1.0">
+                        <saml:AttributeValue>EU_CERTEX_User</saml:AttributeValue>
+                    </saml:Attribute>
+                    <saml:Attribute Name="c" NameFormat="urn:vordel:attribute:1.0">
+                        <saml:AttributeValue>EU</saml:AttributeValue>
+                    </saml:Attribute>
+                    <saml:Attribute Name="role" NameFormat="urn:vordel:attribute:1.0">
+                        <saml:AttributeValue>CCN2.Role.CERTEX.EURole</saml:AttributeValue>
+                    </saml:Attribute>
+                    <saml:Attribute Name="partnername" NameFormat="urn:vordel:attribute:1.0">
+                        <saml:AttributeValue>CCN2.Partner.EU.Customs.TAXUD</saml:AttributeValue>
+                    </saml:Attribute>
+                </saml:AttributeStatement>
+            </saml:Assertion>
+            <dsig:Signature Id="Id-0001647010637722-000000001a12f5fc-2" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">
+                <dsig:SignedInfo>
+                    <dsig:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                    <dsig:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+                    <dsig:Reference URI="#Id-4d632b6292c3776637806515-1">
+                        <dsig:Transforms>
+                            <dsig:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                        </dsig:Transforms>
+                        <dsig:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                        <dsig:DigestValue>zOeqcJuT1zC1JMYVyjwvA4SB1vhv5bS/d63oLXdKQFs=</dsig:DigestValue>
+                    </dsig:Reference>
+                    <dsig:Reference URI="#Id-0001647010637722-000000001a12f5fc-1">
+                        <dsig:Transforms>
+                            <dsig:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                        </dsig:Transforms>
+                        <dsig:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                        <dsig:DigestValue>0DyZOm2aMbS6aMJLoXgFdyDwGCkIEM3DGe4zv7HVpB8=</dsig:DigestValue>
+                    </dsig:Reference>
+                    <dsig:Reference URI="#Id-0001647010637721-ffffffffd16caccb-1">
+                        <dsig:Transforms>
+                            <dsig:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                        </dsig:Transforms>
+                        <dsig:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                        <dsig:DigestValue>QQ3BBgJF4wKfqVWx5TFKCwlaCrFl9gPPoRzmb2ilZv0=</dsig:DigestValue>
+                    </dsig:Reference>
+                </dsig:SignedInfo>
+                <dsig:SignatureValue>DORhKkgHcG/JEheeWpjDhMzHFYfGTMnhZDMQH5r5vMTcRAwixcDpYpWw7OiLuPZ6
+                    qmrn584/15I5bB24fwVKHjC7GqNN5iazWta5XQqxALYOqlBgppWsDrArcR8emq6o
+                    QVScpT+1U6AFeCzgM98SIU8NEj4A81bLqFi6TyEh9hVhGIbtDDjglt1LVUswN0rD
+                    yvoEE87GCpwT+Ob/pGdLjqb7w5P84UGfARBYh5GfVDlHGUeiq5czOMQpRUIMPjut
+                    CzibcZxEbzj4A3LAd3WjLWvC3zNtjetXA+jw8LV0Tx++FBcRFuBATKqrLjjmpKjg
+                    FK4OL0rk0wsP2+lIhLuOTg==</dsig:SignatureValue>
+                <dsig:KeyInfo Id="Id-0001647010637722-000000001a12f5fc-3">
+                    <wsse:SecurityTokenReference wsu:Id="Id-0001647010637722-000000001a12f5fc-4" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                        <wsse:Reference URI="#Id-0001647010637722-000000001a12f5fc-1" ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"/>
+                    </wsse:SecurityTokenReference>
+                </dsig:KeyInfo>
+            </dsig:Signature>
+        </wsse:Security>
+    </soap12-env:Header>
+    <soap:Body>
+        <typ:CERTEX_GenericCallback xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:typ="http://certex.speed2.taxud.eu/CERTEX/types">
+            <responseIES012 xmlns="http://certex.speed2.taxud.eu/cco/v1_0" xmlns:env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns30="http://certex.speed2.taxud.eu/verBase/v1_0" xmlns:wsa="http://www.w3.org/2005/08/addressing" messageId="FNL_FCI_CSW-CER-TC-13_D361_SYNC" uniqPrefix="PL">
+                <relevantQuantityManagementInformation>
+                    <ns30:supportingDocument>
+                        <ns30:referenceNumber>CHEDPP.BE.2020.0008808</ns30:referenceNumber>
+                        <ns30:type>C085</ns30:type>
+                    </ns30:supportingDocument>
+                    <ns30:competentCustomsOffice>
+                        <ns30:ccoReferenceNumber>BE800002</ns30:ccoReferenceNumber>
+                    </ns30:competentCustomsOffice>
+                    <ns30:MRN>18PL12345678956540</ns30:MRN>
+                    <ns30:sendingDate>2022-07-21T10:22:59</ns30:sendingDate>
+                    <ns30:quantityManagementOutcome>01</ns30:quantityManagementOutcome>
+                </relevantQuantityManagementInformation>
+                <processingResult>processedSuccessfullyDataReturned</processingResult>
+            </responseIES012>
+        </typ:CERTEX_GenericCallback>
+    </soap:Body>
+</soap:Envelope>

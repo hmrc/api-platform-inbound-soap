@@ -17,19 +17,12 @@
 package uk.gov.hmrc.apiplatforminboundsoap.config
 
 import javax.inject.{Inject, Provider, Singleton}
-
 import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Certex, Crdl, Ics2}
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.{
-  ApiPlatformOutboundSoapConnector,
-  CertexServiceConnector,
-  CrdlOrchestratorConnector,
-  ImportControlInboundSoapConnector,
-  SdesConnector
-}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ApiPlatformOutboundSoapConnector, CertexServiceConnector, CrdlOrchestratorConnector, EoriServiceConnector, ImportControlInboundSoapConnector, SdesConnector}
 
 class ConfigurationModule extends Module {
 
@@ -40,7 +33,8 @@ class ConfigurationModule extends Module {
       bind[SdesConnector.Config].toProvider[SdesConnectorConfigProvider],
       bind[ImportControlInboundSoapConnector.Config].toProvider[ImportControlInboundSoapConnectorConfigProvider],
       bind[CrdlOrchestratorConnector.Config].toProvider[CrdlOrchestratorConnectorConfigProvider],
-      bind[CertexServiceConnector.Config].toProvider[CertexServiceConnectorConfigProvider]
+      bind[CertexServiceConnector.Config].toProvider[CertexServiceConnectorConfigProvider],
+      bind[EoriServiceConnector.Config].toProvider[EoriServiceConnectorConfigProvider]
     )
   }
 }
@@ -78,6 +72,19 @@ class CertexServiceConnectorConfigProvider @Inject() (val configuration: Configu
     val path      = getConfString("certex-service.path", "cls/receive-ies-messages-from-eu/v1")
     val authToken = getString("microservice.services.certex-service.authToken")
     CertexServiceConnector.Config(url, path, authToken)
+  }
+}
+
+@Singleton
+class EoriServiceConnectorConfigProvider @Inject() (val configuration: Configuration)
+    extends ServicesConfig(configuration)
+    with Provider[EoriServiceConnector.Config] {
+
+  override def get(): EoriServiceConnector.Config = {
+    val url       = baseUrl("eori-service")
+    val path      = getConfString("eori-service.path", "crs/receiveDataChangeEvents/v1")
+    val authToken = getString("microservice.services.eori-service.authToken")
+    EoriServiceConnector.Config(url, path, authToken)
   }
 }
 
