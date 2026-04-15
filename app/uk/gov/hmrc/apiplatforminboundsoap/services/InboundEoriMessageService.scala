@@ -28,12 +28,12 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, RandomUuidGenerator, ZonedDateTimeHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, UuidGenerator, ZonedDateTimeHelper}
 
 @Singleton
 class InboundEoriMessageService @Inject() (
     eoriServiceConnector: EoriServiceConnector,
-    uuidGenerator: RandomUuidGenerator,
+    uuidGenerator: UuidGenerator,
     dtHelper: ZonedDateTimeHelper,
     config: EoriServiceConnector.Config
   )(implicit ec: ExecutionContext
@@ -57,7 +57,7 @@ class InboundEoriMessageService @Inject() (
       "date"             -> formattedDate,
       "source"           -> "MDTP",
       "x-correlation-id" -> uuidGenerator.generateRandomUuid,
-      "x-files-included" -> "no"
+      "x-files-included" -> "false"
     )
   }
 
