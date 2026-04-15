@@ -123,30 +123,6 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       headerCaptor hasCaptured forwardedHeadersNoAttachment
     }
 
-    /* "generate random UUID for x-correlation-id when message doesn't provide one" in new Setup {
-      val forwardedXmlBody = readFromFile("post-sdes-processing/certex/responseIES002-messageId-invalid-uuid.xml")
-
-      when(eoriServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      val result = await(service.processInboundMessage(xmlBodyWithBadMsgId))
-
-      result shouldBe SendSuccess(OK, "some body")
-      verify(eoriServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
-      getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
-      headerCaptor.value mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
-    }
-
-    "generate random UUID for x-correlation-id when message contains empty messageId" in new Setup {
-      val forwardedXmlBody = readFromFile("post-sdes-processing/certex/responseIES002-messageId-empty.xml")
-
-      when(eoriServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      val result = await(service.processInboundMessage(xmlBodyWithNoMsgId))
-
-      result shouldBe SendSuccess(OK, "some body")
-      verify(eoriServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
-      getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
-      headerCaptor.value mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
-    }*/
-
     "return failure when attempt to forward message fails" in new Setup {
       when(eoriServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
 
