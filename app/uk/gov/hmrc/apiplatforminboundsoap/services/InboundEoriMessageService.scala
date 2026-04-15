@@ -20,23 +20,22 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
+
 import play.api.http.MimeTypes
-import play.api.http.Status.OK
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
 import uk.gov.hmrc.http.HeaderCarrier
+
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, CertexUuidHelper, RandomUuidGenerator, UuidGenerator, ZonedDateTimeHelper}
-import uk.gov.hmrc.apiplatforminboundsoap.xml.CertexXml
+import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, RandomUuidGenerator, ZonedDateTimeHelper}
 
 @Singleton
 class InboundEoriMessageService @Inject() (
-                                            eoriServiceConnector: EoriServiceConnector,
-                                            uuidGenerator: RandomUuidGenerator,
-                                            dtHelper: ZonedDateTimeHelper,
-                                            config: EoriServiceConnector.Config
+    eoriServiceConnector: EoriServiceConnector,
+    uuidGenerator: RandomUuidGenerator,
+    dtHelper: ZonedDateTimeHelper,
+    config: EoriServiceConnector.Config
   )(implicit ec: ExecutionContext
   ) extends ApplicationLogger with MimeTypes {
 
@@ -47,12 +46,12 @@ class InboundEoriMessageService @Inject() (
   }
 
   private def buildHeadersToAppend(): Seq[(String, String)] = {
-    val df               = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"))
-    val date             = dtHelper.now
-    val formattedDate    = date.format(df)
+    val df            = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"))
+    val date          = dtHelper.now
+    val formattedDate = date.format(df)
 
     List(
-      "Accept" -> MimeTypes.XML,
+      "Accept"           -> MimeTypes.XML,
       "Authorization"    -> s"Bearer ${config.authToken}",
       "Content-Type"     -> "application/xml; charset=UTF-8",
       "date"             -> formattedDate,

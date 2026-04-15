@@ -17,12 +17,13 @@
 package uk.gov.hmrc.apiplatforminboundsoap.config
 
 import javax.inject.{Inject, Provider, Singleton}
+
 import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.apiplatforminboundsoap.connectors
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Certex, Crdl, Ics2}
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ApiPlatformOutboundSoapConnector, CertexServiceConnector, CrdlOrchestratorConnector, EoriServiceConnector, ImportControlInboundSoapConnector, SdesConnector}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors._
 
 class ConfigurationModule extends Module {
 

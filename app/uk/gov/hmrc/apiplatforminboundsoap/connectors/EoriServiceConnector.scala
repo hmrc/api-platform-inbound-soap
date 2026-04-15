@@ -16,16 +16,17 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
-import play.api.http.Status
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.xml.NodeSeq
+
+import play.api.http.Status
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendResult, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
 object EoriServiceConnector {
   case class Config(baseUrl: String, path: String, authToken: String)
