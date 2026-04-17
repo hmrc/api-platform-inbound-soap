@@ -16,20 +16,21 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
+import com.google.inject.name.Named
+import play.api.http.Status.UNPROCESSABLE_ENTITY
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendResult, SdesSuccess2, SdesSuccessResult2, SendNotAttempted2}
+import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
+import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
+import uk.gov.hmrc.http.HeaderCarrier
+
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
-import com.google.inject.name.Named
 
-import play.api.http.Status.UNPROCESSABLE_ENTITY
-import uk.gov.hmrc.http.HeaderCarrier
-
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
-import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
 
 @Singleton
 class InboundCrdlMessageService @Inject() (
@@ -51,9 +52,9 @@ class InboundCrdlMessageService @Inject() (
 
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
-      sendResults: Seq[SendResult] =>
-        sendResults.find(r => r.isInstanceOf[SendFail]) match {
-          case Some(value) => successful(value)
+      sendResults: Seq[SdesSendResult] =>
+        sendResults.find(r => r.isInstanceOf[SdesSendFail]) match {
+          case Some(value) => successful(mapSdesSendResultToSendResult(value))
           case None        => processSdesResults(wholeMessage, sendResults.asInstanceOf[List[SdesSuccess]]) match {
               case Right(xml) => forwardMessage(xml, extraHeaders)
               case Left(_)    =>
@@ -61,6 +62,15 @@ class InboundCrdlMessageService @Inject() (
                 successful(SendFailExternal(s"Failed to replace embedded attachment for $wholeMessage", UNPROCESSABLE_ENTITY))
             }
         }
+    }
+  }
+
+  private def mapSdesSendResultToSendResult(r: SdesSendResult): SendResult = {
+    r match {
+      case SdesSuccess2(uuid) => SdesSuccess(uuid)
+      case SdesSuccessResult2(sdesReference) => SdesSuccessResult(sdesReference)
+      case SdesSendFailExternal(m, s) => SendFailExternal(m, s)
+      case SendNotAttempted2(r) => SendNotAttempted(r)
     }
   }
 

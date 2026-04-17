@@ -23,14 +23,12 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
-
 import com.google.inject.name.Named
-
 import play.api.http.MimeTypes
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendResult, SdesSuccess2, SdesSuccessResult2, SendNotAttempted2}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, CertexUuidHelper, UuidGenerator, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexXml, XmlTransformer}
@@ -58,9 +56,9 @@ class InboundCertexMessageService @Inject() (
 
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
-      sendResults: Seq[SendResult] =>
+      sendResults: Seq[SdesSendResult] =>
         sendResults.find(r => r.isInstanceOf[SendFail]) match {
-          case Some(value) => successful(value)
+          case Some(value) => successful(mapSdesSendResultToSendResult(value))
           case None        => processSdesResults(wholeMessage, sendResults.asInstanceOf[List[SdesSuccess]]) match {
               case Right(xml) => forwardMessage(xml, extraHeaders)
               case Left(_)    =>
@@ -100,6 +98,15 @@ class InboundCertexMessageService @Inject() (
       "x-correlation-id" -> getMessageIdUuid,
       "x-files-included" -> fileIncluded(soapRequest).toString
     )
+  }
+
+  private def mapSdesSendResultToSendResult(r: SdesSendResult): SendResult = {
+    r match {
+      case SdesSuccess2(uuid) => SdesSuccess(uuid)
+      case SdesSuccessResult2(sdesReference) => SdesSuccessResult(sdesReference)
+      case SdesSendFailExternal(m, s) => SendFailExternal(m, s)
+      case SendNotAttempted2(r) => SendNotAttempted(r)
+    }
   }
 
   private def processSdesResults(wholeMessage: NodeSeq, sdesResult: List[SdesSuccess]): Either[Unit, NodeSeq] = {

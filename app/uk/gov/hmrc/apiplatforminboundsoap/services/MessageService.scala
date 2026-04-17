@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.SdesSendResult
+
 import javax.inject.Singleton
 import scala.concurrent.Future
-import scala.util.Either
 import scala.xml.NodeSeq
-
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 
 @Singleton
@@ -36,7 +35,7 @@ trait MessageService {
 
   def buildMetadataProperties(wholeMessage: NodeSeq, attachmentElement: NodeSeq): Map[String, String]
 
-  def processMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[Seq[SendResult]]
+  def processMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[Seq[SdesSendResult]]
 
   def getAttachment(attachmentElement: NodeSeq): Either[InvalidFormatResult, String]
 

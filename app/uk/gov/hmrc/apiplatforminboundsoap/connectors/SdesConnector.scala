@@ -16,44 +16,51 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
+import play.api.http.Status
+import play.api.libs.json.{JsObject, JsString, Json}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesReference, SdesRequest}
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
+
 import java.net.URI
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
-import play.api.http.Status
-import play.api.libs.json.{JsObject, JsString, Json}
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
-
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SdesSuccess, SendFailExternal, SendResult}
-import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
-
 object SdesConnector {
   case class Config(baseUrl: String, uploadPath: String, ics2: Ics2, crdl: Crdl, certex: Certex)
   case class Ics2(srn: String, informationType: String, encodeSdesReference: Boolean = false)
   case class Crdl(srn: String, informationType: String)
   case class Certex(srn: String, informationType: String)
+
+  sealed trait SdesSendResult
+  case class SdesSuccess2(uuid: String)                       extends SdesSendResult
+  case class SdesSuccessResult2(sdesReference: SdesReference) extends SdesSendResult
+  sealed trait SdesSendFail                                      extends SdesSendResult
+  case class SdesSendFailExternal(message: String, status: Int)  extends SdesSendFail
+  case class SendNotAttempted2(reason: String)                extends SdesSendFail
 }
 
 @Singleton
 class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: SdesConnector.Config)(implicit ec: ExecutionContext) extends ApplicationLogger {
+  import SdesConnector._
   val requiredHeaders: Seq[(String, String)] = Seq("Content-Type" -> "application/octet-stream")
 
-  def postMessage(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[SendResult] = {
+  def postMessage(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[SdesSendResult] = {
     postHttpRequest(sdesRequest).map {
       case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode: $message")
-        SendFailExternal(message, statusCode)
+        SdesSendFailExternal(message, statusCode)
       case Right(response: HttpResponse)                          =>
-        SdesSuccess(response.body)
+        SdesSuccess2(response.body)
     }
       .recoverWith {
         case NonFatal(e) =>
           logger.warn(s"NonFatal error ${e.getMessage} while forwarding message", e)
-          successful(SendFailExternal(e.getMessage, Status.INTERNAL_SERVER_ERROR))
+          successful(SdesSendFailExternal(e.getMessage, Status.INTERNAL_SERVER_ERROR))
       }
   }
 

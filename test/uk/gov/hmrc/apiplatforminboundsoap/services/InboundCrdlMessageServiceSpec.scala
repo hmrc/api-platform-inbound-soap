@@ -20,7 +20,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
-
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
@@ -32,13 +31,12 @@ import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.builder.{DiffBuilder, Input}
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
-
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSuccess2, SendNotAttempted2}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlAttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
 
@@ -99,7 +97,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val forwardedXmlBody = readFromFile("post-sdes-processing/crdl/crdl-request-well-formed.xml")
 
       when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(crdlSdesServiceMock.processMessage(refEq(xmlBodyWithAttachment))(*)).thenReturn(successful(List(SdesSuccess(
+      when(crdlSdesServiceMock.processMessage(refEq(xmlBodyWithAttachment))(*)).thenReturn(successful(List(SdesSuccess2(
         "some-uuid-like-string"
       ))))
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
@@ -113,7 +111,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
     "return fail status to caller and not forward message if call to SDES fails when processing a message with embedded file" in new Setup {
       when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(
-        SendFailExternal("some error", SERVICE_UNAVAILABLE)
+        SdesSendFailExternal("some error", SERVICE_UNAVAILABLE)
       )))
 
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
@@ -124,7 +122,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
     "return fail status to caller and not forward message if attempt to extract embedded file fails" in new Setup {
       when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(
-        SendNotAttempted("some error")
+        SendNotAttempted2("some error")
       )))
 
       val result = await(serviceForError.processInboundMessage(xmlBodyWithAttachment))
@@ -135,7 +133,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
     "return fail status to caller and not forward message if attempt to replace embedded file with SDES UUID fails" in new Setup {
       when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(
-        SdesSuccess("some-uuid")
+        SdesSuccess2("some-uuid")
       )))
 
       val result = await(serviceForError.processInboundMessage(xmlBodyWithAttachment))
@@ -146,7 +144,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
     "return fail status to caller and not forward message if message attachment is blank or absent" in new Setup {
       when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(
-        SendNotAttempted("some error")
+        SendNotAttempted2("some error")
       )))
 
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))

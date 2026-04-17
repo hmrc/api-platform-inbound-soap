@@ -20,20 +20,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.NodeSeq
-
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import play.api.http.Status
 import play.api.http.Status.{ACCEPTED, IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
-
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.Ics2
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Ics2, SdesSendFailExternal, SdesSuccess2, SdesSuccessResult2, SendNotAttempted2}
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ImportControlInboundSoapConnector, SdesConnector}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
@@ -100,7 +97,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       )
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(ics2SdesServiceMock.processMessage(wholeMessageCaptor)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference(
+      when(ics2SdesServiceMock.processMessage(wholeMessageCaptor)(*)).thenReturn(successful(List(SdesSuccessResult2(SdesReference(
         "test-filename.txt",
         "some-uuid-like-string"
       )))))
@@ -129,7 +126,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
       when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType", encodeSdesReference = true)
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(ics2SdesServiceMock.processMessage(wholeMessageCaptor)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference(
+      when(ics2SdesServiceMock.processMessage(wholeMessageCaptor)(*)).thenReturn(successful(List(SdesSuccessResult2(SdesReference(
         "test-filename.txt",
         "some-uuid-like-string"
       )))))
@@ -148,7 +145,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val xmlBody = readFromFile("ie4s03-v2.xml")
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("filename-not-in-xml.txt", "anything")))))
+      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SdesSuccessResult2(SdesReference("filename-not-in-xml.txt", "anything")))))
 
       val result = await(service.processInboundMessage(xmlBody))
 
@@ -161,7 +158,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val xmlBody = readFromFile("ie4s03-v2.xml")
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("", "anything")))))
+      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SdesSuccessResult2(SdesReference("", "anything")))))
 
       val result = await(service.processInboundMessage(xmlBody))
 
@@ -195,7 +192,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val xmlBody = readFromFile("filename/ie4r02-v2-missing-filename-element.xml")
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SendNotAttempted("validation"))))
+      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SendNotAttempted2("validation"))))
 
       val result = await(service.processInboundMessage(xmlBody))
 
@@ -207,7 +204,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val xmlBody = readFromFile("filename/ie4r02-v2-blank-filename-element.xml")
 
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SendNotAttempted("validation"))))
+      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SendNotAttempted2("validation"))))
 
       val result = await(service.processInboundMessage(xmlBody))
 
@@ -226,7 +223,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
         "x-files-included" -> isFileIncluded(xmlBody).toString,
         "x-version-id"     -> "V2"
       )
-      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SdesSuccessResult(SdesReference("filename1.pdf", "some-uuid-like-string")))))
+      when(ics2SdesServiceMock.processMessage(*)(*)).thenReturn(successful(List(SdesSuccessResult2(SdesReference("filename1.pdf", "some-uuid-like-string")))))
       when(inboundConnectorMock.postMessage(*, *, *)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = await(service.processInboundMessage(xmlBody))
@@ -241,8 +238,8 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val xmlBody = readFromFile("uriAndBinaryObject/ie4r02-v2-two-binaryAttachments-with-included-elements.xml")
 
       when(ics2SdesServiceMock.processMessage(refEq(xmlBody))(*)).thenReturn(successful(List(
-        SdesSuccess("sdes-uuid"),
-        SendFailExternal("some error", SERVICE_UNAVAILABLE)
+        SdesSuccess2("sdes-uuid"),
+        SdesSendFailExternal("some error", SERVICE_UNAVAILABLE)
       )))
 
       val result = await(service.processInboundMessage(xmlBody))
