@@ -16,16 +16,17 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendResult, SdesSuccess2, SdesSuccessResult2, SendNotAttempted2}
-import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
-import uk.gov.hmrc.http.HeaderCarrier
-
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.{sequence, successful}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
+
+import uk.gov.hmrc.http.HeaderCarrier
+
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess, SdesSuccessResult}
+import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 @Singleton
 class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector: SdesConnector)(implicit executionContext: ExecutionContext)
@@ -47,16 +48,16 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
     sequence(attachments.map(attachmentElement => {
       buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
-            case s: SdesSuccess2      => getBinaryFilename(attachmentElement) match {
+            case s: SdesSuccess          => getBinaryFilename(attachmentElement) match {
                 case Some(filename) =>
-                  successful(SdesSuccessResult2(SdesReference(uuid = s.uuid, forFilename = filename)))
+                  successful(SdesSuccessResult(SdesReference(uuid = s.uuid, forFilename = filename)))
               }
             case f: SdesSendFailExternal =>
               successful(SdesSendFailExternal(s"${f.status} returned from SDES call", f.status))
           }
         case Left(e: InvalidFormatResult) =>
           logger.warn(s"${e.reason}")
-          successful(SendNotAttempted2(e.reason))
+          successful(SdesSendNotAttempted(e.reason))
       }
     }))
   }

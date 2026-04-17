@@ -22,18 +22,21 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.Elem
+
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import play.api.http.Status
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Crdl, SdesSendFailExternal, SdesSuccess2, SendNotAttempted2}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Crdl, SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{Ics2XmlHelper, NoChangeTransformer}
 
@@ -81,9 +84,9 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       val expectedMetadataProperties = Map.empty[String, String]
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
-      val expectedServiceResult      = SdesSuccess2(uuid = expectedSdesUuid)
+      val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess2(expectedSdesUuid)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
 
       val result = await(service.processMessage(xmlBody))
 
@@ -115,7 +118,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     "not make a call to SDES when message contains empty attachment element" in new Setup {
       val xmlBody: Elem = readFromFile("crdl/crdl-request-empty-attachment-element.xml")
 
-      val expectedServiceResult = SendNotAttempted2("Embedded attachment element ReceiveReferenceDataRequestResult is empty")
+      val expectedServiceResult = SdesSendNotAttempted("Embedded attachment element ReceiveReferenceDataRequestResult is empty")
 
       val result = await(service.processMessage(xmlBody))
 
@@ -137,7 +140,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(SendNotAttempted2("Embedded attachment element ReceiveReferenceDataRequestResult is not valid base 64 data"))
+      result shouldBe List(SdesSendNotAttempted("Embedded attachment element ReceiveReferenceDataRequestResult is not valid base 64 data"))
       verifyZeroInteractions(sdesConnectorMock)
     }
 
@@ -151,9 +154,9 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       val expectedMetadataProperties = Map.empty[String, String]
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
-      val expectedServiceResult      = SdesSuccess2(uuid = expectedSdesUuid)
+      val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess2(expectedSdesUuid)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
 
       val result = await(service.processMessage(xmlBody))
 
@@ -172,9 +175,9 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       val expectedMetadataProperties = Map.empty[String, String]
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
-      val expectedServiceResult      = SdesSuccess2(uuid = expectedSdesUuid)
+      val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess2(expectedSdesUuid)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
 
       val result = await(service.processMessage(xmlBody))
 

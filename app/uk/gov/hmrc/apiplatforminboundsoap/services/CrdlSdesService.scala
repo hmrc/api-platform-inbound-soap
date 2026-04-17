@@ -21,10 +21,13 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.{sequence, successful}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
+
 import com.google.inject.name.Named
+
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendResult, SdesSuccess2, SendNotAttempted2}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.Base64Encoder
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
@@ -67,7 +70,7 @@ class CrdlSdesService @Inject() (
     sequence(attachment.map(attachmentElement => {
       buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
-            case s: SdesSuccess2      =>
+            case s: SdesSuccess          =>
               successful(s)
             case f: SdesSendFailExternal =>
               logger.warn(s"${f.status} returned from SDES call due to ${f.message}")
@@ -75,10 +78,9 @@ class CrdlSdesService @Inject() (
           }
         case Left(e: InvalidFormatResult) =>
           logger.warn(s"${e.reason}")
-          successful(SendNotAttempted2(e.reason))
+          successful(SdesSendNotAttempted(e.reason))
       }
-    }
-    ))
+    }))
   }
 
   override def buildMetadata(attachmentElement: NodeSeq): Map[String, String] = {

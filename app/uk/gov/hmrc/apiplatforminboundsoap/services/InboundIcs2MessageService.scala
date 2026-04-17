@@ -20,9 +20,11 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
+
 import play.api.http.Status.UNPROCESSABLE_ENTITY
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendResult, SdesSuccess2, SdesSuccessResult2, SendNotAttempted2}
 import uk.gov.hmrc.http.HeaderCarrier
+
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccessResult}
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ImportControlInboundSoapConnector, SdesConnector}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
@@ -48,10 +50,13 @@ class InboundIcs2MessageService @Inject() (
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
       sendResults: Seq[SdesSendResult] =>
-        sendResults.find(r => r.isInstanceOf[SendFail]) match {
-          case Some(value) => successful(mapSdesSendResultToSendResult(value))
-          case None        => sendResults.foreach(println)
-            processSdesResults(sendResults.asInstanceOf[Seq[SdesSuccessResult2]], wholeMessage) match {
+        sendResults.find(r => r.isInstanceOf[SdesSendFail]) match {
+          case Some(value: SdesSendFail) => successful(mapFailedSdesSendResultToSendResult(value))
+          case Some(value)               => {
+            logger.warn(s"Found a non failure send result when expecting a failure - $value")
+            successful(UnexpectedSendFailure)
+          }
+          case None                      => processSdesResults(sendResults.asInstanceOf[Seq[SdesSuccessResult]], wholeMessage) match {
               case Right(xml) => forwardMessage(xml, extraHeaders, isTest)
               case Left(f)    =>
                 logger.warn(s"Failed to replace all embedded attachments for files $f")
@@ -61,7 +66,7 @@ class InboundIcs2MessageService @Inject() (
     }
   }
 
-  private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)] = {
+  private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)]                                            = {
     List(
       "x-soap-action"    -> getSoapAction(soapRequest).getOrElse(""),
       "x-correlation-id" -> getMessageId(soapRequest).getOrElse(""),
@@ -70,15 +75,15 @@ class InboundIcs2MessageService @Inject() (
       "x-version-id"     -> SoapMessageVersion("V2").displayName
     )
   }
-  private def mapSdesSendResultToSendResult(r: SdesSendResult): SendResult = {
+
+  private def mapFailedSdesSendResultToSendResult(r: SdesSendFail): SendFail                                               = {
     r match {
-      case SdesSuccess2(uuid) => SdesSuccess(uuid)
-      case SdesSuccessResult2(sdesReference) => SdesSuccessResult(sdesReference)
       case SdesSendFailExternal(m, s) => SendFailExternal(m, s)
-      case SendNotAttempted2(r) => SendNotAttempted(r)
+      case SdesSendNotAttempted(r)    => SendNotAttempted(r)
     }
   }
-  private def processSdesResults(sdesResults: Seq[SdesSuccessResult2], wholeMessage: NodeSeq): Either[Set[String], NodeSeq] = {
+
+  private def processSdesResults(sdesResults: Seq[SdesSuccessResult], wholeMessage: NodeSeq): Either[Set[String], NodeSeq] = {
     val replacements = sdesResults.map(sr => (sr.sdesReference.forFilename, sr.sdesReference.uuid))
     replaceEmbeddedAttachments(replacements.toMap[String, String], wholeMessage, sdesConnectorConfig.ics2.encodeSdesReference)
   }

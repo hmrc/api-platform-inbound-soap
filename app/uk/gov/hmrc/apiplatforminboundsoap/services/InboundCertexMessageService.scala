@@ -23,12 +23,15 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
+
 import com.google.inject.name.Named
+
 import play.api.http.MimeTypes
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendResult, SdesSuccess2, SdesSuccessResult2, SendNotAttempted2}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, CertexUuidHelper, UuidGenerator, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexXml, XmlTransformer}
@@ -57,9 +60,13 @@ class InboundCertexMessageService @Inject() (
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
       sendResults: Seq[SdesSendResult] =>
-        sendResults.find(r => r.isInstanceOf[SendFail]) match {
-          case Some(value) => successful(mapSdesSendResultToSendResult(value))
-          case None        => processSdesResults(wholeMessage, sendResults.asInstanceOf[List[SdesSuccess]]) match {
+        sendResults.find(r => r.isInstanceOf[SdesSendFail]) match {
+          case Some(value: SdesSendFail) => successful(mapFailedSdesSendResultToSendResult(value))
+          case Some(value)               => {
+            logger.warn(s"Found a non failure send result when expecting a failure - $value")
+            successful(UnexpectedSendFailure)
+          }
+          case None                      => processSdesResults(wholeMessage, sendResults.asInstanceOf[List[SdesSuccess]]) match {
               case Right(xml) => forwardMessage(xml, extraHeaders)
               case Left(_)    =>
                 logger.warn(s"Failed to replace embedded attachment for $wholeMessage")
@@ -100,12 +107,10 @@ class InboundCertexMessageService @Inject() (
     )
   }
 
-  private def mapSdesSendResultToSendResult(r: SdesSendResult): SendResult = {
+  private def mapFailedSdesSendResultToSendResult(r: SdesSendFail): SendFail = {
     r match {
-      case SdesSuccess2(uuid) => SdesSuccess(uuid)
-      case SdesSuccessResult2(sdesReference) => SdesSuccessResult(sdesReference)
       case SdesSendFailExternal(m, s) => SendFailExternal(m, s)
-      case SendNotAttempted2(r) => SendNotAttempted(r)
+      case SdesSendNotAttempted(r)    => SendNotAttempted(r)
     }
   }
 

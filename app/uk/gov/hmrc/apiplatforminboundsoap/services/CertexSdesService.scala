@@ -20,9 +20,11 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.{sequence, successful}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
+
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendResult, SdesSuccess2, SendNotAttempted2}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector._
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.{Base64Encoder, CertexUuidHelper, UuidGenerator}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.CertexXml
@@ -64,15 +66,19 @@ class CertexSdesService @Inject() (
     sequence(attachment.map(attachmentElement => {
       buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
-            case s: SdesSuccess2      =>
+            case s: SdesSuccess          =>
               successful(s)
+            case _: SdesSuccessResult    =>
+              successful(SdesSuccess(""))
+            case _: SdesSendNotAttempted =>
+              successful(SdesSuccess(""))
             case f: SdesSendFailExternal =>
               logger.warn(s"${f.status} returned from SDES call due to ${f.message}")
               successful(SdesSendFailExternal(s"${f.status} returned from SDES call due to ${f.message}", f.status))
           }
         case Left(e: InvalidFormatResult) =>
           logger.warn(s"${e.reason}")
-          successful(SendNotAttempted2(e.reason))
+          successful(SdesSendNotAttempted(e.reason))
       }
     }))
   }

@@ -16,19 +16,20 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.connectors
 
-import play.api.http.Status
-import play.api.libs.json.{JsObject, JsString, Json}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesReference, SdesRequest}
-import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
-
 import java.net.URI
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
+
+import play.api.http.Status
+import play.api.libs.json.{JsObject, JsString, Json}
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
+
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesReference, SdesRequest}
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
 object SdesConnector {
   case class Config(baseUrl: String, uploadPath: String, ics2: Ics2, crdl: Crdl, certex: Certex)
@@ -37,11 +38,11 @@ object SdesConnector {
   case class Certex(srn: String, informationType: String)
 
   sealed trait SdesSendResult
-  case class SdesSuccess2(uuid: String)                       extends SdesSendResult
-  case class SdesSuccessResult2(sdesReference: SdesReference) extends SdesSendResult
-  sealed trait SdesSendFail                                      extends SdesSendResult
-  case class SdesSendFailExternal(message: String, status: Int)  extends SdesSendFail
-  case class SendNotAttempted2(reason: String)                extends SdesSendFail
+  case class SdesSuccess(uuid: String)                          extends SdesSendResult
+  case class SdesSuccessResult(sdesReference: SdesReference)    extends SdesSendResult
+  sealed trait SdesSendFail                                     extends SdesSendResult
+  case class SdesSendFailExternal(message: String, status: Int) extends SdesSendFail
+  case class SdesSendNotAttempted(reason: String)               extends SdesSendFail
 }
 
 @Singleton
@@ -55,7 +56,7 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: SdesConnec
         logger.warn(s"Sending message failed with status code $statusCode: $message")
         SdesSendFailExternal(message, statusCode)
       case Right(response: HttpResponse)                          =>
-        SdesSuccess2(response.body)
+        SdesSuccess(response.body)
     }
       .recoverWith {
         case NonFatal(e) =>

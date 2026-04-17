@@ -29,7 +29,8 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.ExternalWireMockSupport
 
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SdesSuccess, SendFailExternal, SendResult}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendResult, SdesSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.SdesRequest
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
 class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ExternalWireMockSupport with ExternalServiceStub {
@@ -61,7 +62,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus, path)
 
-      val result: SendResult = await(underTest.postMessage(simpleSdesRequest))
+      val result: SdesSendResult = await(underTest.postMessage(simpleSdesRequest))
 
       result shouldBe SdesSuccess(responseBody)
       verifyRequestBody(simpleSdesRequest.body, path)
@@ -74,7 +75,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus, path)
 
-      val result: SendResult = await(underTest.postMessage(sdesRequest))
+      val result: SdesSendResult = await(underTest.postMessage(sdesRequest))
 
       result shouldBe SdesSuccess(responseBody)
       verifyRequestBody(simpleSdesRequest.body, path)
@@ -88,7 +89,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus, path)
 
-      val result: SendResult = await(underTest.postMessage(sdesRequest))
+      val result: SdesSendResult = await(underTest.postMessage(sdesRequest))
 
       result shouldBe SdesSuccess(responseBody)
       verifyRequestBody(simpleSdesRequest.body, path)
@@ -107,7 +108,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val expectedStatus: Int        = OK
       primeStubForSuccess(responseBody, expectedStatus, path)
 
-      val result: SendResult = await(underTest.postMessage(sdesRequest))
+      val result: SdesSendResult = await(underTest.postMessage(sdesRequest))
 
       result shouldBe SdesSuccess(responseBody)
       verifyRequestBody(simpleSdesRequest.body, path)
@@ -124,9 +125,9 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
       primeStubForSuccess(responseBody, expectedStatus, path)
 
-      val result: SendResult = await(underTest.postMessage(simpleSdesRequest))
+      val result: SdesSendResult = await(underTest.postMessage(simpleSdesRequest))
 
-      result shouldBe SendFailExternal(s"POST of '$requestUrl' returned 500. Response body: '$responseBody'", expectedStatus)
+      result shouldBe SdesSendFailExternal(s"POST of '$requestUrl' returned 500. Response body: '$responseBody'", expectedStatus)
       verifyHeadersOnRequest(defaultHeaders, path)
     }
 
@@ -139,9 +140,9 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       ) foreach { (input) =>
         primeStubForFault(responseBody, input._1, path)
 
-        val result: SendResult = await(underTest.postMessage(simpleSdesRequest))
+        val result: SdesSendResult = await(underTest.postMessage(simpleSdesRequest))
 
-        result shouldBe SendFailExternal(s"${input._2}", INTERNAL_SERVER_ERROR)
+        result shouldBe SdesSendFailExternal(s"${input._2}", INTERNAL_SERVER_ERROR)
         verifyHeadersOnRequest(defaultHeaders, path)
       }
     }
