@@ -33,7 +33,7 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Crdl, SdesSendFailExternal, SdesSuccess2}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Crdl, SdesSendFailExternal, SdesSuccess2, SendNotAttempted2}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{Ics2XmlHelper, NoChangeTransformer}
 
@@ -81,7 +81,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       val expectedMetadataProperties = Map.empty[String, String]
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
-      val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
+      val expectedServiceResult      = SdesSuccess2(uuid = expectedSdesUuid)
 
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess2(expectedSdesUuid)))
 
@@ -101,7 +101,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       val expectedMetadataProperties = Map.empty[String, String]
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
-      val expectedServiceResult      = SendFailExternal("500 returned from SDES call due to some error", INTERNAL_SERVER_ERROR)
+      val expectedServiceResult      = SdesSendFailExternal("500 returned from SDES call due to some error", INTERNAL_SERVER_ERROR)
 
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSendFailExternal("some error", INTERNAL_SERVER_ERROR)))
 
@@ -115,7 +115,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     "not make a call to SDES when message contains empty attachment element" in new Setup {
       val xmlBody: Elem = readFromFile("crdl/crdl-request-empty-attachment-element.xml")
 
-      val expectedServiceResult = SendNotAttempted("Embedded attachment element ReceiveReferenceDataRequestResult is empty")
+      val expectedServiceResult = SendNotAttempted2("Embedded attachment element ReceiveReferenceDataRequestResult is empty")
 
       val result = await(service.processMessage(xmlBody))
 
@@ -137,7 +137,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(SendNotAttempted("Embedded attachment element ReceiveReferenceDataRequestResult is not valid base 64 data"))
+      result shouldBe List(SendNotAttempted2("Embedded attachment element ReceiveReferenceDataRequestResult is not valid base 64 data"))
       verifyZeroInteractions(sdesConnectorMock)
     }
 
@@ -151,7 +151,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       val expectedMetadataProperties = Map.empty[String, String]
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
-      val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
+      val expectedServiceResult      = SdesSuccess2(uuid = expectedSdesUuid)
 
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess2(expectedSdesUuid)))
 
@@ -172,7 +172,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       val expectedMetadataProperties = Map.empty[String, String]
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
-      val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
+      val expectedServiceResult      = SdesSuccess2(uuid = expectedSdesUuid)
 
       when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess2(expectedSdesUuid)))
 
