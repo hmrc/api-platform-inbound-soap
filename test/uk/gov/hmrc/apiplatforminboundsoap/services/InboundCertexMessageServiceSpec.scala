@@ -94,6 +94,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     val sdesRequestHeaderCaptor                            = ArgCaptor[Seq[(String, String)]]
     val xmlBodyWithAttachment                              = readFromFile("certex/responseIES002.xml")
     val xmlBodyWithBadMsgId                                = readFromFile("certex/responseIES002-messageId-invalid-uuid.xml")
+    val xmlBodyWithNoMsgId                                 = readFromFile("certex/responseIES002-messageId-empty.xml")
     val xmlBodyNoAttachment                                = readFromFile("certex/certex-request-no-attachment.xml")
 
     val service: InboundCertexMessageService =
@@ -164,6 +165,22 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       result shouldBe SendSuccess(OK, "some body")
       verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
       verify(certexSdesServiceMock).processMessage(xmlBodyWithBadMsgId)
+      getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
+      headerCaptor.value mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
+    }
+
+    "generate random UUID for x-correlation-id when message contains empty messageId" in new Setup {
+      val forwardedXmlBody = readFromFile("post-sdes-processing/certex/responseIES002-messageId-empty.xml")
+
+      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(certexSdesServiceMock.processMessage(refEq(xmlBodyWithNoMsgId))(*)).thenReturn(successful(List(SdesSuccess(
+        "some-uuid-like-string"
+      ))))
+      val result = await(service.processInboundMessage(xmlBodyWithNoMsgId))
+
+      result shouldBe SendSuccess(OK, "some body")
+      verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
+      verify(certexSdesServiceMock).processMessage(xmlBodyWithNoMsgId)
       getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
       headerCaptor.value mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
     }
