@@ -86,7 +86,7 @@ class InboundCertexMessageService @Inject() (
       }
       getMessageId(soapRequest) match {
         case Some(m) => getUuidFromMessageId(m)
-        case None    =>
+        case _       =>
           logger.warn("Unable to find messageId in provided XML")
           uuidGenerator.generateRandomUuid
       }
