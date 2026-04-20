@@ -17,7 +17,7 @@
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future.{sequence, successful}
+import scala.concurrent.Future.{failed, sequence, successful}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
@@ -48,13 +48,15 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
     sequence(attachments.map(attachmentElement => {
       buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
-            case s: SdesSuccess          => getBinaryFilename(attachmentElement) match {
+            case s: SdesSuccess                                 => getBinaryFilename(attachmentElement) match {
                 case Some(filename) =>
                   successful(SdesSuccessResult(SdesReference(uuid = s.uuid, forFilename = filename)))
                 case None           => ??? // TODO What do we do if the filename isn't found?
               }
-            case f: SdesSendFailExternal =>
+            case f: SdesSendFailExternal                        =>
               successful(SdesSendFailExternal(s"${f.status} returned from SDES call", f.status))
+            case SdesSendNotAttempted(_) | SdesSuccessResult(_) => // TODO Does this make sense in this context?
+              failed(new UnsupportedOperationException("Unexpected return type from call to postMessage"))
           }
         case Left(e: InvalidFormatResult) =>
           logger.warn(s"${e.reason}")

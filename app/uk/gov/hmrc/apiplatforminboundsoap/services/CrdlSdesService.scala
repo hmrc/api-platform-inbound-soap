@@ -75,7 +75,7 @@ class CrdlSdesService @Inject() (
             case f: SdesSendFailExternal                        =>
               logger.warn(s"${f.status} returned from SDES call due to ${f.message}")
               successful(SdesSendFailExternal(s"${f.status} returned from SDES call due to ${f.message}", f.status))
-            case SdesSendNotAttempted(_) | SdesSuccessResult(_) =>
+            case SdesSendNotAttempted(_) | SdesSuccessResult(_) => // TODO Does this make sense in this context?
               failed(new UnsupportedOperationException("Unexpected return type from call to postMessage"))
           }
         case Left(e: InvalidFormatResult) =>
