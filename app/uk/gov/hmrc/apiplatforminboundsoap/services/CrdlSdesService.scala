@@ -18,7 +18,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import java.time.Clock
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future.{sequence, successful}
+import scala.concurrent.Future.{failed, sequence, successful}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
@@ -27,7 +27,7 @@ import com.google.inject.name.Named
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess, SdesSuccessResult}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.Base64Encoder
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
@@ -70,11 +70,13 @@ class CrdlSdesService @Inject() (
     sequence(attachment.map(attachmentElement => {
       buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
-            case s: SdesSuccess          =>
+            case s: SdesSuccess                                 =>
               successful(s)
-            case f: SdesSendFailExternal =>
+            case f: SdesSendFailExternal                        =>
               logger.warn(s"${f.status} returned from SDES call due to ${f.message}")
               successful(SdesSendFailExternal(s"${f.status} returned from SDES call due to ${f.message}", f.status))
+            case SdesSendNotAttempted(_) | SdesSuccessResult(_) =>
+              failed(new UnsupportedOperationException("Unexpected return type from call to postMessage"))
           }
         case Left(e: InvalidFormatResult) =>
           logger.warn(s"${e.reason}")
