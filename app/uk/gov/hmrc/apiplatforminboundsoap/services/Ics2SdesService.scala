@@ -51,6 +51,7 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
             case s: SdesSuccess          => getBinaryFilename(attachmentElement) match {
                 case Some(filename) =>
                   successful(SdesSuccessResult(SdesReference(uuid = s.uuid, forFilename = filename)))
+                case None           => ??? // TODO What do we do if the filename isn't found?
               }
             case f: SdesSendFailExternal =>
               successful(SdesSendFailExternal(s"${f.status} returned from SDES call", f.status))

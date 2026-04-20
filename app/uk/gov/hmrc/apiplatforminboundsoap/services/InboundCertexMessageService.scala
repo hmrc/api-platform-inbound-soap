@@ -31,7 +31,7 @@ import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendResult, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, CertexUuidHelper, UuidGenerator, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexXml, XmlTransformer}
@@ -45,7 +45,7 @@ class InboundCertexMessageService @Inject() (
     config: CertexServiceConnector.Config,
     @Named("certex") override val xmlTransformer: XmlTransformer
   )(implicit ec: ExecutionContext
-  ) extends ApplicationLogger with CertexXml with MimeTypes with CertexUuidHelper {
+  ) extends ApplicationLogger with CertexXml with MimeTypes with CertexUuidHelper with SdesResultMapper {
 
   def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
@@ -105,13 +105,6 @@ class InboundCertexMessageService @Inject() (
       "x-correlation-id" -> getMessageIdUuid,
       "x-files-included" -> fileIncluded(soapRequest).toString
     )
-  }
-
-  private def mapFailedSdesSendResultToSendResult(r: SdesSendFail): SendFail = {
-    r match {
-      case SdesSendFailExternal(m, s) => SendFailExternal(m, s)
-      case SdesSendNotAttempted(r)    => SendNotAttempted(r)
-    }
   }
 
   private def processSdesResults(wholeMessage: NodeSeq, sdesResult: List[SdesSuccess]): Either[Unit, NodeSeq] = {

@@ -24,7 +24,7 @@ import scala.xml.NodeSeq
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccessResult}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendResult, SdesSuccessResult}
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ImportControlInboundSoapConnector, SdesConnector}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
@@ -36,7 +36,7 @@ class InboundIcs2MessageService @Inject() (
     sdesService: Ics2SdesService,
     sdesConnectorConfig: SdesConnector.Config
   )(implicit ec: ExecutionContext
-  ) extends ApplicationLogger with Ics2XmlHelper {
+  ) extends ApplicationLogger with Ics2XmlHelper with SdesResultMapper {
 
   def processInboundMessage(wholeMessage: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
@@ -74,13 +74,6 @@ class InboundIcs2MessageService @Inject() (
       "x-files-included" -> isFileIncluded(soapRequest).toString,
       "x-version-id"     -> SoapMessageVersion("V2").displayName
     )
-  }
-
-  private def mapFailedSdesSendResultToSendResult(r: SdesSendFail): SendFail = {
-    r match {
-      case SdesSendFailExternal(m, s) => SendFailExternal(m, s)
-      case SdesSendNotAttempted(r)    => SendNotAttempted(r)
-    }
   }
 
   private def processSdesResults(sdesResults: Seq[SdesSuccessResult], wholeMessage: NodeSeq): Either[Set[String], NodeSeq] = {

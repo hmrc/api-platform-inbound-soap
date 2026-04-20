@@ -27,7 +27,7 @@ import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendResult, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
@@ -38,7 +38,7 @@ class InboundCrdlMessageService @Inject() (
     sdesService: CrdlSdesService,
     @Named("crdl") override val xmlTransformer: XmlTransformer
   )(implicit ec: ExecutionContext
-  ) extends ApplicationLogger with CrdlXml {
+  ) extends ApplicationLogger with CrdlXml with SdesResultMapper {
 
   def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
@@ -66,13 +66,6 @@ class InboundCrdlMessageService @Inject() (
                 successful(SendFailExternal(s"Failed to replace embedded attachment for $wholeMessage", UNPROCESSABLE_ENTITY))
             }
         }
-    }
-  }
-
-  private def mapFailedSdesSendResultToSendResult(r: SdesSendFail): SendFail = {
-    r match {
-      case SdesSendFailExternal(m, s) => SendFailExternal(m, s)
-      case SdesSendNotAttempted(r)    => SendNotAttempted(r)
     }
   }
 
