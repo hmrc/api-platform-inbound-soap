@@ -66,7 +66,7 @@ class InboundIcs2MessageService @Inject() (
     }
   }
 
-  private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)]                                            = {
+  private def buildHeadersToAppend(soapRequest: NodeSeq): Seq[(String, String)] = {
     List(
       "x-soap-action"    -> getSoapAction(soapRequest).getOrElse(""),
       "x-correlation-id" -> getMessageId(soapRequest).getOrElse(""),
@@ -76,7 +76,7 @@ class InboundIcs2MessageService @Inject() (
     )
   }
 
-  private def mapFailedSdesSendResultToSendResult(r: SdesSendFail): SendFail                                               = {
+  private def mapFailedSdesSendResultToSendResult(r: SdesSendFail): SendFail = {
     r match {
       case SdesSendFailExternal(m, s) => SendFailExternal(m, s)
       case SdesSendNotAttempted(r)    => SendNotAttempted(r)

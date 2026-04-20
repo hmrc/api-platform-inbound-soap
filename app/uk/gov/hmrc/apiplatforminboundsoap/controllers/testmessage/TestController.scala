@@ -43,6 +43,7 @@ class TestController @Inject() (
           Future.successful(Ok.as("application/soap+xml"))
         case SendFailExternal(message, status) =>
           Future.successful(new Status(status).as("application/soap+xml"))
+        case _                                 => Future.successful(NotImplemented)
       }
   }
 }
