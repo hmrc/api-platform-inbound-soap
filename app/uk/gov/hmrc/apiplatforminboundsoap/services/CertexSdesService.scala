@@ -66,12 +66,9 @@ class CertexSdesService @Inject() (
     sequence(attachment.map(attachmentElement => {
       buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
-            case s: SdesSuccess          =>
-              successful(s)
-            case _: SdesSuccessResult    =>
-              successful(SdesSuccess(""))
-            case _: SdesSendNotAttempted =>
-              successful(SdesSuccess(""))
+            case s: SdesSuccess          => successful(s)
+            case _: SdesSuccessResult    => successful(SdesSuccess("")) // TODO Does this make sense?
+            case _: SdesSendNotAttempted => successful(SdesSuccess("")) // TODO Does this make sense?
             case f: SdesSendFailExternal =>
               logger.warn(s"${f.status} returned from SDES call due to ${f.message}")
               successful(SdesSendFailExternal(s"${f.status} returned from SDES call due to ${f.message}", f.status))
