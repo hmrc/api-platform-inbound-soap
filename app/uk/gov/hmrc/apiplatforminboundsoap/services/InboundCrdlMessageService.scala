@@ -54,12 +54,15 @@ class InboundCrdlMessageService @Inject() (
     sdesService.processMessage(wholeMessage) flatMap {
       sendResults: List[Either[SdesSendFail,SdesSendResult]] =>
         val haveErrors = sendResults.filter(_.isLeft).nonEmpty
-        
+        val happyResults = sendResults.collect { case Right(value) => value }
+
         if (haveErrors){
           // Do error stuff
+          successful(/* Insert Error Msg Here */)
         }
         else {
           // Do happy stuff
+          processSdesResults(wholeMessage, ???)
         }
           // successful(mapFailedSdesSendResultToSendResult(lefts.head.left.get))
 
