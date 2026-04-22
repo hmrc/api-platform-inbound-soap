@@ -39,7 +39,7 @@ object SdesConnector {
 
   sealed trait SdesSendResult
   case class SdesSuccess(uuid: String)                          extends SdesSendResult
-  case class SdesSuccessResult(sdesReference: SdesReference)    extends SdesSendResult
+  // case class SdesSuccessResult(sdesReference: SdesReference)    extends SdesSendResult
   sealed trait SdesSendFail
 //  sealed trait SdesSendFail                                     extends SdesSendResult
   case class SdesSendFailExternal(message: String, status: Int) extends SdesSendFail

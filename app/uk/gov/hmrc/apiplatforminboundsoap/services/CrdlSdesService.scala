@@ -24,7 +24,7 @@ import scala.xml.NodeSeq
 import com.google.inject.name.Named
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess, SdesSuccessResult}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess}//, SdesSuccessResult}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.Base64Encoder
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
@@ -52,12 +52,14 @@ class CrdlSdesService @Inject() (
   override def buildSdesRequest(wholeMessage: NodeSeq, attachmentElement: NodeSeq): Either[InvalidFormatResult, SdesRequest] = {
     getAttachment(wholeMessage) match {
       case Right(attachment) =>
-        Right(SdesRequest(
-          body = attachment,
-          headers = Seq.empty,
-          metadata = buildMetadata(wholeMessage),
-          metadataProperties = buildMetadataProperties(wholeMessage, attachmentElement)
-        ))
+        Right(
+          SdesRequest(
+            body = attachment,
+            headers = Seq.empty,
+            metadata = buildMetadata(wholeMessage),
+            metadataProperties = buildMetadataProperties(wholeMessage, attachmentElement)
+          )
+        )
       case Left(result)      => Left(result)
     }
   }
@@ -72,14 +74,12 @@ class CrdlSdesService @Inject() (
             case Left(f: SdesSendFailExternal)                        =>
               logger.warn(s"${f.status} returned from SDES call due to ${f.message}")
               successful(Left(SdesSendFailExternal(s"${f.status} returned from SDES call due to ${f.message}", f.status)))
-//            case SdesSendNotAttempted(_) | SdesSuccessResult(_) => // TODO Does this make sense in this context?
-//              failed(new UnsupportedOperationException("Unexpected return type from call to postMessage"))
           }
         case Left(e: InvalidFormatResult) =>
           logger.warn(s"${e.reason}")
           successful(Left(SdesSendNotAttempted(e.reason)))
       }
-    }))
+    })).map(_.toList)
   }
 
   override def buildMetadata(attachmentElement: NodeSeq): Map[String, String] = {
