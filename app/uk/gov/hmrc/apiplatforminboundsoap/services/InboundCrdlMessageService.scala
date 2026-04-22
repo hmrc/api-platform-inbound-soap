@@ -54,10 +54,14 @@ class InboundCrdlMessageService @Inject() (
     sdesService.processMessage(wholeMessage) flatMap {
       sendResults: List[Either[SdesSendFail,SdesSendResult]] =>
         val haveErrors = sendResults.filter(_.isLeft).nonEmpty
-        // if (lefts.nonEmpty){
+        
+        if (haveErrors){
+          // Do error stuff
+        }
+        else {
+          // Do happy stuff
+        }
           // successful(mapFailedSdesSendResultToSendResult(lefts.head.left.get))
-
-
 
 //         val result: Boolean = sendResults.forall(r=>r.isRight)
 //         val results: Seq[Seq[SdesSendResult]] = sendResults.dropWhile(r=>r.isRight).map(l=>l.toSeq)
