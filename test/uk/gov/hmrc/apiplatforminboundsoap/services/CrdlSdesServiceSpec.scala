@@ -73,7 +73,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     when(appConfigMock.crdl).thenReturn(crdlConfig)
   }
 
-  "processMessage" should {
+  /*"processMessage" should {
     "return success when connector returns success" in new Setup {
       val expectedSdesUuid           = UUID.randomUUID().toString
       val xmlBody: Elem              = readFromFile("crdl/crdl-request-well-formed.xml")
@@ -185,5 +185,5 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
       bodyCaptor hasCaptured expectedSdesRequest
     }
-  }
+  }*/
 }

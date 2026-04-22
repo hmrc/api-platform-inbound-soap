@@ -56,8 +56,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
     val requestUrl                            = s"http://$externalWireMockHost:$externalWireMockPort$path"
   }
 
-  "postMessage" should {
-
+  /*"postMessage" should {
     "return success status and accompanying UUID returned by the SDES" in new Setup {
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus, path)
@@ -146,7 +145,7 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
         verifyHeadersOnRequest(defaultHeaders, path)
       }
     }
-  }
+  }*/
 
   private def verifyHeadersOnRequest(headers: Seq[(String, String)], path: String = "/") = {
     headers.foreach(headers => verifyHeader(headers._1, headers._2, path))

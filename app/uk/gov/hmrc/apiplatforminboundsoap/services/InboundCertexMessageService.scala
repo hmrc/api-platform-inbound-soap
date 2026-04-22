@@ -47,7 +47,7 @@ class InboundCertexMessageService @Inject() (
   )(implicit ec: ExecutionContext
   ) extends ApplicationLogger with CertexXml with MimeTypes with CertexUuidHelper with SdesResultMapper {
 
-  def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
+ /* def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
 
     if (fileIncluded(wholeMessage)) {
@@ -114,5 +114,5 @@ class InboundCertexMessageService @Inject() (
 
   private def forwardMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     certexServiceConnector.postMessage(soapRequest, headers)
-  }
+  }*/
 }

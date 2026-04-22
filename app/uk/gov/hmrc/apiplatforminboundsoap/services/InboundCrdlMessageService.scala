@@ -52,8 +52,29 @@ class InboundCrdlMessageService @Inject() (
 
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
-      sendResults: Seq[SdesSendResult] =>
-        sendResults.find(r => r.isInstanceOf[SdesSendFail]) match {
+      sendResults: List[Either[SdesSendFail,SdesSendResult]] =>
+        val  lefts =  sendResults.find(_.isLeft)
+          sendResults.find(_.isLeft).
+        if (lefts.nonEmpty){
+          successful(mapFailedSdesSendResultToSendResult(lefts.head.left.get))
+
+
+
+        val result: Boolean = sendResults.forall(r=>r.isRight)
+        val results: Seq[Seq[SdesSendResult]] = sendResults.dropWhile(r=>r.isRight).map(l=>l.toSeq)
+        val results2: List[Object] = sendResults.filter(r=>r.isLeft).map(s => s.left.getOrElse(None))
+        val rights: List[SdesSuccess] = sendResults.takeWhile(r=>r.isRight).asInstanceOf[List[SdesSuccess]]
+         sendResults.partition(r => r.isLeft) match {
+           case (Nil, r) => processSdesResults(wholeMessage, r.asInstanceOf[List[SdesSuccess]]) match {
+             case Right(xml) => forwardMessage(xml, extraHeaders)
+             case Left(_)    =>
+               logger.warn(s"Failed to replace embedded attachment for $wholeMessage")
+               successful(SendFailExternal(s"Failed to replace embedded attachment for $wholeMessage", UNPROCESSABLE_ENTITY))
+           }
+//           case (r, _) => successful(mapFailedSdesSendResultToSendResult(r.hea))
+         }
+
+//        sendResults.find(r => r.isInstanceOf[SdesSendFail]) match {
           case Some(value: SdesSendFail) => successful(mapFailedSdesSendResultToSendResult(value))
           case Some(value)               => {
             logger.warn(s"Found a non failure send result when expecting a failure - $value")

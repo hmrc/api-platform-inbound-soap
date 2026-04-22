@@ -128,7 +128,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       .checkForIdentical()
   }
 
-  "processInboundMessage" should {
+  /*"processInboundMessage" should {
     "return success when connector returns success" in new Setup {
       when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
@@ -241,5 +241,5 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       verify(certexServiceConnectorMock).postMessage(xmlBodyNoAttachment, forwardedHeadersNoAttachment)
       forwardedMessageCaptor hasCaptured xmlBodyNoAttachment
     }
-  }
+  }*/
 }

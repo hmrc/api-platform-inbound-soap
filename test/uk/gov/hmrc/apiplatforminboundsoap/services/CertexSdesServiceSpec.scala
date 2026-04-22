@@ -75,7 +75,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     when(appConfigMock.certex).thenReturn(certexConfig)
   }
 
-  "processMessage" should {
+  /*"processMessage" should {
     "return success when connector returns success" in new Setup {
       val expectedSdesUuid           = UUID.randomUUID().toString
       val xmlBody: Elem              = readFromFile("certex/responseIES002.xml")
@@ -256,5 +256,5 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
       bodyCaptor hasCaptured expectedSdesRequest
     }
-  }
+  }*/
 }

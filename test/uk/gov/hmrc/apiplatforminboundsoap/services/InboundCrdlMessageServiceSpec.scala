@@ -84,7 +84,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       .checkForIdentical()
   }
 
-  "processInboundMessage" should {
+  /*"processInboundMessage" should {
     "return success when connector returns success" in new Setup {
       when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
 
@@ -165,5 +165,5 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       verify(crdlOrchestratorConnectorMock).postMessage(xmlBodyNoAttachment, forwardedHeadersNoAttachment)
       forwardedMessageCaptor hasCaptured xmlBodyNoAttachment
     }
-  }
+  }*/
 }

@@ -24,17 +24,17 @@ import scala.xml.NodeSeq
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess, SdesSuccessResult}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendResult, SdesSuccess, SdesSuccessResult}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 @Singleton
 class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector: SdesConnector)(implicit executionContext: ExecutionContext)
-    extends MessageService with Ics2XmlHelper {
+    extends /*MessageService with*/ Ics2XmlHelper {
 
   private def getAttachmentElements(wholeMessage: NodeSeq): NodeSeq = getBinaryElementsWithEmbeddedData(wholeMessage)
 
-  override def getAttachment(attachmentElement: NodeSeq): Either[InvalidFormatResult, String] = {
+  /*override def getAttachment(attachmentElement: NodeSeq): Either[InvalidFormatResult, String] = {
     (getBinaryFilename(attachmentElement), getBinaryBase64Object(attachmentElement)) match {
       case (Some(filename), Some(_)) if filename.isEmpty => Left(InvalidFormatResult("Argument filename found in XML but is empty"))
       case (Some(_), Some(binaryAttachment))             => Right(binaryAttachment)
@@ -51,7 +51,7 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
             case s: SdesSuccess                                 => getBinaryFilename(attachmentElement) match {
                 case Some(filename) =>
                   successful(SdesSuccessResult(SdesReference(uuid = s.uuid, forFilename = filename)))
-                case None           => ??? // TODO What do we do if the filename isn't found?
+                case None           => successful(SdesSendNotAttempted("Filename was not found in XML"))
               }
             case f: SdesSendFailExternal                        =>
               successful(SdesSendFailExternal(s"${f.status} returned from SDES call", f.status))
@@ -93,5 +93,5 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
       "LRN"                      -> lrn
     ).collect(filterEmpty)
   }
-
+*/
 }

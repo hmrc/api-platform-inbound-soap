@@ -38,12 +38,13 @@ class TestController @Inject() (
 
   def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
     implicit request =>
-      incomingMessageService.processInboundMessage(request.body, isTest = true) flatMap {
+      /*incomingMessageService.processInboundMessage(request.body, isTest = true) flatMap {
         case SendSuccess(_, _)                 =>
           Future.successful(Ok.as("application/soap+xml"))
         case SendFailExternal(message, status) =>
           Future.successful(new Status(status).as("application/soap+xml"))
-        case _                                 => Future.successful(NotImplemented)
-      }
+        case _                                 => Future.successful(NotImplemented)*/
+        Future.successful(NotImplemented)
+//      }
   }
 }

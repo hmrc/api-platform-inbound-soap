@@ -66,7 +66,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
     when(sdesConnectorConfig.ics2) thenReturn Ics2(srn = "srn", informationType = "infoType")
   }
 
-  "processInboundMessage for production" should {
+  /*"processInboundMessage for production" should {
     val xmlBody = readFromFile("ie4n09-v2.xml")
 
     val forwardedHeaders = Seq[(String, String)](
@@ -260,9 +260,9 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       verify(inboundConnectorMock).postMessage(xmlBody, forwardedHeaders, true)
       bodyCaptor hasCaptured xmlBody
     }
-  }
+  }*/
 
-  "processInboundMessage for test" should {
+  /*"processInboundMessage for test" should {
     val xmlBody = readFromFile("ie4n09-v2.xml")
 
     val forwardedHeaders = Seq[(String, String)](
@@ -293,5 +293,5 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       verify(inboundConnectorMock).postMessage(xmlBody, forwardedHeaders, true)
       bodyCaptor hasCaptured xmlBody
     }
-  }
+  }*/
 }

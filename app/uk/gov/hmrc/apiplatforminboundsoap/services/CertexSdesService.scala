@@ -35,9 +35,9 @@ class CertexSdesService @Inject() (
     sdesConnector: SdesConnector,
     override val uuidGenerator: UuidGenerator
   )(implicit executionContext: ExecutionContext
-  ) extends CertexXml with CertexUuidHelper with Base64Encoder with MessageService {
+  ) extends CertexXml with CertexUuidHelper with Base64Encoder /*with MessageService*/ {
 
-  override def getAttachment(wholeMessage: NodeSeq): Either[InvalidFormatResult, String] = {
+  /*override def getAttachment(wholeMessage: NodeSeq): Either[InvalidFormatResult, String] = {
     getBinaryAttachment(wholeMessage) match {
       case attachment: NodeSeq if attachment.text.isBlank    =>
         Left(InvalidFormatResult("Embedded attachment element pcaDocumentPdf is empty"))
@@ -68,7 +68,7 @@ class CertexSdesService @Inject() (
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
             case s: SdesSuccess          => successful(s)
             case _: SdesSuccessResult    => successful(SdesSuccess("")) // TODO Does this make sense?
-            case _: SdesSendNotAttempted => successful(SdesSuccess("")) // TODO Does this make sense?
+            //case _: SdesSendNotAttempted => successful(SdesSuccess("")) // TODO Does this make sense?
             case f: SdesSendFailExternal =>
               logger.warn(s"${f.status} returned from SDES call due to ${f.message}")
               successful(SdesSendFailExternal(s"${f.status} returned from SDES call due to ${f.message}", f.status))
@@ -108,4 +108,4 @@ class CertexSdesService @Inject() (
   override def buildMetadataProperties(wholeMessage: NodeSeq, attachmentElement: NodeSeq): Map[String, String] = {
     Map[String, String]("MRN" -> getMrn(wholeMessage), "documentSource" -> "certex") ++ getMessageId(wholeMessage).map(m => "messageId" -> m)
   }
-}
+*/}

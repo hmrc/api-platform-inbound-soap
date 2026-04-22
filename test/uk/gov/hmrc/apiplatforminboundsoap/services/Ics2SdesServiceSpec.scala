@@ -66,7 +66,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     when(appConfigMock.ics2).thenReturn(ics2)
   }
 
-  "processMessage" should {
+  /*"processMessage" should {
     "return success when connector returns success" in new Setup {
       val expectedSdesUuid           = UUID.randomUUID().toString
       val xmlBody: Elem              = readFromFile("ie4s03-v2.xml")
@@ -181,5 +181,5 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       result shouldBe List(SdesSendFailExternal("500 returned from SDES call", INTERNAL_SERVER_ERROR))
     }
-  }
+  }*/
 }

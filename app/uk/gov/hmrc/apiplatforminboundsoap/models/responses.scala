@@ -22,6 +22,7 @@ case class SdesReference(forFilename: String, uuid: String)
 sealed trait SendFail                                     extends SendResult
 case class SendFailExternal(message: String, status: Int) extends SendFail
 case class SendNotAttempted(reason: String)               extends SendFail
+//case class SdesSendNotAttempted(reason: String)           extends SendFail
 case object UnexpectedSendFailure                         extends SendFail
 
 sealed trait ParseResult

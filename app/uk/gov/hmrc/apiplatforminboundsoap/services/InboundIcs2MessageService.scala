@@ -38,7 +38,7 @@ class InboundIcs2MessageService @Inject() (
   )(implicit ec: ExecutionContext
   ) extends ApplicationLogger with Ics2XmlHelper with SdesResultMapper {
 
-  def processInboundMessage(wholeMessage: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
+ /* def processInboundMessage(wholeMessage: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
     if (isFileIncluded(wholeMessage) && getBinaryElementsWithEmbeddedData(wholeMessage).nonEmpty) {
       sendToSdesThenForwardMessage(wholeMessage, extraHeaders, isTest)
@@ -84,4 +84,4 @@ class InboundIcs2MessageService @Inject() (
   private def forwardMessage(soapRequest: NodeSeq, newHeaders: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
     importControlInboundSoapConnector.postMessage(soapRequest, newHeaders, isTest)
   }
-}
+*/}
