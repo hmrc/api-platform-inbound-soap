@@ -53,8 +53,7 @@ class InboundCrdlMessageService @Inject() (
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
       sendResults: List[Either[SdesSendFail,SdesSendResult]] =>
-        // val  lefts =  sendResults.find(_.isLeft)
-          // sendResults.find(_.isLeft).
+        val haveErrors = sendResults.filter(_.isLeft).nonEmpty
         // if (lefts.nonEmpty){
           // successful(mapFailedSdesSendResultToSendResult(lefts.head.left.get))
 
