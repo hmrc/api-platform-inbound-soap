@@ -39,18 +39,10 @@ object SdesConnector {
 
   sealed trait SdesSendResult
   case class SdesSuccess(uuid: String)                          extends SdesSendResult
-  // case class SdesSuccessResult(sdesReference: SdesReference)    extends SdesSendResult
+  case class SdesSuccessResult(sdesReference: SdesReference)    extends SdesSendResult
   sealed trait SdesSendFail
-//  sealed trait SdesSendFail                                     extends SdesSendResult
   case class SdesSendFailExternal(message: String, status: Int) extends SdesSendFail
   case class SdesSendNotAttempted(reason: String)               extends SdesSendFail
-//sealed trait SdesResult
-//  case class SdesPrepareResult(reason:String) extends SdesResult
-//  case object SdesSendResultNew extends SdesResult
-//  case class SdesSendResultNew() extends SdesResult
-//  case class SdesSuccessResultNew(sdesReference: SdesReference)    extends SdesSendResultNew
-//  case class SdesSendFailExternalNew(message: String, status: Int) extends SdesSendResultNew
-
 }
 
 @Singleton
@@ -58,7 +50,7 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: SdesConnec
   import SdesConnector._
   val requiredHeaders: Seq[(String, String)] = Seq("Content-Type" -> "application/octet-stream")
 
-  def postMessage(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[Either[SdesSendFail, SdesSendResult]] = {
+  def postMessage(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[Either[SdesSendFailExternal, SdesSuccess]] = {
     postHttpRequest(sdesRequest).map {
       case Left(UpstreamErrorResponse(message, statusCode, _, _)) =>
         logger.warn(s"Sending message failed with status code $statusCode: $message")

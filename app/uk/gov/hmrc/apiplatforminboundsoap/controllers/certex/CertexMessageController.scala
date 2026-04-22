@@ -42,12 +42,13 @@ class CertexMessageController @Inject() (
   def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction).async(parse.xml) {
     implicit request =>
       val requestId = request.headers.get("http_x_request_id").getOrElse("unable to obtain http_x_request_id")
-      /*inboundCertexMessageService.processInboundMessage(request.body) flatMap {
+      inboundCertexMessageService.processInboundMessage(request.body) flatMap {
         case SendSuccess(status, body)         => successful(Status(status)(body).as("application/soap+xml"))
         case SendFailExternal(message, status) => successful(returnErrorResponse(NonEmptyList.one(message), requestId, status))
         case SendNotAttempted(message)         => successful(returnErrorResponse(NonEmptyList.one(message), requestId))
-        case UnexpectedSendFailure             => successful(returnErrorResponse(NonEmptyList.one("message"), requestId))*/
-        successful(Status(200)("body").as("application/soap+xml"))
-//      }
+        case UnexpectedSendFailure             =>
+          successful(returnErrorResponse(NonEmptyList.one("message"), requestId))
+          successful(Status(200)("body").as("application/soap+xml"))
+      }
   }
 }

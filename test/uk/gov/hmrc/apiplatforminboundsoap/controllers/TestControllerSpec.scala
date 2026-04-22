@@ -87,7 +87,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
        |</soap:Envelope>""".stripMargin
   }
 
-  /*"POST test message endpoint " should {
+  "POST test message endpoint " should {
     "return 200 when successful for a message with embedded attached file" in new Setup {
       val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
       val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
@@ -126,5 +126,5 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Element SOAP Header Action is missing", xRequestIdHeaderValue)
       verifyZeroInteractions(incomingMessageServiceMock)
     }
-  }*/
+  }
 }

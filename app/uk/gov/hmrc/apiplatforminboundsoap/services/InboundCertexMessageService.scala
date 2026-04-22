@@ -47,7 +47,7 @@ class InboundCertexMessageService @Inject() (
   )(implicit ec: ExecutionContext
   ) extends ApplicationLogger with CertexXml with MimeTypes with CertexUuidHelper with SdesResultMapper {
 
- /* def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
+  def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
 
     if (fileIncluded(wholeMessage)) {
@@ -59,19 +59,20 @@ class InboundCertexMessageService @Inject() (
 
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
-      sendResults: Seq[SdesSendResult] =>
-        sendResults.find(r => r.isInstanceOf[SdesSendFail]) match {
-          case Some(value: SdesSendFail) => successful(mapFailedSdesSendResultToSendResult(value))
-          case Some(value)               => {
-            logger.warn(s"Found a non failure send result when expecting a failure - $value")
-            successful(UnexpectedSendFailure)
+      sendResults: List[Either[SdesSendFail, SdesSendResult]] =>
+        val haveErrors   = sendResults.exists(_.isLeft)
+        val badResults   = sendResults.collect { case Left(value) => value }
+        val happyResults = sendResults.collect { case Right(value) => value }
+
+        if (haveErrors) {
+          successful(mapFailedSdesSendResultToSendResult(badResults.head))
+        } else {
+          processSdesResults(wholeMessage, happyResults.collect { case s: SdesSuccess => s }) match {
+            case Right(xml) => forwardMessage(xml, extraHeaders)
+            case Left(_)    =>
+              logger.warn(s"Failed to replace embedded attachment for $wholeMessage")
+              successful(SendFailExternal(s"Failed to replace embedded attachment for $wholeMessage", UNPROCESSABLE_ENTITY))
           }
-          case None                      => processSdesResults(wholeMessage, sendResults.asInstanceOf[List[SdesSuccess]]) match {
-              case Right(xml) => forwardMessage(xml, extraHeaders)
-              case Left(_)    =>
-                logger.warn(s"Failed to replace embedded attachment for $wholeMessage")
-                successful(SendFailExternal(s"Failed to replace embedded attachment for $wholeMessage", UNPROCESSABLE_ENTITY))
-            }
         }
     }
   }
@@ -114,5 +115,5 @@ class InboundCertexMessageService @Inject() (
 
   private def forwardMessage(soapRequest: NodeSeq, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     certexServiceConnector.postMessage(soapRequest, headers)
-  }*/
+  }
 }

@@ -43,7 +43,7 @@ class ICS2MessageController @Inject() (
   def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
     implicit request =>
       val requestId = request.headers.get("http_x_request_id").getOrElse("unable to obtain http_x_request_id")
-      /*incomingMessageService.processInboundMessage(request.body) flatMap {
+      incomingMessageService.processInboundMessage(request.body) flatMap {
         case SendSuccess(status, body)         =>
           successful(Status(status)(body).as("application/soap+xml"))
         case SendFailExternal(message, status) =>
@@ -51,8 +51,7 @@ class ICS2MessageController @Inject() (
         case SendNotAttempted(message)         =>
           successful(returnErrorResponse(NonEmptyList.one(message), requestId))
         case UnexpectedSendFailure             =>
-          successful(returnErrorResponse(NonEmptyList.one("Unhandled send failure"), requestId))*/
-          successful(Status(200)("body").as("application/soap+xml"))
-//      }
+          successful(returnErrorResponse(NonEmptyList.one("Unhandled send failure"), requestId))
+      }
   }
 }

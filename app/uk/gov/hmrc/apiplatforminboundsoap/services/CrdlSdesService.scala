@@ -18,13 +18,16 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import java.time.Clock
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future.{failed, sequence, successful}
+import scala.concurrent.Future.{sequence, successful}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
+
 import com.google.inject.name.Named
+
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess}//, SdesSuccessResult}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.Base64Encoder
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
@@ -66,12 +69,12 @@ class CrdlSdesService @Inject() (
 
   override def processMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[List[Either[SdesSendFail, SdesSendResult]]] = {
     val attachment = getBinaryAttachment(wholeMessage)
-    sequence(attachment.map(attachmentElement => { //TODO: map these return types to SendResult types?
+    sequence(attachment.map(attachmentElement => { // TODO: map these return types to SendResult types?
       buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
-            case Right(s: SdesSuccess)                                 =>
+            case Right(s: SdesSuccess)         =>
               successful(Right(s))
-            case Left(f: SdesSendFailExternal)                        =>
+            case Left(f: SdesSendFailExternal) =>
               logger.warn(s"${f.status} returned from SDES call due to ${f.message}")
               successful(Left(SdesSendFailExternal(s"${f.status} returned from SDES call due to ${f.message}", f.status)))
           }

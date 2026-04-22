@@ -29,7 +29,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.ExternalWireMockSupport
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendResult, SdesSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models.SdesRequest
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
@@ -56,14 +56,14 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
     val requestUrl                            = s"http://$externalWireMockHost:$externalWireMockPort$path"
   }
 
-  /*"postMessage" should {
+  "postMessage" should {
     "return success status and accompanying UUID returned by the SDES" in new Setup {
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus, path)
 
-      val result: SdesSendResult = await(underTest.postMessage(simpleSdesRequest))
+      val result = await(underTest.postMessage(simpleSdesRequest))
 
-      result shouldBe SdesSuccess(responseBody)
+      result shouldBe Right(SdesSuccess(responseBody))
       verifyRequestBody(simpleSdesRequest.body, path)
       verifyHeadersOnRequest(defaultHeaders, path)
     }
@@ -74,9 +74,9 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus, path)
 
-      val result: SdesSendResult = await(underTest.postMessage(sdesRequest))
+      val result = await(underTest.postMessage(sdesRequest))
 
-      result shouldBe SdesSuccess(responseBody)
+      result shouldBe Right(SdesSuccess(responseBody))
       verifyRequestBody(simpleSdesRequest.body, path)
       verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders, path)
     }
@@ -88,9 +88,9 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val expectedStatus: Int = OK
       primeStubForSuccess(responseBody, expectedStatus, path)
 
-      val result: SdesSendResult = await(underTest.postMessage(sdesRequest))
+      val result = await(underTest.postMessage(sdesRequest))
 
-      result shouldBe SdesSuccess(responseBody)
+      result shouldBe Right(SdesSuccess(responseBody))
       verifyRequestBody(simpleSdesRequest.body, path)
 
       verifyHeadersOnRequest(defaultHeaders ++ additionalHeaders ++ List("Metadata" -> """{"metadata":{"foo":"bar","humpty":"dumpty"}}"""), path)
@@ -107,9 +107,9 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val expectedStatus: Int        = OK
       primeStubForSuccess(responseBody, expectedStatus, path)
 
-      val result: SdesSendResult = await(underTest.postMessage(sdesRequest))
+      val result = await(underTest.postMessage(sdesRequest))
 
-      result shouldBe SdesSuccess(responseBody)
+      result shouldBe Right(SdesSuccess(responseBody))
       verifyRequestBody(simpleSdesRequest.body, path)
 
       verifyHeadersOnRequest(
@@ -124,9 +124,9 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       val expectedStatus: Int = INTERNAL_SERVER_ERROR
       primeStubForSuccess(responseBody, expectedStatus, path)
 
-      val result: SdesSendResult = await(underTest.postMessage(simpleSdesRequest))
+      val result = await(underTest.postMessage(simpleSdesRequest))
 
-      result shouldBe SdesSendFailExternal(s"POST of '$requestUrl' returned 500. Response body: '$responseBody'", expectedStatus)
+      result shouldBe Left(SdesSendFailExternal(s"POST of '$requestUrl' returned 500. Response body: '$responseBody'", expectedStatus))
       verifyHeadersOnRequest(defaultHeaders, path)
     }
 
@@ -139,13 +139,13 @@ class SdesConnectorISpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       ) foreach { (input) =>
         primeStubForFault(responseBody, input._1, path)
 
-        val result: SdesSendResult = await(underTest.postMessage(simpleSdesRequest))
+        val result = await(underTest.postMessage(simpleSdesRequest))
 
-        result shouldBe SdesSendFailExternal(s"${input._2}", INTERNAL_SERVER_ERROR)
+        result shouldBe Left(SdesSendFailExternal(s"${input._2}", INTERNAL_SERVER_ERROR))
         verifyHeadersOnRequest(defaultHeaders, path)
       }
     }
-  }*/
+  }
 
   private def verifyHeadersOnRequest(headers: Seq[(String, String)], path: String = "/") = {
     headers.foreach(headers => verifyHeader(headers._1, headers._2, path))
