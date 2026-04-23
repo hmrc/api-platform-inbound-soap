@@ -48,7 +48,6 @@ class CertexMessageController @Inject() (
         case SendNotAttempted(message)         => successful(returnErrorResponse(NonEmptyList.one(message), requestId))
         case UnexpectedSendFailure             =>
           successful(returnErrorResponse(NonEmptyList.one("message"), requestId))
-          successful(Status(200)("body").as("application/soap+xml"))
       }
   }
 }

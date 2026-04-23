@@ -55,9 +55,6 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
               }
             case Left(f: SdesSendFailExternal) =>
               successful(Left(SdesSendFailExternal(s"${f.status} returned from SDES call", f.status)))
-            /*case SdesSendNotAttempted(_) | SdesSuccessResult(_) => // TODO Does this make sense in this context?
-              failed(new UnsupportedOperationException("Unexpected return type from call to postMessage"))
-             */
           }
         case Left(e: InvalidFormatResult) =>
           logger.warn(s"${e.reason}")
