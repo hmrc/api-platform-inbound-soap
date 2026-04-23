@@ -28,7 +28,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, PassThroughModeAction, SoapErrorResponse, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess, UnexpectedSendFailure}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
 @Singleton()
@@ -51,7 +51,6 @@ class ConfirmationController @Inject() (
         successful(new Status(status).as("application/soap+xml"))
       case SendNotAttempted(message)         =>
         successful(returnErrorResponse(NonEmptyList.one(message), requestId))
-      case UnexpectedSendFailure             => successful(returnErrorResponse(NonEmptyList.one("Unhandled send failure"), requestId))
     }
   }
 }

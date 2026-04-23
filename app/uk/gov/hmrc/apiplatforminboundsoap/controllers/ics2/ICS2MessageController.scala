@@ -27,7 +27,7 @@ import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapErrorResponse, SoapMessageValidateAction, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess, UnexpectedSendFailure}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundIcs2MessageService
 
 @Singleton()
@@ -50,8 +50,6 @@ class ICS2MessageController @Inject() (
           successful(returnErrorResponse(NonEmptyList.one(message), requestId, status))
         case SendNotAttempted(message)         =>
           successful(returnErrorResponse(NonEmptyList.one(message), requestId))
-        case UnexpectedSendFailure             =>
-          successful(returnErrorResponse(NonEmptyList.one("Unhandled send failure"), requestId))
       }
   }
 }

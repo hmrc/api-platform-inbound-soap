@@ -27,7 +27,7 @@ import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapErrorResponse, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess, UnexpectedSendFailure}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCrdlMessageService
 
 @Singleton()
@@ -46,7 +46,6 @@ class CrdlMessageController @Inject() (
         case SendSuccess(status, body)         => successful(Status(status)(body).as("application/soap+xml"))
         case SendNotAttempted(message)         => successful(returnErrorResponse(NonEmptyList.one(message), requestId))
         case SendFailExternal(message, status) => successful(returnErrorResponse(NonEmptyList.one(message), requestId, status))
-        case UnexpectedSendFailure             => successful(returnErrorResponse(NonEmptyList.one("Unhandled send failure"), requestId))
       }
   }
 }
