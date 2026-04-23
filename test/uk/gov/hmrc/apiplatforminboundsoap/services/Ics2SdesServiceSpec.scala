@@ -16,8 +16,11 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future.successful
 import scala.io.Source
+import scala.xml.Elem
 
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
@@ -27,10 +30,12 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.http.Status
+import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.Ics2
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Ics2, SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess, SdesSuccessResult}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
@@ -61,7 +66,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     when(appConfigMock.ics2).thenReturn(ics2)
   }
 
-  /*"processMessage" should {
+  "processMessage" should {
     "return success when connector returns success" in new Setup {
       val expectedSdesUuid           = UUID.randomUUID().toString
       val xmlBody: Elem              = readFromFile("ie4s03-v2.xml")
@@ -78,9 +83,9 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       val expectedBody               = "cid:1177341525550"
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, expectedBody)
-      val expectedServiceResult      = SdesSuccessResult(SdesReference(uuid = expectedSdesUuid, forFilename = "test-filename.txt"))
+      val expectedServiceResult      = Right(SdesSuccessResult(SdesReference(uuid = expectedSdesUuid, forFilename = "test-filename.txt")))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
 
       val result = await(service.processMessage(xmlBody))
 
@@ -123,14 +128,14 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val expectedFirstSdesRequest                = SdesRequest(Seq.empty, expectedFirstRequestMetadata, expectedFirstRequestMetadataProperties, expectedBody)
       val expectedSecondSdesRequest               = SdesRequest(Seq.empty, expectedSecondRequestMetadata, expectedSecondRequestMetadataProperties, expectedBody)
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuidForFirstCall)))
-        .andThen(successful(SdesSuccess(expectedSdesUuidForSecondCall)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuidForFirstCall))))
+        .andThen(successful(Right(SdesSuccess(expectedSdesUuidForSecondCall))))
 
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(
-        SdesSuccessResult(SdesReference(expectedFilenameForFirstCall, expectedSdesUuidForFirstCall)),
-        SdesSuccessResult(SdesReference(expectedFilenameForSecondCall, expectedSdesUuidForSecondCall))
+        Right(SdesSuccessResult(SdesReference(expectedFilenameForFirstCall, expectedSdesUuidForFirstCall))),
+        Right(SdesSuccessResult(SdesReference(expectedFilenameForSecondCall, expectedSdesUuidForSecondCall)))
       )
       verify(sdesConnectorMock, times(2)).postMessage(*)(*)
 
@@ -142,7 +147,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(SdesSendNotAttempted("Argument includedBinaryObject was not found in XML"))
+      result shouldBe List(Left(SdesSendNotAttempted("Argument includedBinaryObject was not found in XML")))
       verifyZeroInteractions(appConfigMock)
       verifyZeroInteractions(sdesConnectorMock)
     }
@@ -152,7 +157,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(SdesSendNotAttempted("Argument filename was not found in XML"))
+      result shouldBe List(Left(SdesSendNotAttempted("Argument filename was not found in XML")))
       verifyZeroInteractions(appConfigMock)
       verifyZeroInteractions(sdesConnectorMock)
     }
@@ -162,7 +167,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(SdesSendNotAttempted("Argument filename found in XML but is empty"))
+      result shouldBe List(Left(SdesSendNotAttempted("Argument filename found in XML but is empty")))
       verifyZeroInteractions(appConfigMock)
       verifyZeroInteractions(sdesConnectorMock)
     }
@@ -170,11 +175,11 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     "return upstream response when message sending fails" in new Setup {
       val xmlBody: Elem = readFromFile("ie4s03-v2.xml")
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSendFailExternal("some error", INTERNAL_SERVER_ERROR)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Left(SdesSendFailExternal("some error", INTERNAL_SERVER_ERROR))))
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(SdesSendFailExternal("500 returned from SDES call", INTERNAL_SERVER_ERROR))
+      result shouldBe List(Left(SdesSendFailExternal("500 returned from SDES call", INTERNAL_SERVER_ERROR)))
     }
-  }*/
+  }
 }

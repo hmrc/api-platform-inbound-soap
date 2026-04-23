@@ -17,7 +17,7 @@
 package uk.gov.hmrc.apiplatforminboundsoap.models
 
 sealed trait SendResult
-case class SendSuccess(status: Int, body: String)         extends SendResult
+case class SendSuccess(status: Int, body: String) extends SendResult
 case class SdesReference(forFilename: String, uuid: String)
 
 sealed trait SendFail                                     extends SendResult
