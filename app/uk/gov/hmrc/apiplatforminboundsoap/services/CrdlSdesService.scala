@@ -69,7 +69,7 @@ class CrdlSdesService @Inject() (
 
   override def processMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[List[Either[SdesSendFail, SdesSendResult]]] = {
     val attachment = getBinaryAttachment(wholeMessage)
-    sequence(attachment.map(attachmentElement => { // TODO: map these return types to SendResult types?
+    sequence(attachment.map(attachmentElement => {
       buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
             case Right(s: SdesSuccess)         =>
