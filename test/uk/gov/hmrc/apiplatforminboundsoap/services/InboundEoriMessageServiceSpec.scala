@@ -57,26 +57,15 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     val authToken = "some-auth-token-value"
 
     val forwardedHeaders = Seq[(String, String)](
-      "Accept"        -> "application/xml",
-      "Authorization" -> s"Bearer $authToken",
-      "Content-Type"  -> "application/xml; charset=UTF-8",
-      "date"          -> dateHeaderValue,
-      "source"        -> "MDTP"
-    )
-
-    val forwardedHeadersWithAttachment = forwardedHeaders ++ Map(
-      "x-correlation-id" -> "ca49dfbe-c5d6-4cb3-b424-ddead6c002ad",
-      "x-files-included" -> "true"
-    )
-
-    val forwardedHeadersWithAttachmentAndRandomCorrelationId = forwardedHeaders ++ Map(
-      "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557",
-      "x-files-included" -> "true"
+      "Accept"           -> "application/xml",
+      "Authorization"    -> s"Bearer $authToken",
+      "Content-Type"     -> "application/xml; charset=UTF-8",
+      "date"             -> dateHeaderValue,
+      "x-forwarded-host" -> "MDTP"
     )
 
     val forwardedHeadersNoAttachment                   = forwardedHeaders ++ Map(
-      "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557",
-      "x-files-included" -> "false"
+      "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557"
     )
     val eoriServiceConnectorMock: EoriServiceConnector = mock[EoriServiceConnector]
     val configMock: EoriServiceConnector.Config        = mock[EoriServiceConnector.Config]

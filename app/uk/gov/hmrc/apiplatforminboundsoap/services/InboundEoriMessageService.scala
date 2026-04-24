@@ -54,9 +54,8 @@ class InboundEoriMessageService @Inject() (
       "Authorization"    -> s"Bearer ${config.authToken}",
       "Content-Type"     -> "application/xml; charset=UTF-8",
       "date"             -> formattedDate,
-      "source"           -> "MDTP",
-      "x-correlation-id" -> uuidGenerator.generateRandomUuid,
-      "x-files-included" -> "false"
+      "x-forwarded-host" -> "MDTP",
+      "x-correlation-id" -> uuidGenerator.generateRandomUuid
     )
   }
 
