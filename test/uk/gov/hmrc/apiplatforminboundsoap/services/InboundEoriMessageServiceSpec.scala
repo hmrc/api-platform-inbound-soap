@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.models
+package uk.gov.hmrc.apiplatforminboundsoap.services
 
-sealed trait SendResult
-case class SendSuccess(status: Int, body: String) extends SendResult
-case class SdesReference(forFilename: String, uuid: String)
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFail, SendFailExternal, SendNotAttempted}
 
-sealed trait SendFail                                     extends SendResult
-case class SendFailExternal(message: String, status: Int) extends SendFail
-case class SendNotAttempted(reason: String)               extends SendFail
+trait SdesResultMapper {
 
-sealed trait ParseResult
-case class InvalidFormatResult(reason: String) extends ParseResult
+  def mapFailedSdesSendResultToSendResult(r: SdesSendFail): SendFail = {
+    r match {
+      case SdesSendFailExternal(m, s) => SendFailExternal(m, s)
+      case SdesSendNotAttempted(r)    => SendNotAttempted(r)
+    }
+  }
+}

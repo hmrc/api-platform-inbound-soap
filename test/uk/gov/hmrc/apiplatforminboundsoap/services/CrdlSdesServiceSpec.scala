@@ -36,7 +36,7 @@ import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.Crdl
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Crdl, SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{Ics2XmlHelper, NoChangeTransformer}
 
@@ -86,11 +86,11 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(expectedServiceResult)
+      result shouldBe List(Right(expectedServiceResult))
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
       bodyCaptor hasCaptured expectedSdesRequest
     }
@@ -104,13 +104,13 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       val expectedMetadataProperties = Map.empty[String, String]
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
-      val expectedServiceResult      = SendFailExternal("500 returned from SDES call due to some error", INTERNAL_SERVER_ERROR)
+      val expectedServiceResult      = SdesSendFailExternal("500 returned from SDES call due to some error", INTERNAL_SERVER_ERROR)
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SendFailExternal("some error", INTERNAL_SERVER_ERROR)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Left(SdesSendFailExternal("some error", INTERNAL_SERVER_ERROR))))
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(expectedServiceResult)
+      result shouldBe List(Left(expectedServiceResult))
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
       bodyCaptor hasCaptured expectedSdesRequest
     }
@@ -118,11 +118,11 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     "not make a call to SDES when message contains empty attachment element" in new Setup {
       val xmlBody: Elem = readFromFile("crdl/crdl-request-empty-attachment-element.xml")
 
-      val expectedServiceResult = SendNotAttempted("Embedded attachment element ReceiveReferenceDataRequestResult is empty")
+      val expectedServiceResult = SdesSendNotAttempted("Embedded attachment element ReceiveReferenceDataRequestResult is empty")
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(expectedServiceResult)
+      result shouldBe List(Left(expectedServiceResult))
       verifyZeroInteractions(sdesConnectorMock)
     }
 
@@ -140,7 +140,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(SendNotAttempted("Embedded attachment element ReceiveReferenceDataRequestResult is not valid base 64 data"))
+      result shouldBe List(Left(SdesSendNotAttempted("Embedded attachment element ReceiveReferenceDataRequestResult is not valid base 64 data")))
       verifyZeroInteractions(sdesConnectorMock)
     }
 
@@ -156,11 +156,11 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(expectedServiceResult)
+      result shouldBe List(Right(expectedServiceResult))
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
       bodyCaptor hasCaptured expectedSdesRequest
     }
@@ -177,11 +177,11 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = SdesSuccess(uuid = expectedSdesUuid)
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(SdesSuccess(expectedSdesUuid)))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
 
       val result = await(service.processMessage(xmlBody))
 
-      result shouldBe List(expectedServiceResult)
+      result shouldBe List(Right(expectedServiceResult))
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
       bodyCaptor hasCaptured expectedSdesRequest
     }

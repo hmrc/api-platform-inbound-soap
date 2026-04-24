@@ -24,6 +24,7 @@ import scala.xml.NodeSeq
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector._
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
@@ -42,23 +43,24 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
     }
   }
 
-  override def processMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[Seq[SendResult]] = {
+  override def processMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[List[Either[SdesSendFail, SdesSendResult]]] = {
     val attachments = getAttachmentElements(wholeMessage)
     sequence(attachments.map(attachmentElement => {
       buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
-            case s: SdesSuccess      => getBinaryFilename(attachmentElement) match {
+            case Right(s: SdesSuccess)         => getBinaryFilename(attachmentElement) match {
                 case Some(filename) =>
-                  successful(SdesSuccessResult(SdesReference(uuid = s.uuid, forFilename = filename)))
+                  successful(Right(SdesSuccessResult(SdesReference(uuid = s.uuid, forFilename = filename))))
+                case None           => successful(Left(SdesSendNotAttempted("Filename was not found in XML")))
               }
-            case f: SendFailExternal =>
-              successful(SendFailExternal(s"${f.status} returned from SDES call", f.status))
+            case Left(f: SdesSendFailExternal) =>
+              successful(Left(SdesSendFailExternal(s"${f.status} returned from SDES call", f.status)))
           }
         case Left(e: InvalidFormatResult) =>
           logger.warn(s"${e.reason}")
-          successful(SendNotAttempted(e.reason))
+          successful(Left(SdesSendNotAttempted(e.reason)))
       }
-    }))
+    })).map(_.toList)
   }
 
   override def buildMetadata(attachmentElement: NodeSeq): Map[String, String] = {
@@ -89,5 +91,4 @@ class Ics2SdesService @Inject() (appConfig: SdesConnector.Config, sdesConnector:
       "LRN"                      -> lrn
     ).collect(filterEmpty)
   }
-
 }

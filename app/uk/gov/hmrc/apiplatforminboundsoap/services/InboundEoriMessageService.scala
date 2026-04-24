@@ -20,7 +20,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 import play.api.http.MimeTypes
@@ -36,7 +36,6 @@ class InboundEoriMessageService @Inject() (
     uuidGenerator: UuidGenerator,
     dtHelper: ZonedDateTimeHelper,
     config: EoriServiceConnector.Config
-  )(implicit ec: ExecutionContext
   ) extends ApplicationLogger with MimeTypes {
 
   def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {

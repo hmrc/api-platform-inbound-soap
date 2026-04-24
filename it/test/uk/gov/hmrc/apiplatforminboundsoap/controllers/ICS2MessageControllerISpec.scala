@@ -37,7 +37,7 @@ import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.apiplatforminboundsoap.wiremockstubs.ExternalServiceStub
 
-class ICS2ControllerISpec extends AnyWordSpecLike with Matchers
+class ICS2MessageControllerISpec extends AnyWordSpecLike with Matchers
     with HttpClientV2Support with ExternalWireMockSupport with GuiceOneAppPerSuite with ExternalServiceStub {
 
   def readFromFile(fileName: String) = {

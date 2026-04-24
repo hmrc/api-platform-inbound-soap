@@ -27,6 +27,7 @@ import com.google.inject.name.Named
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendFailExternal, SdesSendNotAttempted, SdesSendResult, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.Base64Encoder
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
@@ -54,32 +55,34 @@ class CrdlSdesService @Inject() (
   override def buildSdesRequest(wholeMessage: NodeSeq, attachmentElement: NodeSeq): Either[InvalidFormatResult, SdesRequest] = {
     getAttachment(wholeMessage) match {
       case Right(attachment) =>
-        Right(SdesRequest(
-          body = attachment,
-          headers = Seq.empty,
-          metadata = buildMetadata(wholeMessage),
-          metadataProperties = buildMetadataProperties(wholeMessage, attachmentElement)
-        ))
+        Right(
+          SdesRequest(
+            body = attachment,
+            headers = Seq.empty,
+            metadata = buildMetadata(wholeMessage),
+            metadataProperties = buildMetadataProperties(wholeMessage, attachmentElement)
+          )
+        )
       case Left(result)      => Left(result)
     }
   }
 
-  override def processMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[Seq[SendResult]] = {
+  override def processMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[List[Either[SdesSendFail, SdesSendResult]]] = {
     val attachment = getBinaryAttachment(wholeMessage)
     sequence(attachment.map(attachmentElement => {
       buildSdesRequest(wholeMessage, attachmentElement) match {
         case Right(sdesRequest)           => sdesConnector.postMessage(sdesRequest) flatMap {
-            case s: SdesSuccess      =>
-              successful(SdesSuccess(uuid = s.uuid))
-            case f: SendFailExternal =>
+            case Right(s: SdesSuccess)         =>
+              successful(Right(s))
+            case Left(f: SdesSendFailExternal) =>
               logger.warn(s"${f.status} returned from SDES call due to ${f.message}")
-              successful(SendFailExternal(s"${f.status} returned from SDES call due to ${f.message}", f.status))
+              successful(Left(SdesSendFailExternal(s"${f.status} returned from SDES call due to ${f.message}", f.status)))
           }
         case Left(e: InvalidFormatResult) =>
           logger.warn(s"${e.reason}")
-          successful(SendNotAttempted(e.reason))
+          successful(Left(SdesSendNotAttempted(e.reason)))
       }
-    }))
+    })).map(_.toList)
   }
 
   override def buildMetadata(attachmentElement: NodeSeq): Map[String, String] = {

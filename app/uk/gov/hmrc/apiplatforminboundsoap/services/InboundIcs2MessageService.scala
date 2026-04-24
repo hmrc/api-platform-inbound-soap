@@ -24,6 +24,7 @@ import scala.xml.NodeSeq
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendResult, SdesSuccessResult}
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ImportControlInboundSoapConnector, SdesConnector}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
@@ -35,7 +36,7 @@ class InboundIcs2MessageService @Inject() (
     sdesService: Ics2SdesService,
     sdesConnectorConfig: SdesConnector.Config
   )(implicit ec: ExecutionContext
-  ) extends ApplicationLogger with Ics2XmlHelper {
+  ) extends ApplicationLogger with Ics2XmlHelper with SdesResultMapper {
 
   def processInboundMessage(wholeMessage: NodeSeq, isTest: Boolean = false)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
@@ -48,15 +49,20 @@ class InboundIcs2MessageService @Inject() (
 
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)], isTest: Boolean)(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
-      sendResults: Seq[SendResult] =>
-        sendResults.find(r => r.isInstanceOf[SendFail]) match {
-          case Some(value) => successful(value)
-          case None        => processSdesResults(sendResults.asInstanceOf[Seq[SdesSuccessResult]], wholeMessage) match {
-              case Right(xml) => forwardMessage(xml, extraHeaders, isTest)
-              case Left(f)    =>
-                logger.warn(s"Failed to replace all embedded attachments for files $f")
-                successful(SendFailExternal(s"Failed to replace all embedded attachments for files $f", UNPROCESSABLE_ENTITY))
-            }
+      sendResults: List[Either[SdesSendFail, SdesSendResult]] =>
+        val haveErrors   = sendResults.exists(_.isLeft)
+        val badResults   = sendResults.collect { case Left(value) => value }
+        val happyResults = sendResults.collect { case Right(value) => value }
+
+        if (haveErrors) {
+          successful(mapFailedSdesSendResultToSendResult(badResults.head))
+        } else {
+          processSdesResults(wholeMessage, happyResults.collect { case s: SdesSuccessResult => s }) match {
+            case Right(xml) => forwardMessage(xml, extraHeaders, isTest)
+            case Left(f)    =>
+              logger.warn(s"Failed to replace all embedded attachments for files $f")
+              successful(SendFailExternal(s"Failed to replace all embedded attachments for files $f", UNPROCESSABLE_ENTITY))
+          }
         }
     }
   }
@@ -71,7 +77,7 @@ class InboundIcs2MessageService @Inject() (
     )
   }
 
-  private def processSdesResults(sdesResults: Seq[SdesSuccessResult], wholeMessage: NodeSeq): Either[Set[String], NodeSeq] = {
+  private def processSdesResults(wholeMessage: NodeSeq, sdesResults: Seq[SdesSuccessResult]): Either[Set[String], NodeSeq] = {
     val replacements = sdesResults.map(sr => (sr.sdesReference.forFilename, sr.sdesReference.uuid))
     replaceEmbeddedAttachments(replacements.toMap[String, String], wholeMessage, sdesConnectorConfig.ics2.encodeSdesReference)
   }

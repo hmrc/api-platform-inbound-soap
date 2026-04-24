@@ -27,6 +27,7 @@ import play.api.http.Status.UNPROCESSABLE_ENTITY
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendResult, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models._
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
@@ -37,7 +38,7 @@ class InboundCrdlMessageService @Inject() (
     sdesService: CrdlSdesService,
     @Named("crdl") override val xmlTransformer: XmlTransformer
   )(implicit ec: ExecutionContext
-  ) extends ApplicationLogger with CrdlXml {
+  ) extends ApplicationLogger with CrdlXml with SdesResultMapper {
 
   def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend(wholeMessage)
@@ -51,15 +52,20 @@ class InboundCrdlMessageService @Inject() (
 
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
-      sendResults: Seq[SendResult] =>
-        sendResults.find(r => r.isInstanceOf[SendFail]) match {
-          case Some(value) => successful(value)
-          case None        => processSdesResults(wholeMessage, sendResults.asInstanceOf[List[SdesSuccess]]) match {
-              case Right(xml) => forwardMessage(xml, extraHeaders)
-              case Left(_)    =>
-                logger.warn(s"Failed to replace embedded attachment for $wholeMessage")
-                successful(SendFailExternal(s"Failed to replace embedded attachment for $wholeMessage", UNPROCESSABLE_ENTITY))
-            }
+      sendResults: List[Either[SdesSendFail, SdesSendResult]] =>
+        val haveErrors   = sendResults.exists(_.isLeft)
+        val badResults   = sendResults.collect { case Left(value) => value }
+        val happyResults = sendResults.collect { case Right(value) => value }
+
+        if (haveErrors) {
+          successful(mapFailedSdesSendResultToSendResult(badResults.head))
+        } else {
+          processSdesResults(wholeMessage, happyResults.collect { case s: SdesSuccess => s }) match {
+            case Right(xml) => forwardMessage(xml, extraHeaders)
+            case Left(_)    =>
+              logger.warn(s"Failed to replace embedded attachment for $wholeMessage")
+              successful(SendFailExternal(s"Failed to replace embedded attachment for $wholeMessage", UNPROCESSABLE_ENTITY))
+          }
         }
     }
   }
