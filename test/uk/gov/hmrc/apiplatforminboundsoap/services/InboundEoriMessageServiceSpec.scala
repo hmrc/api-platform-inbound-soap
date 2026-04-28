@@ -59,7 +59,7 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     val forwardedHeaders = Seq[(String, String)](
       "Accept"           -> "application/xml",
       "Authorization"    -> s"Bearer $authToken",
-      "Content-Type"     -> "application/xml; charset=UTF-8",
+      "Content-Type"     -> "application/soap+xml; charset=UTF-8",
       "date"             -> dateHeaderValue,
       "x-forwarded-host" -> "MDTP"
     )
