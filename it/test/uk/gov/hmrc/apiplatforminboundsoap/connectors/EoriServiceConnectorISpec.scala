@@ -49,7 +49,7 @@ class EoriServiceConnectorISpec extends AnyWordSpec with Matchers with GuiceOneA
     val underTest: EoriServiceConnector = app.injector.instanceOf[EoriServiceConnector]
     val requestBody                     = <foo>bar</foo>
     val responseBody                    = <zim>job</zim>
-    val targetPath                      = "/crs/receiveDataChangeEvents/v1"
+    val targetPath                      = "/taxud/crs/receiveDataChangeEvents/v1"
     val addedHeaders                    = Seq.empty
   }
 
