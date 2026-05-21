@@ -96,8 +96,9 @@ class ImportControlInboundSoapConnectorConfigProvider @Inject() (val configurati
 
   override def get(): ImportControlInboundSoapConnector.Config = {
     val url                   = baseUrl("import-control-inbound-soap")
+    val path                  = getConfString("import-control-inbound-soap.path", "import-control-inbound-soap")
     val testForwardMessageUrl = getString("testForwardMessageUrl")
-    ImportControlInboundSoapConnector.Config(url, testForwardMessageUrl)
+    ImportControlInboundSoapConnector.Config(url, path, testForwardMessageUrl)
   }
 }
 
