@@ -1,0 +1,27 @@
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:ccn2="http://ccn2.ec.eu/CCN2.Service.Platform.Common.Schema" xmlns:v3="http://xmlns.ec.eu/BusinessServices/CRS/ReceiveCustomsCustomerReferenceDataChangesBAS/V3">
+    <soap:Header>
+        <Action xmlns="http://www.w3.org/2005/08/addressing">CCN2.Service.Customs.Default.CRS.ReceiveCustomsCustomerReferenceDataChangesBASv3/IsAlive</Action>
+        <MessageID xmlns="http://www.w3.org/2005/08/addressing">urn:uuid:${=java.util.UUID.randomUUID()}</MessageID>
+        <To xmlns="http://www.w3.org/2005/08/addressing">partner:CCN2.Partner.XX(CountryPrefix).Customs.TAXUD/CRS.CONF</To>
+        <ReplyTo xmlns="http://www.w3.org/2005/08/addressing">
+            <Address>http://www.w3.org/2005/08/addressing/anonymous</Address>
+        </ReplyTo>
+        <From xmlns="http://www.w3.org/2005/08/addressing">
+            <Address>partner:CCN2.Partner.EU.Customs.TAXUD/CRS.CONF</Address>
+        </From>
+        <ns3:MessageHeader xmlns="http://ccn2.ec.eu/CCN2.Service.Default.BusinessObjectsCommon.Schema" xmlns:ns2="http://ccn2.ec.eu/CCN2.Service.Default.TraderSystem.Schema" xmlns:ns3="http://ccn2.ec.eu/CCN2.Service.Platform.Common.Schema">
+            <ns3:Version>1.0</ns3:Version>
+            <ns3:MessageType>IsAlive</ns3:MessageType>
+            <ns3:RequestCoD>false</ns3:RequestCoD>
+        </ns3:MessageHeader>
+        <wsse:Security soap:mustUnderstand="true" soap:role="CCN2.Platform" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+            <wsse:UsernameToken wsu:Id="UsernameToken-d34e8cba-f313-4377-9196-d6f5f5070dcf">
+                <wsse:Username>XYZ(username)</wsse:Username>
+                <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">XYZ(Password)</wsse:Password>
+            </wsse:UsernameToken>
+        </wsse:Security>
+    </soap:Header>
+    <soap:Body>
+        <v3:isAliveReqMsg/>
+    </soap:Body>
+</soap:Envelope>
