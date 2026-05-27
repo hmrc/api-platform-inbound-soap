@@ -26,10 +26,6 @@ import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.xmlunit.builder.DiffBuilder.compare
-import org.xmlunit.builder.{DiffBuilder, Input}
-import org.xmlunit.diff.DefaultNodeMatcher
-import org.xmlunit.diff.ElementSelectors.byName
 
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK}
@@ -88,8 +84,7 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     val binaryElementsCaptor                           = ArgCaptor[NodeSeq]
     val headerCaptor                                   = ArgCaptor[Seq[(String, String)]]
     val sdesRequestHeaderCaptor                        = ArgCaptor[Seq[(String, String)]]
-     val xmlBodyIsAlive                             = readFromFile("eori/isAliveRequest.xml")
-//     val xmlBody                            = readFromFile("certex/certex-request-no-attachment.xml")
+    val xmlBodyIsAlive                                 = readFromFile("eori/isAliveRequest.xml")
 
     val service: InboundEoriMessageService =
       new InboundEoriMessageService(

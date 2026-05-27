@@ -22,12 +22,14 @@ import java.util.Locale
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 import scala.xml.NodeSeq
+
 import play.api.http.MimeTypes
 import play.api.http.Status.OK
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, UuidGenerator, ZonedDateTimeHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.util.{UuidGenerator, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.EoriXml
 
 @Singleton
@@ -41,9 +43,9 @@ class InboundEoriMessageService @Inject() (
   def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend()
 
-    if (isAliveMessage(wholeMessage)){
+    if (isAliveMessage(wholeMessage)) {
       Future.successful(SendSuccess(OK, ""))
-    }else {
+    } else {
       forwardMessage(wholeMessage, extraHeaders)
     }
   }

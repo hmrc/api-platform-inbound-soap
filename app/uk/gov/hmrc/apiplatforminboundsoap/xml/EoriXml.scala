@@ -16,11 +16,12 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
-import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
-
 import scala.xml.NodeSeq
 
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
+
 trait EoriXml extends ApplicationLogger {
+
   def isAliveMessage(soapMessage: NodeSeq): Boolean = {
     (soapMessage \\ "MessageType").text.equalsIgnoreCase("isalive")
   }

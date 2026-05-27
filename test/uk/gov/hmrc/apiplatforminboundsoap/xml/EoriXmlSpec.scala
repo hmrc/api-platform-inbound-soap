@@ -16,24 +16,20 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
+import scala.io.Source
+import scala.xml.{Elem, NodeSeq}
+
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.xmlunit.builder.DiffBuilder.compare
-import org.xmlunit.builder.{DiffBuilder, Input}
-import org.xmlunit.diff.DefaultNodeMatcher
-import org.xmlunit.diff.ElementSelectors.byName
-
-import scala.io.Source
-import scala.xml.{Elem, NodeSeq}
 
 class EoriXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with EoriXml {
 
   "isAliveMessage" should {
     "return true when fed an isAlive message" in new Setup {
-      val xmlBody: Elem       = readFromFile("eori/isAliveRequest.xml")
-      val result = isAliveMessage(xmlBody)
+      val xmlBody: Elem = readFromFile("eori/isAliveRequest.xml")
+      val result        = isAliveMessage(xmlBody)
       result shouldBe true
     }
 
