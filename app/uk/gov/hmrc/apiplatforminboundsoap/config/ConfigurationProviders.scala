@@ -83,7 +83,7 @@ class EoriServiceConnectorConfigProvider @Inject() (val configuration: Configura
 
   override def get(): EoriServiceConnector.Config = {
     val url       = baseUrl("eori-service")
-    val path      = getConfString("eori-service.path", "crs/receiveDataChangeEvents/v1")
+    val path      = getConfString("eori-service.path", "taxud/crs/receiveDataChangeEvents/v1")
     val authToken = getString("microservice.services.eori-service.authToken")
     EoriServiceConnector.Config(url, path, authToken)
   }
