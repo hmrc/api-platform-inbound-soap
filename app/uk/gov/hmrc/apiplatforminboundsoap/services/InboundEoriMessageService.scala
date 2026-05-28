@@ -44,6 +44,7 @@ class InboundEoriMessageService @Inject() (
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend()
 
     if (isAliveMessage(wholeMessage)) {
+      logger.info("Received isAlive message on EORI endpoint")
       Future.successful(SendSuccess(OK, ""))
     } else {
       forwardMessage(wholeMessage, extraHeaders)
