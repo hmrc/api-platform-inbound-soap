@@ -26,10 +26,6 @@ import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.xmlunit.builder.DiffBuilder.compare
-import org.xmlunit.builder.{DiffBuilder, Input}
-import org.xmlunit.diff.DefaultNodeMatcher
-import org.xmlunit.diff.ElementSelectors.byName
 
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK}
@@ -77,10 +73,7 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     val binaryElementsCaptor                           = ArgCaptor[NodeSeq]
     val headerCaptor                                   = ArgCaptor[Seq[(String, String)]]
     val sdesRequestHeaderCaptor                        = ArgCaptor[Seq[(String, String)]]
-    val xmlBodyWithAttachment                          = readFromFile("certex/responseIES002.xml")
-    val xmlBodyWithBadMsgId                            = readFromFile("certex/responseIES002-messageId-invalid-uuid.xml")
-    val xmlBodyWithNoMsgId                             = readFromFile("certex/responseIES002-messageId-empty.xml")
-    val xmlBodyNoAttachment                            = readFromFile("certex/certex-request-no-attachment.xml")
+    val xmlBodyIsAlive                                 = readFromFile("eori/isAliveRequest.xml")
 
     val service: InboundEoriMessageService =
       new InboundEoriMessageService(
@@ -89,13 +82,6 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
         staticZonedDTHelper,
         configMock
       )
-  }
-
-  private def getXmlDiff(actual: NodeSeq, expected: Elem): DiffBuilder = {
-    compare(Input.fromString(expected.toString).build())
-      .withTest(Input.fromString(actual.toString()).build())
-      .withNodeMatcher(new DefaultNodeMatcher(byName))
-      .checkForIdentical()
   }
 
   "processInboundMessage" should {
@@ -111,14 +97,23 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       headerCaptor hasCaptured forwardedHeadersNoAttachment
     }
 
+    "return success for isAlive message and not invoke connector" in new Setup {
+
+      val result = await(service.processInboundMessage(xmlBodyIsAlive))
+
+      result shouldBe SendSuccess(OK, "")
+      verifyZeroInteractions(eoriServiceConnectorMock)
+    }
+
     "return failure when attempt to forward message fails" in new Setup {
+      private val requestBody: Elem = <xml>foo</xml>
       when(eoriServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
 
-      val result = await(service.processInboundMessage(xmlBodyNoAttachment))
+      val result = await(service.processInboundMessage(requestBody))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      verify(eoriServiceConnectorMock).postMessage(xmlBodyNoAttachment, forwardedHeadersNoAttachment)
-      forwardedMessageCaptor hasCaptured xmlBodyNoAttachment
+      verify(eoriServiceConnectorMock).postMessage(requestBody, forwardedHeadersNoAttachment)
+      forwardedMessageCaptor hasCaptured requestBody
     }
   }
 }

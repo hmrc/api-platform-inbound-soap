@@ -24,11 +24,13 @@ import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 import play.api.http.MimeTypes
+import play.api.http.Status.OK
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models._
-import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, UuidGenerator, ZonedDateTimeHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.util.{UuidGenerator, ZonedDateTimeHelper}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.EoriXml
 
 @Singleton
 class InboundEoriMessageService @Inject() (
@@ -36,12 +38,17 @@ class InboundEoriMessageService @Inject() (
     uuidGenerator: UuidGenerator,
     dtHelper: ZonedDateTimeHelper,
     config: EoriServiceConnector.Config
-  ) extends ApplicationLogger with MimeTypes {
+  ) extends EoriXml with MimeTypes {
 
   def processInboundMessage(wholeMessage: NodeSeq)(implicit hc: HeaderCarrier): Future[SendResult] = {
     val extraHeaders: Seq[(String, String)] = buildHeadersToAppend()
 
-    forwardMessage(wholeMessage, extraHeaders)
+    if (isAliveMessage(wholeMessage)) {
+      logger.info("Received isAlive message on EORI endpoint")
+      Future.successful(SendSuccess(OK, ""))
+    } else {
+      forwardMessage(wholeMessage, extraHeaders)
+    }
   }
 
   private def buildHeadersToAppend(): Seq[(String, String)] = {
