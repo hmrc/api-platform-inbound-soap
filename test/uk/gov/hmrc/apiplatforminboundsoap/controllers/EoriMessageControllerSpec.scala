@@ -61,7 +61,7 @@ class EoriMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
     val controller  =
       new EoriMessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, mockService)
-    val fakeRequest = FakeRequest("POST", "/eori/dataChangeEvents").withHeaders(headersWithValidBearerToken)
+    val fakeRequest = FakeRequest("POST", "/crs/receiveDataChangeEvents/v1").withHeaders(headersWithValidBearerToken)
   }
 
   "POST EORI message endpoint" should {
