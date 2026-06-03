@@ -23,6 +23,6 @@ import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 trait EoriXml extends ApplicationLogger {
 
   def isAliveMessage(soapMessage: NodeSeq): Boolean = {
-    (soapMessage \\ "MessageType").text.equalsIgnoreCase("isalive")
+    (soapMessage \\ "MessageType").text.toLowerCase.contains("isalive")
   }
 }
