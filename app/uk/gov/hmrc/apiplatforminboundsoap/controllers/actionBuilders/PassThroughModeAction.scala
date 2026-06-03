@@ -35,23 +35,24 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.apiplatforminboundsoap.config.AppConfig
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
+import play.api.libs.ws.writeableOf_NodeSeq
+
 @Singleton
 class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig)(implicit ec: ExecutionContext)
     extends ActionFilter[Request] with ApplicationLogger {
   override def executionContext: ExecutionContext = ec
   implicit def httpReads: HttpReads[HttpResponse] = (method: String, url: String, response: HttpResponse) => HttpReads.Implicits.readRaw.read(method, url, response)
   lazy val passThroughHost                        = s"${appConfig.passThroughProtocol}://${appConfig.passThroughHost}:${appConfig.passThroughPort}"
-  private val route                               = """^/(.+)/.+""".r
+  private val routePattern                        = """^/(.+)/.+""".r
 
   override protected def filter[A](request: Request[A]): Future[Option[Result]] = {
     def passThroughForRoute: Either[Unit, Boolean] = {
       try {
-        val route(capture) = request.path
-        capture.toLowerCase match {
-          case "certex" => Right(appConfig.passThroughEnabledCertex)
-          case "crdl"   => Right(appConfig.passThroughEnabledCrdl)
-          case "ccn2"   => Right(appConfig.passThroughEnabledAck)
-          case "ics2"   => Right(appConfig.passThroughEnabledIcs2)
+        routePattern.findFirstIn(request.path).map(_.toLowerCase()) match {
+          case Some("certex") => Right(appConfig.passThroughEnabledCertex)
+          case Some("crdl")   => Right(appConfig.passThroughEnabledCrdl)
+          case Some("ccn2")   => Right(appConfig.passThroughEnabledAck)
+          case Some("ics2")   => Right(appConfig.passThroughEnabledIcs2)
         }
       } catch {
         case _: MatchError =>
@@ -65,7 +66,7 @@ class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: Ap
       case Right(passThrough) if passThrough =>
         logger.info(s"In pass-through mode. Passing request on to path ${request.path}")
         val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        postAndReturn(s"$passThroughHost${request.path}", request.body.asInstanceOf[NodeSeq], maybeAuthHeader)(hc).map { httpResponse =>
+        postAndReturn(s"$passThroughHost${request.path}", request.body.asInstanceOf[NodeSeq], maybeAuthHeader)(using hc).map { httpResponse =>
           Some(Result(
             header = ResponseHeader(httpResponse.status, Map.empty),
             body = HttpEntity.Strict(ByteString(httpResponse.body), request.headers.get("Content-Type").orElse(Some(ContentTypes.XML)))
@@ -86,11 +87,11 @@ class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: Ap
     def getHttpClient: RequestBuilder = {
       authHeader match {
         case Some((h: String, v: String)) =>
-          httpClientV2.post(url"$url")(hc)
+          httpClientV2.post(url"$url")(using hc)
             .setHeader((h, v))
             .withBody(requestBody)
         case None                         =>
-          httpClientV2.post(url"$url")(hc)
+          httpClientV2.post(url"$url")(using hc)
             .withBody(requestBody)
       }
     }

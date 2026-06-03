@@ -31,6 +31,8 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesReference, SdesRequest}
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
+import play.api.libs.ws.writeableOf_String
+
 object SdesConnector {
   case class Config(baseUrl: String, uploadPath: String, ics2: Ics2, crdl: Crdl, certex: Certex)
   case class Ics2(srn: String, informationType: String, encodeSdesReference: Boolean = false)
@@ -67,9 +69,9 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: SdesConnec
 
   private def postHttpRequest(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
     val combinedHeaders = sdesRequest.headers ++ List("Metadata" -> constructMetadataHeader(sdesRequest.metadata, sdesRequest.metadataProperties))
-    httpClientV2.post(new URI(s"${appConfig.baseUrl}/${appConfig.uploadPath}").toURL).setHeader(requiredHeaders: _*)
+    httpClientV2.post(new URI(s"${appConfig.baseUrl}/${appConfig.uploadPath}").toURL).setHeader(requiredHeaders*)
       .withBody(sdesRequest.body)
-      .transform(_.addHttpHeaders(combinedHeaders: _*))
+      .transform(_.addHttpHeaders(combinedHeaders*))
       .execute[Either[UpstreamErrorResponse, HttpResponse]]
   }
 

@@ -23,6 +23,7 @@ import scala.xml.NodeSeq
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
+import play.api.libs.ws.writeableOf_NodeSeq
 
 abstract class BaseConnector(httpClientV2: HttpClientV2)(implicit ec: ExecutionContext) {
 
@@ -30,12 +31,12 @@ abstract class BaseConnector(httpClientV2: HttpClientV2)(implicit ec: ExecutionC
     val httpClient = headers.filter(h => h._1 == "Authorization") match {
       // if we have to add an Authorization header before forwarding we replace the one on the request here
       case h: List[(String, String)] if h.nonEmpty =>
-        httpClientV2.post(new URI(forwardUrl).toURL)(hc)
+        httpClientV2.post(new URI(forwardUrl).toURL)(using hc)
           .setHeader("Authorization" -> h.head._2)
-          .transform(_.addHttpHeaders(headers.filterNot(h => h._1 == "Authorization"): _*))
-// forward the request without the received Authorization header
-      case _                                       => httpClientV2.post(new URI(forwardUrl).toURL)(hc.copy(authorization = None))
-          .transform(_.addHttpHeaders(headers: _*))
+          .transform(_.addHttpHeaders(headers.filterNot(h => h._1 == "Authorization")*))
+      // forward the request without the received Authorization header
+      case _                                       => httpClientV2.post(new URI(forwardUrl).toURL)(using hc.copy(authorization = None))
+          .transform(_.addHttpHeaders(headers*))
     }
     httpClient.withBody(soapRequest)
       .execute[Either[UpstreamErrorResponse, HttpResponse]]

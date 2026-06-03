@@ -27,7 +27,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.connectors._
 
 class ConfigurationModule extends Module {
 
-  override def bindings(environment: Environment, configuration: Configuration): List[Binding[_]] = {
+  override def bindings(environment: Environment, configuration: Configuration): List[Binding[?]] = {
 
     List(
       bind[ApiPlatformOutboundSoapConnector.Config].toProvider[ApiPlatformOutboundSoapConnectorConfigProvider],

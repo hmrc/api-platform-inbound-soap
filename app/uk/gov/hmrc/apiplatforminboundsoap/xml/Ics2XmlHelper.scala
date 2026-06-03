@@ -19,7 +19,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 import scala.annotation.tailrec
 import scala.xml.{Elem, NodeSeq, Text}
 
-import jstengel.ezxml.core.SimpleWrapper.ElemWrapper
+// import jstengel.ezxml.core.SimpleWrapper.ElemWrapper
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, Base64Encoder}
 
