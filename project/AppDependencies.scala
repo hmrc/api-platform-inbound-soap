@@ -10,7 +10,7 @@ object AppDependencies {
     "uk.gov.hmrc"             %% "bootstrap-backend-play-30"  % bootstrapVersion,
     "com.auth0"               %  "java-jwt"                   % "4.4.0",
     "org.typelevel"           %% "cats-core"                  % "2.10.0",
-    "com.github.julienst"     % "ezxml-core_2.13"             % "0.6.1"
+    "com.github.geirolz" %% "advxml-core" % "2.5.0"
   )
 
   val test = Seq(

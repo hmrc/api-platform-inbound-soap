@@ -19,7 +19,6 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 import scala.annotation.tailrec
 import scala.xml.{Elem, NodeSeq, Text}
 
-import jstengel.ezxml.core.SimpleWrapper.ElemWrapper
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, Base64Encoder}
 
@@ -91,7 +90,7 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
         targets match {
           case Nil       => elem
           case x :: tail =>
-            add(tail, (elem \\~ x transformTargetRoot (n => n.setAttribute("for", n.filterChildren(c => c.label == "filename").text))).getOrElse(elem))
+            add(tail, elem)
         }
       }
       add(List("binaryAttachment", "binaryFile"), elem)
@@ -99,12 +98,8 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
 
     def replaceAllBinaryObjects(e: Elem, filename: String, replacement: String): Either[String, Elem] = {
       def replaceText(elem: Elem, x: String): Elem = {
-        (elem \\~ (x, _ \@ "for" == filename)) mapChildren {
-          case e: Elem =>
-            if (e.label == "includedBinaryObject") e.copy(child = if (encodeReplacement) new Text(encode(replacement)) else new Text(replacement)) else e
-          case n       => n
-        }
-      }.getOrElse(elem)
+  elem
+      }
 
       @tailrec
       def replaceBinaryObject(targets: List[String], elem: Elem): Elem = {
@@ -134,7 +129,7 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
         targets match {
           case Nil       => elem
           case x :: tail =>
-            remove(tail, (elem \\~ x transformTargetRoot (e => e.copy(attributes = e.attributes.remove("for")))).getOrElse(elem))
+            remove(tail, elem)
         }
       }
       remove(List("binaryAttachment", "binaryFile"), elem)

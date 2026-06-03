@@ -16,10 +16,14 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
-import scala.xml.transform.{RewriteRule, RuleTransformer}
-import scala.xml.{Elem, Node, NodeSeq, Text}
-
+import advxml.implicits._
+import advxml.transform.XmlModifier._
+import advxml.transform.XmlRule
+import advxml.transform.XmlZoom.root
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
+
+import scala.util.Try
+import scala.xml.{Elem, NodeSeq, Text}
 
 class NoChangeTransformer extends XmlTransformer {
 
@@ -32,22 +36,20 @@ class CrdlAttachmentReplacingTransformer extends XmlTransformer {
 
   def replaceAttachment: (NodeSeq, String) => NodeSeq = {
     (m, s) =>
-      {
-        def rewrite = new RewriteRule {
-          override def transform(n: Node): Seq[Node] = n match {
-            case elem: Elem if elem.label == "ReceiveReferenceDataRequestResult" =>
-              elem.copy(child = elem.child collect {
-                case Text(_) => Text(s)
-              })
-            case n                                                               =>
-              n
-          }
-        }
-
-        val transform = new RuleTransformer(rewrite)
-        m.map(n => transform(n))
-      }
+      val rule: XmlRule = root.Body.ReceiveReferenceDataReqMsg.ReceiveReferenceDataRequestResult ==> Replace(ns => doTransform(ns, s))
+      m.asInstanceOf[Elem].transform[Try](rule).get
   }
+
+  def doTransform(ns: NodeSeq, replacement: String): NodeSeq = ns.theSeq.map(n =>
+    n match {
+      case elem: Elem if elem.label == "ReceiveReferenceDataRequestResult" =>
+        elem.copy(child = elem.child collect {
+          case Text(_) => Text(replacement)
+        })
+      case n                                                               =>
+        n
+    }
+  )
 }
 
 trait CrdlXml extends ApplicationLogger {
