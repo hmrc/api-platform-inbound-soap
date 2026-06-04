@@ -16,14 +16,12 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.xml.{Elem, NodeSeq, Text}
-
 import advxml.implicits.*
 import advxml.transform.XmlModifier.*
 import advxml.transform.XmlRule
 import advxml.transform.XmlZoom.root
-
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
 class NoChangeTransformer extends XmlTransformer {
@@ -37,8 +35,14 @@ class CrdlAttachmentReplacingTransformer extends XmlTransformer {
 
   def replaceAttachment: (NodeSeq, String) => NodeSeq = {
     (m, s) =>
+      //TODO this implementation has us closely tied to the structure of the document whereas before we searched for the attachment XML element at any point in the document
+      //TODO this introduces a risk that we don't continue finding the attachment in all documents - only those matching the structure of the solitary example we've been given.
+      // Make this search for the attachment element as lax as before 
       val rule: XmlRule = root.Body.ReceiveReferenceDataReqMsg.ReceiveReferenceDataRequestResult ==> Replace(ns => doTransform(ns, s))
-      m.asInstanceOf[Elem].transform[Try](rule).get
+      m.transform[Try](rule) match {
+        case Failure(_) => m
+        case Success(value) => value
+      }
   }
 
   def doTransform(ns: NodeSeq, replacement: String): NodeSeq = ns.theSeq.map(n =>
