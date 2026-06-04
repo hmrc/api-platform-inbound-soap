@@ -22,12 +22,12 @@ import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.*
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Certex, Crdl, Ics2}
-import uk.gov.hmrc.apiplatforminboundsoap.connectors._
 
 class ConfigurationModule extends Module {
 
-  override def bindings(environment: Environment, configuration: Configuration): List[Binding[_]] = {
+  override def bindings(environment: Environment, configuration: Configuration): List[Binding[?]] = {
 
     List(
       bind[ApiPlatformOutboundSoapConnector.Config].toProvider[ApiPlatformOutboundSoapConnectorConfigProvider],

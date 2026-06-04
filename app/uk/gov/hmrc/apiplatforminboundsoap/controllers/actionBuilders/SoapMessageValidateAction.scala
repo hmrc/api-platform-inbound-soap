@@ -22,7 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
 import _root_.uk.gov.hmrc.http.HttpErrorFunctions
-import cats.data._
+import cats.data.*
 
 import play.api.mvc.{ActionFilter, Request, Result}
 

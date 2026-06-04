@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
-import advxml.implicits._
-import advxml.transform.XmlModifier._
-import advxml.transform.XmlRule
-import advxml.transform.XmlZoom.root
-import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
-
 import scala.util.Try
 import scala.xml.{Elem, NodeSeq, Text}
+
+import advxml.implicits.*
+import advxml.transform.XmlModifier.*
+import advxml.transform.XmlRule
+import advxml.transform.XmlZoom.root
+
+import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
 class NoChangeTransformer extends XmlTransformer {
 

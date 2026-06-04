@@ -17,8 +17,7 @@
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import scala.annotation.tailrec
-import scala.xml.{Elem, NodeSeq, Text}
-
+import scala.xml.{Elem, NodeSeq}
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, Base64Encoder}
 
@@ -98,7 +97,7 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
 
     def replaceAllBinaryObjects(e: Elem, filename: String, replacement: String): Either[String, Elem] = {
       def replaceText(elem: Elem, x: String): Elem = {
-  elem
+        elem
       }
 
       @tailrec
