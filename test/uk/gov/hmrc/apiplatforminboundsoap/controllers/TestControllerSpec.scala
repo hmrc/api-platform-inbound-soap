@@ -22,8 +22,8 @@ import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, XML}
 
-import org.mockito.captor.{ArgCaptor, Captor}
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import org.scalatestplus.mockito.captor.{ArgCaptor, Captor}
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -38,7 +38,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.controllers.testmessage.TestController
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundIcs2MessageService
 
-class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {

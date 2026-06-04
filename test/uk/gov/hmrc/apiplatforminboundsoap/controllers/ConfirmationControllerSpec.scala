@@ -23,7 +23,7 @@ import scala.xml.{Elem, XML}
 
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.{ArgCaptor, Captor}
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -41,7 +41,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{Acknowledg
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 
-class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
