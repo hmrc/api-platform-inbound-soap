@@ -21,11 +21,12 @@ import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
 
 import org.apache.pekko.stream.Materializer
-import org.mockito.captor.ArgCaptor
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers.any as `*`
 
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK}
@@ -68,11 +69,11 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     when(configMock.authToken).thenReturn(authToken)
     val uuidGenerator: StaticUuidGenerator             = new StaticUuidGenerator()
     val staticZonedDTHelper: ZonedDateTimeHelper       = new StaticZonedDTHelper()
-    val forwardedMessageCaptor                         = ArgCaptor[NodeSeq]
-    val wholeMessageCaptor                             = ArgCaptor[NodeSeq]
-    val binaryElementsCaptor                           = ArgCaptor[NodeSeq]
-    val headerCaptor                                   = ArgCaptor[Seq[(String, String)]]
-    val sdesRequestHeaderCaptor                        = ArgCaptor[Seq[(String, String)]]
+    val forwardedMessageCaptor                         = capture[NodeSeq]
+    val wholeMessageCaptor                             = capture[NodeSeq]
+    val binaryElementsCaptor                           = capture[NodeSeq]
+    val headerCaptor                                   = capture[Seq[(String, String)]]
+    val sdesRequestHeaderCaptor                        = capture[Seq[(String, String)]]
     val xmlBodyIsAlive                                 = readFromFile("eori/isAliveRequest.xml")
 
     val service: InboundEoriMessageService =
@@ -92,9 +93,9 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(requestBody))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(eoriServiceConnectorMock).postMessage(requestBody, forwardedHeadersNoAttachment)
-      forwardedMessageCaptor hasCaptured requestBody
-      headerCaptor hasCaptured forwardedHeadersNoAttachment
+      verify(eoriServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)
+      assert(forwardedMessageCaptor.getValue == requestBody)
+      assert(headerCaptor.getValue == forwardedHeadersNoAttachment)
     }
 
     "return success for isAlive message and not invoke connector" in new Setup {
@@ -102,7 +103,7 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBodyIsAlive))
 
       result shouldBe SendSuccess(OK, "")
-      verifyZeroInteractions(eoriServiceConnectorMock)
+      verify(eoriServiceConnectorMock, times(0))
     }
 
     "return failure when attempt to forward message fails" in new Setup {
@@ -112,8 +113,8 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(requestBody))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      verify(eoriServiceConnectorMock).postMessage(requestBody, forwardedHeadersNoAttachment)
-      forwardedMessageCaptor hasCaptured requestBody
+      verify(eoriServiceConnectorMock).postMessage(forwardedMessageCaptor, forwardedHeadersNoAttachment)
+      assert(forwardedMessageCaptor.getValue ==requestBody)
     }
   }
 }

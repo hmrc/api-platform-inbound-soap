@@ -48,7 +48,7 @@ class ICS2MessageControllerISpec extends AnyWordSpecLike with Matchers
   val forwardedBody: Elem   = readFromFile("requests/post-sdes-processing/ie4r02-v2-one-binary-attachment.xml")
   val responseBody: Elem    = <xml>response</xml>
 
-  override def fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure(
       "metrics.enabled"                                                           -> false,
       "auditing.enabled"                                                          -> false,

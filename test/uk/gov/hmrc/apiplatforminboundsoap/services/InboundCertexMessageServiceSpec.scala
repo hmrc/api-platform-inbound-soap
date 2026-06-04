@@ -20,11 +20,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
-
 import org.apache.pekko.stream.Materializer
-import org.mockito.captor.ArgCaptor
+import org.mockito.ArgumentCaptor
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers.{argThat, any as `*`}
+import org.mockito.ArgumentMatchers.refEq
+import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -32,15 +34,13 @@ import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.builder.{DiffBuilder, Input}
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
-
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.util.{StaticUuidGenerator, StaticZonedDTHelper, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexAttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
 
@@ -90,11 +90,11 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     val failingXmlTransformer: XmlTransformer              = new NoChangeTransformer()
     val staticUuidGenerator: StaticUuidGenerator           = new StaticUuidGenerator()
     val staticZonedDTHelper: ZonedDateTimeHelper           = new StaticZonedDTHelper()
-    val forwardedMessageCaptor                             = ArgCaptor[NodeSeq]
-    val wholeMessageCaptor                                 = ArgCaptor[NodeSeq]
-    val binaryElementsCaptor                               = ArgCaptor[NodeSeq]
-    val headerCaptor                                       = ArgCaptor[Seq[(String, String)]]
-    val sdesRequestHeaderCaptor                            = ArgCaptor[Seq[(String, String)]]
+    val forwardedMessageCaptor                             = ArgumentCaptor.forClass(classOf[NodeSeq])
+    val wholeMessageCaptor                                 = ArgumentCaptor.forClass(classOf[NodeSeq])
+    val binaryElementsCaptor                               = ArgumentCaptor.forClass(classOf[NodeSeq])
+    val headerCaptor                                       = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
+    val sdesRequestHeaderCaptor                            = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
     val xmlBodyWithAttachment                              = readFromFile("certex/responseIES002.xml")
     val xmlBodyWithBadMsgId                                = readFromFile("certex/responseIES002-messageId-invalid-uuid.xml")
     val xmlBodyWithNoMsgId                                 = readFromFile("certex/responseIES002-messageId-empty.xml")
@@ -136,8 +136,8 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
 
       result shouldBe SendSuccess(OK, "some body")
       verify(certexServiceConnectorMock).postMessage(xmlBodyNoAttachment, forwardedHeadersNoAttachment)
-      forwardedMessageCaptor hasCaptured xmlBodyNoAttachment
-      headerCaptor hasCaptured forwardedHeadersNoAttachment
+      assert(forwardedMessageCaptor.getValue == xmlBodyNoAttachment)
+      assert(headerCaptor.getValue == forwardedHeadersNoAttachment)
     }
 
     "invoke SDESConnector when message contains embedded file attachment" in new Setup {
@@ -152,8 +152,8 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       result shouldBe SendSuccess(OK, "some body")
       verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
       verify(certexSdesServiceMock).processMessage(xmlBodyWithAttachment)
-      getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
-      headerCaptor.value mustBe forwardedHeadersWithAttachment
+      getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().hasDifferences mustBe false
+      headerCaptor.getValue mustBe forwardedHeadersWithAttachment
     }
 
     "generate random UUID for x-correlation-id when message doesn't provide one" in new Setup {
@@ -168,8 +168,8 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       result shouldBe SendSuccess(OK, "some body")
       verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
       verify(certexSdesServiceMock).processMessage(xmlBodyWithBadMsgId)
-      getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
-      headerCaptor.value mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
+      getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().hasDifferences mustBe false
+      headerCaptor.getValue mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
     }
 
     "generate random UUID for x-correlation-id when message contains empty messageId" in new Setup {
@@ -184,8 +184,8 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       result shouldBe SendSuccess(OK, "some body")
       verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
       verify(certexSdesServiceMock).processMessage(xmlBodyWithNoMsgId)
-      getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
-      headerCaptor.value mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
+      getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().hasDifferences mustBe false
+      headerCaptor.getValue mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
     }
 
     "return fail status to caller and not forward message if call to SDES fails when processing a message with embedded file" in new Setup {
@@ -196,7 +196,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendFailExternal("some error", SERVICE_UNAVAILABLE)
-      verifyZeroInteractions(certexServiceConnectorMock)
+      verify(certexServiceConnectorMock, times(0))
     }
 
     "return fail status to caller and not forward message if attempt to extract embedded file fails" in new Setup {
@@ -207,7 +207,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       val result = await(serviceForError.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendNotAttempted("some error")
-      verifyZeroInteractions(certexServiceConnectorMock)
+      verify(certexServiceConnectorMock, times(0))
     }
 
     "return fail status to caller and not forward message if attempt to replace embedded file with SDES UUID fails" in new Setup {
@@ -218,7 +218,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       val result = await(serviceForError.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendFailExternal(s"Failed to replace embedded attachment for $xmlBodyWithAttachment", UNPROCESSABLE_ENTITY)
-      verifyZeroInteractions(certexServiceConnectorMock)
+      verify(certexServiceConnectorMock, times(0))
     }
 
     "return fail status to caller and not forward message if message attachment is blank or absent" in new Setup {
@@ -229,7 +229,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendNotAttempted("some error")
-      verifyZeroInteractions(certexServiceConnectorMock)
+      verify(certexServiceConnectorMock, times(0))
     }
 
     "return failure when attempt to forward message fails" in new Setup {
@@ -239,7 +239,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
       verify(certexServiceConnectorMock).postMessage(xmlBodyNoAttachment, forwardedHeadersNoAttachment)
-      forwardedMessageCaptor hasCaptured xmlBodyNoAttachment
+      assert(forwardedMessageCaptor.getValue == xmlBodyNoAttachment)
     }
   }
 }

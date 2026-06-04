@@ -46,7 +46,7 @@ class CertexControllerPassThroughISpec extends AnyWordSpecLike with Matchers
 
   val certexRequestBody: Elem = readFromFile("requests/certex/certex-request-no-attachment.xml")
 
-  override def fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure(
       "metrics.enabled"           -> false,
       "auditing.enabled"          -> false,

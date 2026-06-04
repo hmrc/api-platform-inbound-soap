@@ -19,6 +19,8 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.xml.Elem
+import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers.any as `*`
 
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
@@ -68,7 +70,7 @@ class EoriMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     "return 200 for successful request" in new Setup {
       val requestBody: Elem    = <xml>foobar</xml>
       val responseBody: String = <xml>some response body</xml>.text
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK, responseBody)))
+      when(mockService.processInboundMessage(*)(using *)).thenReturn(successful(SendSuccess(OK, responseBody)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -79,7 +81,7 @@ class EoriMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     "return error when unsuccessful with failure in connector sending" in new Setup {
       val requestBody: Elem   = <xml>foobar</xml>
       val expectedSoapMessage = expectedSoapResponse("some error", SERVICE_UNAVAILABLE)
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", SERVICE_UNAVAILABLE)))
+      when(mockService.processInboundMessage(*)(using *)).thenReturn(successful(SendFailExternal("some error", SERVICE_UNAVAILABLE)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -90,7 +92,7 @@ class EoriMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     "return error when send not attempted due to detected error in message format" in new Setup {
       val requestBody: Elem   = <xml>foobar</xml>
       val expectedSoapMessage = expectedSoapResponse("problem")
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendNotAttempted("problem")))
+      when(mockService.processInboundMessage(*)(using *)).thenReturn(successful(SendNotAttempted("problem")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 

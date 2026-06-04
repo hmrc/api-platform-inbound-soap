@@ -18,17 +18,16 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
-
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.builder.{DiffBuilder, Input}
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
 
-class CertexXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with CertexXml {
+class CertexXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with CertexXml {
 
   private def getXmlDiff(actual: NodeSeq, expected: Elem): DiffBuilder = {
     compare(Input.fromString(expected.toString).build())

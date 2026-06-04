@@ -66,7 +66,7 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
       |    </soap:Body>
       |</soap:Envelope>""".stripMargin
 
-  override def fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure(
       "metrics.enabled"         -> false,
       "auditing.enabled"        -> false,
@@ -81,7 +81,7 @@ class ICS2ControllerPassThroughISpec extends AnyWordSpecLike with Matchers
   val path        = "/ics2/NESControlBASV2"
   val fakeRequest = FakeRequest("POST", path)
 
-  val underTest: ICS2MessageController = fakeApplication.injector.instanceOf[ICS2MessageController]
+  val underTest: ICS2MessageController = fakeApplication().injector.instanceOf[ICS2MessageController]
   "message" should {
     "forward an XML message" in {
       val expectedStatus = Status.OK

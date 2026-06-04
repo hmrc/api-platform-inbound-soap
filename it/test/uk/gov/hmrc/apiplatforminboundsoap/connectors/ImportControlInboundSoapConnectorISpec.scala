@@ -39,7 +39,7 @@ class ImportControlInboundSoapConnectorISpec extends AnyWordSpec with Matchers
     with GuiceOneAppPerSuite with ExternalWireMockSupport with ApiPlatformOutboundSoapStub {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  override def fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure(
       "metrics.enabled"                                        -> false,
       "auditing.enabled"                                       -> false,

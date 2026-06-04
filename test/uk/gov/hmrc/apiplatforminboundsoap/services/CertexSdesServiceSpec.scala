@@ -22,22 +22,21 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.Elem
-
 import org.apache.pekko.stream.Materializer
-import org.mockito.captor.ArgCaptor
+import org.mockito.ArgumentCaptor
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
+import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers.any as `*`
 import play.api.http.Status
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Certex, SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.util.StaticUuidGenerator
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{Ics2XmlHelper, NoChangeTransformer}
 
@@ -52,8 +51,8 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
   trait Setup {
     val sdesConnectorMock: SdesConnector = mock[SdesConnector]
-    val bodyCaptor                       = ArgCaptor[SdesRequest]
-    val headerCaptor                     = ArgCaptor[Seq[(String, String)]]
+    val bodyCaptor                       = ArgumentCaptor.forClass(classOf[SdesRequest])
+    val headerCaptor                     = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
 
     val sdesRequestTime: Instant            = Instant.parse("2020-01-02T03:04:05.006Z")
     val sdesRequestClock: Clock             = Clock.fixed(sdesRequestTime, ZoneId.of("UTC"))
@@ -95,7 +94,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      assert(bodyCaptor.getValue == expectedSdesRequest)
     }
 
     "correctly set metadata properties header on SDES request" in new Setup {
@@ -117,7 +116,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      assert(bodyCaptor.getValue == expectedSdesRequest)
     }
 
     "omit messageId metadata property on SDES request when one cannot be found in the XML" in new Setup {
@@ -139,7 +138,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      assert(bodyCaptor.getValue == expectedSdesRequest)
     }
 
     "process response when connector returns error" in new Setup {
@@ -160,7 +159,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      assert(bodyCaptor.getValue == expectedSdesRequest)
     }
 
     "not make a call to SDES when message contains empty attachment element" in new Setup {
@@ -171,7 +170,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
-      verifyZeroInteractions(sdesConnectorMock)
+      verify(sdesConnectorMock, times(0))
     }
 
     "not make a call to SDES when message has no attachment element" in new Setup {
@@ -180,7 +179,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List.empty
-      verifyZeroInteractions(sdesConnectorMock)
+      verify(sdesConnectorMock, times(0))
     }
 
     "not make a call to SDES when message attachment is not base 64 data" in new Setup {
@@ -189,7 +188,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(SdesSendNotAttempted("Embedded attachment element pcaDocumentPdf is not valid base 64 data")))
-      verifyZeroInteractions(sdesConnectorMock)
+      verify(sdesConnectorMock, times(0))
     }
 
     "generate random UUID for filename when messageId in message is blank" in new Setup {
@@ -211,7 +210,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      assert(bodyCaptor.getValue == expectedSdesRequest)
     }
     "generate random UUID for filename when messageId in message can't supply one" in new Setup {
       val xmlBody: Elem              = readFromFile("certex/responseIES002-unexpected-messageid-format.xml")
@@ -232,7 +231,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      assert(bodyCaptor.getValue == expectedSdesRequest)
     }
 
     "generate random UUID for filename when UUID from messageId in message is invalid" in new Setup {
@@ -254,7 +253,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      assert(bodyCaptor.getValue == expectedSdesRequest)
     }
   }
 }

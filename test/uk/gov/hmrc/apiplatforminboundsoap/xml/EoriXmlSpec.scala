@@ -18,13 +18,12 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
-
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
-class EoriXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with EoriXml {
+class EoriXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with EoriXml {
 
   "isAliveMessage" should {
     "return true when fed an isAlive message" in new Setup {

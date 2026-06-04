@@ -17,14 +17,13 @@
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import scala.io.Source
-
 import cats.data.NonEmptyList
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
-class Ics2RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with Ics2RequestValidator {
+class Ics2RequestValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with Ics2RequestValidator {
 
   trait Setup {
 

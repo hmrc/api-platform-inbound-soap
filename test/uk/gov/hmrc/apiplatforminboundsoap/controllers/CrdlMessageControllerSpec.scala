@@ -19,6 +19,8 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.xml.Elem
+import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers.any as `*`
 
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
@@ -68,7 +70,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
   "POST CRDL message endpoint" should {
     "return success when connector returns success" in new Setup {
       val requestBody: Elem = readFromFile("crdl/crdl-request-no-attachment.xml")
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(mockService.processInboundMessage(*)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
       val result            = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
@@ -79,7 +81,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val requestBody: Elem   = readFromFile("crdl/crdl-request-no-attachment.xml")
       val expectedStatus      = SERVICE_UNAVAILABLE
       val expectedSoapMessage = expectedSoapResponse("some error", expectedStatus)
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", expectedStatus)))
+      when(mockService.processInboundMessage(*)(using *)).thenReturn(successful(SendFailExternal("some error", expectedStatus)))
       val result              = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe SERVICE_UNAVAILABLE
@@ -89,7 +91,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     "return failure when message is found to be invalid" in new Setup {
       val requestBody: Elem   = readFromFile("crdl/crdl-request-no-attachment.xml")
       val expectedSoapMessage = expectedSoapResponse("some error")
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendNotAttempted("some error")))
+      when(mockService.processInboundMessage(*)(using *)).thenReturn(successful(SendNotAttempted("some error")))
       val result              = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST

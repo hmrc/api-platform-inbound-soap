@@ -18,24 +18,44 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
-import scala.io.Source
-import scala.xml.{Elem, XML}
-
-import org.apache.pekko.stream.Materializer
-import org.mockito.captor.{ArgCaptor, Captor}
+import scala.xml.Elem
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatestplus.play.guice.{GuiceFakeApplicationFactory, GuiceOneAppPerSuite}
+import org.mockito.Mockito.*
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.Headers
+import play.api.test.Helpers.*
+import play.api.test.{FakeRequest, Helpers}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCertexMessageService
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future.successful
+import scala.io.Source
+import scala.xml.{Elem, XML}
+import org.apache.pekko.stream.Materializer
+import org.mockito.{ArgumentCaptor, Captor}
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.matchers.should.Matchers
+import org.mockito.ArgumentMatchers.any as `*`
+import org.mockito.Mockito.*
+import org.scalatest.TestSuite
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.play.FakeApplicationFactory
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController
@@ -45,7 +65,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
-  override def fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure("passThroughEnabled.ACK" -> "false")
     .build()
 
@@ -166,13 +186,13 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
       val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(codRequestBody)
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
+      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK
-      verify(mockOutboundConnector).postMessage(*)(*)
-      xmlRequestCaptor hasCaptured codRequestBody
+      verify(mockOutboundConnector).postMessage(*)(using *)
+      assert(xmlRequestCaptor.getValue == codRequestBody)
     }
   }
 
@@ -181,13 +201,13 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
       val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
+      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK
-      verify(mockOutboundConnector).postMessage(*)(*)
-      xmlRequestCaptor hasCaptured coeRequestBody
+      verify(mockOutboundConnector).postMessage(*)(using *)
+      assert(xmlRequestCaptor.getValue == coeRequestBody)
     }
   }
 
@@ -196,13 +216,13 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
       val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", INTERNAL_SERVER_ERROR)))
+      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
+      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", INTERNAL_SERVER_ERROR)))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       verify(mockOutboundConnector).postMessage(*)(*)
-      xmlRequestCaptor hasCaptured coeRequestBody
+      assert(xmlRequestCaptor == coeRequestBody)
     }
   }
 }

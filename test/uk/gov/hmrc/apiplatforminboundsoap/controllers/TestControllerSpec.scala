@@ -16,23 +16,24 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
+import org.mockito.{ArgumentCaptor, Captor}
+
 import java.util.UUID.randomUUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, XML}
-
-import org.scalatestplus.mockito.captor.{ArgCaptor, Captor}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import play.api.mvc.Headers
-import play.api.test.Helpers._
+import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers.any as `*`
+
+import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.testmessage.TestController
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
@@ -89,32 +90,32 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
   "POST test message endpoint " should {
     "return 200 when successful for a message with embedded attached file" in new Setup {
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
+      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
+      val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(ACCEPTED, "some body")))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(ACCEPTED, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
-      xmlRequestCaptor hasCaptured requestBody
-      isTestCaptor hasCaptured true
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
+      assert(xmlRequestCaptor.getValue == requestBody)
+      assert(isTestCaptor.getValue == true)
     }
 
     "return response code it received when not successful" in new Setup {
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
+      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
+      val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
 
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe PRECONDITION_FAILED
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
-      xmlRequestCaptor hasCaptured requestBody
-      isTestCaptor hasCaptured true
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
+      assert(xmlRequestCaptor.getValue == requestBody)
+      assert(isTestCaptor.getValue == true)
     }
 
     "return 400 when action element is missing" in new Setup {
@@ -124,7 +125,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Element SOAP Header Action is missing", xRequestIdHeaderValue)
-      verifyZeroInteractions(incomingMessageServiceMock)
+      verify(incomingMessageServiceMock, times(0))
     }
   }
 }

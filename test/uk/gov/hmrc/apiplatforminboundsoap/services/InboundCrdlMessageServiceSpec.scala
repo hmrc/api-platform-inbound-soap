@@ -20,11 +20,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
-
+import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers.any as `*`
+import org.mockito.ArgumentMatchers.refEq
 import org.apache.pekko.stream.Materializer
-import org.mockito.captor.ArgCaptor
+import org.mockito.ArgumentCaptor
+import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -32,15 +34,13 @@ import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.builder.{DiffBuilder, Input}
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
-
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlAttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
 
 class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
@@ -62,11 +62,11 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     val crdlOrchestratorConnectorMock: CrdlOrchestratorConnector = mock[CrdlOrchestratorConnector]
     val workingXmlTransformer: XmlTransformer                    = new CrdlAttachmentReplacingTransformer()
     val failingXmlTransformer: XmlTransformer                    = new NoChangeTransformer()
-    val forwardedMessageCaptor                                   = ArgCaptor[NodeSeq]
-    val wholeMessageCaptor                                       = ArgCaptor[NodeSeq]
-    val binaryElementsCaptor                                     = ArgCaptor[NodeSeq]
-    val headerCaptor                                             = ArgCaptor[Seq[(String, String)]]
-    val sdesRequestHeaderCaptor                                  = ArgCaptor[Seq[(String, String)]]
+    val forwardedMessageCaptor                                   = capture[NodeSeq]
+    val wholeMessageCaptor                                       = capture[NodeSeq]
+    val binaryElementsCaptor                                     = capture[NodeSeq]
+    val headerCaptor                                             = capture[Seq[(String, String)]]
+    val sdesRequestHeaderCaptor                                  = capture[Seq[(String, String)]]
     val xmlBodyWithAttachment                                    = readFromFile("crdl/crdl-request-well-formed.xml")
     val xmlBodyNoAttachment                                      = readFromFile("crdl/crdl-request-no-attachment.xml")
 
@@ -86,14 +86,14 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
   "processInboundMessage" should {
     "return success when connector returns success" in new Setup {
-      when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = await(service.processInboundMessage(xmlBodyNoAttachment))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(crdlOrchestratorConnectorMock).postMessage(xmlBodyNoAttachment, forwardedHeadersNoAttachment)
-      forwardedMessageCaptor hasCaptured xmlBodyNoAttachment
-      headerCaptor hasCaptured forwardedHeadersNoAttachment
+      verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)
+      assert(forwardedMessageCaptor.getValue == xmlBodyNoAttachment)
+      assert(headerCaptor.getValue == forwardedHeadersNoAttachment)
     }
 
     "invoke SDESConnector when message contains embedded file attachment" in new Setup {
@@ -108,8 +108,8 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       result shouldBe SendSuccess(OK, "some body")
       verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
       verify(crdlSdesServiceMock).processMessage(xmlBodyWithAttachment)
-      getXmlDiff(forwardedMessageCaptor.value, forwardedXmlBody).build().hasDifferences mustBe false
-      headerCaptor.value mustBe forwardedHeadersWithAttachment
+      getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().hasDifferences mustBe false
+      headerCaptor.getValue mustBe forwardedHeadersWithAttachment
     }
 
     "return fail status to caller and not forward message if call to SDES fails when processing a message with embedded file" in new Setup {
@@ -120,7 +120,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendFailExternal("some error", SERVICE_UNAVAILABLE)
-      verifyZeroInteractions(crdlOrchestratorConnectorMock)
+      verify(crdlOrchestratorConnectorMock, times(0))
     }
 
     "return fail status to caller and not forward message if attempt to extract embedded file fails" in new Setup {
@@ -131,7 +131,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(serviceForError.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendNotAttempted("some error")
-      verifyZeroInteractions(crdlOrchestratorConnectorMock)
+      verify(crdlOrchestratorConnectorMock, times(0))
     }
 
     "return fail status to caller and not forward message if attempt to replace embedded file with SDES UUID fails" in new Setup {
@@ -142,7 +142,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(serviceForError.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendFailExternal(s"Failed to replace embedded attachment for $xmlBodyWithAttachment", UNPROCESSABLE_ENTITY)
-      verifyZeroInteractions(crdlOrchestratorConnectorMock)
+      verify(crdlOrchestratorConnectorMock, times(0))
     }
 
     "return fail status to caller and not forward message if message attachment is blank or absent" in new Setup {
@@ -153,7 +153,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendNotAttempted("some error")
-      verifyZeroInteractions(crdlOrchestratorConnectorMock)
+      verify(crdlOrchestratorConnectorMock, times(0))
     }
 
     "return failure when attempt to forward message fails" in new Setup {
@@ -162,8 +162,8 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBodyNoAttachment))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      verify(crdlOrchestratorConnectorMock).postMessage(xmlBodyNoAttachment, forwardedHeadersNoAttachment)
-      forwardedMessageCaptor hasCaptured xmlBodyNoAttachment
+      verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, forwardedHeadersNoAttachment)
+      assert(forwardedMessageCaptor.getValue == xmlBodyNoAttachment)
     }
   }
 }

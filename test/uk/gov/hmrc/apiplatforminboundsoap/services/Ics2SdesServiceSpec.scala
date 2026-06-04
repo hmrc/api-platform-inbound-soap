@@ -21,22 +21,21 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.Elem
-
 import org.apache.pekko.stream.Materializer
-import org.mockito.captor.ArgCaptor
+import org.mockito.ArgumentCaptor
+import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers.any as `*`
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import play.api.http.Status
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Ics2, SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess, SdesSuccessResult}
-import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
 class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with Ics2XmlHelper {
@@ -50,8 +49,8 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
   trait Setup {
     val sdesConnectorMock: SdesConnector = mock[SdesConnector]
-    val bodyCaptor                       = ArgCaptor[SdesRequest]
-    val headerCaptor                     = ArgCaptor[Seq[(String, String)]]
+    val bodyCaptor                       = ArgumentCaptor.forClass(classOf[SdesRequest])
+    val headerCaptor                     = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
 
     val httpStatus: Int                     = Status.OK
     val appConfigMock: SdesConnector.Config = mock[SdesConnector.Config]
@@ -91,7 +90,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      assert(bodyCaptor.getValue == expectedSdesRequest)
     }
 
     "make two requests to SDES when XML message contains two binaryAttachment elements" in new Setup {
@@ -128,8 +127,8 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val expectedFirstSdesRequest                = SdesRequest(Seq.empty, expectedFirstRequestMetadata, expectedFirstRequestMetadataProperties, expectedBody)
       val expectedSecondSdesRequest               = SdesRequest(Seq.empty, expectedSecondRequestMetadata, expectedSecondRequestMetadataProperties, expectedBody)
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuidForFirstCall))))
-        .andThen(successful(Right(SdesSuccess(expectedSdesUuidForSecondCall))))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(using *)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuidForFirstCall))))
+        .thenReturn(successful(Right(SdesSuccess(expectedSdesUuidForSecondCall))))
 
       val result = await(service.processMessage(xmlBody))
 
@@ -137,9 +136,9 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
         Right(SdesSuccessResult(SdesReference(expectedFilenameForFirstCall, expectedSdesUuidForFirstCall))),
         Right(SdesSuccessResult(SdesReference(expectedFilenameForSecondCall, expectedSdesUuidForSecondCall)))
       )
-      verify(sdesConnectorMock, times(2)).postMessage(*)(*)
+      verify(sdesConnectorMock, times(2)).postMessage(*)(using *)
 
-      bodyCaptor.hasCaptured(expectedFirstSdesRequest, expectedSecondSdesRequest)
+      assert(bodyCaptor.getAllValues == List(expectedFirstSdesRequest, expectedSecondSdesRequest))
     }
 
     "return invalid response when message does not contain includedBinaryObject" in new Setup {
@@ -148,8 +147,8 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(SdesSendNotAttempted("Argument includedBinaryObject was not found in XML")))
-      verifyZeroInteractions(appConfigMock)
-      verifyZeroInteractions(sdesConnectorMock)
+      verify(appConfigMock, times(0))
+      verify(sdesConnectorMock, times(0))
     }
 
     "return invalid response when message's binaryFile block does not contain filename" in new Setup {
@@ -158,8 +157,8 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(SdesSendNotAttempted("Argument filename was not found in XML")))
-      verifyZeroInteractions(appConfigMock)
-      verifyZeroInteractions(sdesConnectorMock)
+      verify(appConfigMock, times(0))
+      verify(sdesConnectorMock, times(0))
     }
 
     "return invalid response when message's binaryFile block contains empty filename" in new Setup {
@@ -168,8 +167,8 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(SdesSendNotAttempted("Argument filename found in XML but is empty")))
-      verifyZeroInteractions(appConfigMock)
-      verifyZeroInteractions(sdesConnectorMock)
+      verify(appConfigMock, times(0))
+      verify(sdesConnectorMock, times(0))
     }
 
     "return upstream response when message sending fails" in new Setup {
