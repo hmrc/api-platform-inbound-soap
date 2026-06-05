@@ -205,6 +205,7 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
       val xmlBodyAfterTransformation = readFromFile("post-sdes-processing/ie4s03-v2.xml")
       val replacement                = Map("test-filename.txt" -> "some-uuid-like-string")
       val result                     = replaceEmbeddedAttachments(replacement, xmlBody)
+      println(s"result is $result")
       val diff                       = getXmlDiff(result, xmlBodyAfterTransformation).build()
       diff.getDifferences.forEach(println(_))
       diff.hasDifferences shouldBe false

@@ -74,6 +74,7 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     val binaryElementsCaptor                           = capture[NodeSeq]
     val headerCaptor                                   = capture[Seq[(String, String)]]
     val sdesRequestHeaderCaptor                        = capture[Seq[(String, String)]]
+    val hcCaptor                                       = capture[HeaderCarrier]
     val xmlBodyIsAlive                                 = readFromFile("eori/isAliveRequest.xml")
 
     val service: InboundEoriMessageService =
@@ -88,12 +89,12 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
   "processInboundMessage" should {
     "return success when connector returns success" in new Setup {
       private val requestBody: Elem = <xml>foo</xml>
-      when(eoriServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(eoriServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = await(service.processInboundMessage(requestBody))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(eoriServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)
+      verify(eoriServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using hcCaptor)
       assert(forwardedMessageCaptor.getValue == requestBody)
       assert(headerCaptor.getValue == forwardedHeadersNoAttachment)
     }
@@ -103,18 +104,18 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBodyIsAlive))
 
       result shouldBe SendSuccess(OK, "")
-      verify(eoriServiceConnectorMock, times(0))
+      verifyNoInteractions(eoriServiceConnectorMock)
     }
 
     "return failure when attempt to forward message fails" in new Setup {
       private val requestBody: Elem = <xml>foo</xml>
-      when(eoriServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
+      when(eoriServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
 
       val result = await(service.processInboundMessage(requestBody))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      verify(eoriServiceConnectorMock).postMessage(forwardedMessageCaptor, forwardedHeadersNoAttachment)
-      assert(forwardedMessageCaptor.getValue ==requestBody)
+      verify(eoriServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using hcCaptor)
+      assert(forwardedMessageCaptor.getValue == requestBody)
     }
   }
 }

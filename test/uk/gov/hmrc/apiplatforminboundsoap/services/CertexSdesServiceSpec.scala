@@ -170,7 +170,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
-      verify(sdesConnectorMock, times(0))
+      verifyNoInteractions(sdesConnectorMock)
     }
 
     "not make a call to SDES when message has no attachment element" in new Setup {
@@ -179,7 +179,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List.empty
-      verify(sdesConnectorMock, times(0))
+      verifyNoInteractions(sdesConnectorMock)
     }
 
     "not make a call to SDES when message attachment is not base 64 data" in new Setup {
@@ -188,7 +188,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(SdesSendNotAttempted("Embedded attachment element pcaDocumentPdf is not valid base 64 data")))
-      verify(sdesConnectorMock, times(0))
+      verifyNoInteractions(sdesConnectorMock)
     }
 
     "generate random UUID for filename when messageId in message is blank" in new Setup {

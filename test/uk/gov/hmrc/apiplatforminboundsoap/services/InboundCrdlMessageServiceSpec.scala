@@ -66,6 +66,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     val wholeMessageCaptor                                       = capture[NodeSeq]
     val binaryElementsCaptor                                     = capture[NodeSeq]
     val headerCaptor                                             = capture[Seq[(String, String)]]
+    val hcCaptor                                                 = capture[HeaderCarrier]
     val sdesRequestHeaderCaptor                                  = capture[Seq[(String, String)]]
     val xmlBodyWithAttachment                                    = readFromFile("crdl/crdl-request-well-formed.xml")
     val xmlBodyNoAttachment                                      = readFromFile("crdl/crdl-request-no-attachment.xml")
@@ -81,6 +82,8 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     compare(Input.fromString(expected.toString).build())
       .withTest(Input.fromString(actual.toString()).build())
       .withNodeMatcher(new DefaultNodeMatcher(byName))
+      //todo can we stop ignoring whitespace; we didn't need to before Scala 3
+      .ignoreWhitespace()
       .checkForIdentical()
   }
 
@@ -91,7 +94,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBodyNoAttachment))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)
+      verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using hcCaptor)
       assert(forwardedMessageCaptor.getValue == xmlBodyNoAttachment)
       assert(headerCaptor.getValue == forwardedHeadersNoAttachment)
     }
@@ -99,70 +102,72 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     "invoke SDESConnector when message contains embedded file attachment" in new Setup {
       val forwardedXmlBody = readFromFile("post-sdes-processing/crdl/crdl-request-well-formed.xml")
 
-      when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(crdlSdesServiceMock.processMessage(refEq(xmlBodyWithAttachment))(*)).thenReturn(successful(List(Right(SdesSuccess(
+      when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(crdlSdesServiceMock.processMessage(refEq(xmlBodyWithAttachment))(using *)).thenReturn(successful(List(Right(SdesSuccess(
         "some-uuid-like-string"
       )))))
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
+      verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using *)
       verify(crdlSdesServiceMock).processMessage(xmlBodyWithAttachment)
+      println (forwardedXmlBody)
+      getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().getDifferences.forEach(println)
       getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().hasDifferences mustBe false
       headerCaptor.getValue mustBe forwardedHeadersWithAttachment
     }
 
     "return fail status to caller and not forward message if call to SDES fails when processing a message with embedded file" in new Setup {
-      when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(Left(
+      when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(using *)).thenReturn(successful(List(Left(
         SdesSendFailExternal("some error", SERVICE_UNAVAILABLE)
       ))))
 
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendFailExternal("some error", SERVICE_UNAVAILABLE)
-      verify(crdlOrchestratorConnectorMock, times(0))
+      verifyNoInteractions(crdlOrchestratorConnectorMock)
     }
 
     "return fail status to caller and not forward message if attempt to extract embedded file fails" in new Setup {
-      when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(Left(
+      when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(using *)).thenReturn(successful(List(Left(
         SdesSendNotAttempted("some error")
       ))))
 
       val result = await(serviceForError.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendNotAttempted("some error")
-      verify(crdlOrchestratorConnectorMock, times(0))
+      verifyNoInteractions(crdlOrchestratorConnectorMock)
     }
 
     "return fail status to caller and not forward message if attempt to replace embedded file with SDES UUID fails" in new Setup {
-      when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(Right(
+      when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(using *)).thenReturn(successful(List(Right(
         SdesSuccess("some-uuid")
       ))))
 
       val result = await(serviceForError.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendFailExternal(s"Failed to replace embedded attachment for $xmlBodyWithAttachment", UNPROCESSABLE_ENTITY)
-      verify(crdlOrchestratorConnectorMock, times(0))
+      verifyNoInteractions(crdlOrchestratorConnectorMock)
     }
 
     "return fail status to caller and not forward message if message attachment is blank or absent" in new Setup {
-      when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(Left(
+      when(crdlSdesServiceMock.processMessage(forwardedMessageCaptor)(using *)).thenReturn(successful(List(Left(
         SdesSendNotAttempted("some error")
       ))))
 
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendNotAttempted("some error")
-      verify(crdlOrchestratorConnectorMock, times(0))
+      verifyNoInteractions(crdlOrchestratorConnectorMock)
     }
 
     "return failure when attempt to forward message fails" in new Setup {
-      when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
+      when(crdlOrchestratorConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
 
       val result = await(service.processInboundMessage(xmlBodyNoAttachment))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, forwardedHeadersNoAttachment)
+      verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using *)
       assert(forwardedMessageCaptor.getValue == xmlBodyNoAttachment)
     }
   }

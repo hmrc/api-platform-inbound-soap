@@ -122,7 +122,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(expectedServiceResult))
-      verify(sdesConnectorMock, times(0))
+      verifyNoInteractions(sdesConnectorMock)
     }
 
     "not make a call to SDES when message has no attachment element" in new Setup {
@@ -131,7 +131,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List()
-      verify(sdesConnectorMock, times(0))
+      verifyNoInteractions(sdesConnectorMock)
     }
 
     "not make a call to SDES when message attachment is not base 64 data" in new Setup {
@@ -140,7 +140,7 @@ class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(SdesSendNotAttempted("Embedded attachment element ReceiveReferenceDataRequestResult is not valid base 64 data")))
-      verify(sdesConnectorMock, times(0))
+      verifyNoInteractions(sdesConnectorMock)
     }
 
     "omit TaskIdentifier from SDES metadata header where not found in message" in new Setup {

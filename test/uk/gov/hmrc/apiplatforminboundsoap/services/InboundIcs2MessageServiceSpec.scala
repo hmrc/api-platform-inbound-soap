@@ -83,7 +83,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(inboundConnectorMock).postMessage(bodyCaptor, forwardedHeaders, true)
+      verify(inboundConnectorMock).postMessage(bodyCaptor, headerCaptor, isTestCaptor)(using *)
       assert(bodyCaptor.getValue == xmlBody)
     }
 
@@ -259,7 +259,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      verify(inboundConnectorMock).postMessage(bodyCaptor, forwardedHeaders, true)
+      verify(inboundConnectorMock).postMessage(bodyCaptor, headerCaptor, isTestCaptor)(using *)
       assert(bodyCaptor.getValue == xmlBody)
     }
   }
@@ -281,7 +281,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendSuccess(ACCEPTED, "some body")
-      verify(inboundConnectorMock).postMessage(bodyCaptor, forwardedHeaders, true)
+      verify(inboundConnectorMock).postMessage(bodyCaptor, headerCaptor, isTestCaptor)(using *)
       assert(bodyCaptor.getValue == xmlBody)
     }
 
@@ -291,7 +291,7 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      verify(inboundConnectorMock).postMessage(bodyCaptor, forwardedHeaders, true)
+      verify(inboundConnectorMock).postMessage(bodyCaptor, headerCaptor, isTestCaptor)(using *)
       assert(bodyCaptor.getValue == xmlBody)
     }
   }

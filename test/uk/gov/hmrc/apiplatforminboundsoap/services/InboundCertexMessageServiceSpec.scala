@@ -90,11 +90,11 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     val failingXmlTransformer: XmlTransformer              = new NoChangeTransformer()
     val staticUuidGenerator: StaticUuidGenerator           = new StaticUuidGenerator()
     val staticZonedDTHelper: ZonedDateTimeHelper           = new StaticZonedDTHelper()
-    val forwardedMessageCaptor                             = ArgumentCaptor.forClass(classOf[NodeSeq])
-    val wholeMessageCaptor                                 = ArgumentCaptor.forClass(classOf[NodeSeq])
-    val binaryElementsCaptor                               = ArgumentCaptor.forClass(classOf[NodeSeq])
-    val headerCaptor                                       = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
-    val sdesRequestHeaderCaptor                            = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
+    val forwardedMessageCaptor                             = capture[NodeSeq]
+    val wholeMessageCaptor                                 = capture[NodeSeq]
+    val binaryElementsCaptor                               = capture[NodeSeq]
+    val headerCaptor                                       = capture[Seq[(String, String)]]
+    val sdesRequestHeaderCaptor                            = capture[Seq[(String, String)]]
     val xmlBodyWithAttachment                              = readFromFile("certex/responseIES002.xml")
     val xmlBodyWithBadMsgId                                = readFromFile("certex/responseIES002-messageId-invalid-uuid.xml")
     val xmlBodyWithNoMsgId                                 = readFromFile("certex/responseIES002-messageId-empty.xml")
@@ -130,7 +130,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
 
   "processInboundMessage" should {
     "return success when connector returns success" in new Setup {
-      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = await(service.processInboundMessage(xmlBodyNoAttachment))
 
@@ -143,14 +143,14 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     "invoke SDESConnector when message contains embedded file attachment" in new Setup {
       val forwardedXmlBody = readFromFile("post-sdes-processing/certex/forwarded-responseIES002.xml")
 
-      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(certexSdesServiceMock.processMessage(refEq(xmlBodyWithAttachment))(*)).thenReturn(successful(List(Right(SdesSuccess(
+      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(certexSdesServiceMock.processMessage(refEq(xmlBodyWithAttachment))(using *)).thenReturn(successful(List(Right(SdesSuccess(
         "some-uuid-like-string"
       )))))
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
+      verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using *)
       verify(certexSdesServiceMock).processMessage(xmlBodyWithAttachment)
       getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().hasDifferences mustBe false
       headerCaptor.getValue mustBe forwardedHeadersWithAttachment
@@ -159,14 +159,14 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     "generate random UUID for x-correlation-id when message doesn't provide one" in new Setup {
       val forwardedXmlBody = readFromFile("post-sdes-processing/certex/responseIES002-messageId-invalid-uuid.xml")
 
-      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(certexSdesServiceMock.processMessage(refEq(xmlBodyWithBadMsgId))(*)).thenReturn(successful(List(Right(SdesSuccess(
+      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(certexSdesServiceMock.processMessage(refEq(xmlBodyWithBadMsgId))(using *)).thenReturn(successful(List(Right(SdesSuccess(
         "some-uuid-like-string"
       )))))
       val result = await(service.processInboundMessage(xmlBodyWithBadMsgId))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
+      verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using *)
       verify(certexSdesServiceMock).processMessage(xmlBodyWithBadMsgId)
       getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().hasDifferences mustBe false
       headerCaptor.getValue mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
@@ -175,65 +175,65 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     "generate random UUID for x-correlation-id when message contains empty messageId" in new Setup {
       val forwardedXmlBody = readFromFile("post-sdes-processing/certex/responseIES002-messageId-empty.xml")
 
-      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
-      when(certexSdesServiceMock.processMessage(refEq(xmlBodyWithNoMsgId))(*)).thenReturn(successful(List(Right(SdesSuccess(
+      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(certexSdesServiceMock.processMessage(refEq(xmlBodyWithNoMsgId))(using *)).thenReturn(successful(List(Right(SdesSuccess(
         "some-uuid-like-string"
       )))))
       val result = await(service.processInboundMessage(xmlBodyWithNoMsgId))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(*)
+      verify(certexServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using *)
       verify(certexSdesServiceMock).processMessage(xmlBodyWithNoMsgId)
       getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().hasDifferences mustBe false
       headerCaptor.getValue mustBe forwardedHeadersWithAttachmentAndRandomCorrelationId
     }
 
     "return fail status to caller and not forward message if call to SDES fails when processing a message with embedded file" in new Setup {
-      when(certexSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(Left(
+      when(certexSdesServiceMock.processMessage(forwardedMessageCaptor)(using *)).thenReturn(successful(List(Left(
         SdesSendFailExternal("some error", SERVICE_UNAVAILABLE)
       ))))
 
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendFailExternal("some error", SERVICE_UNAVAILABLE)
-      verify(certexServiceConnectorMock, times(0))
+      verifyNoInteractions(certexServiceConnectorMock)
     }
 
     "return fail status to caller and not forward message if attempt to extract embedded file fails" in new Setup {
-      when(certexSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(Left(
+      when(certexSdesServiceMock.processMessage(forwardedMessageCaptor)(using *)).thenReturn(successful(List(Left(
         SdesSendNotAttempted("some error")
       ))))
 
       val result = await(serviceForError.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendNotAttempted("some error")
-      verify(certexServiceConnectorMock, times(0))
+      verifyNoInteractions(certexServiceConnectorMock)
     }
 
     "return fail status to caller and not forward message if attempt to replace embedded file with SDES UUID fails" in new Setup {
-      when(certexSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(Right(
+      when(certexSdesServiceMock.processMessage(forwardedMessageCaptor)(using *)).thenReturn(successful(List(Right(
         SdesSuccess("some-uuid")
       ))))
 
       val result = await(serviceForError.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendFailExternal(s"Failed to replace embedded attachment for $xmlBodyWithAttachment", UNPROCESSABLE_ENTITY)
-      verify(certexServiceConnectorMock, times(0))
+      verifyNoInteractions(certexServiceConnectorMock)
     }
 
     "return fail status to caller and not forward message if message attachment is blank or absent" in new Setup {
-      when(certexSdesServiceMock.processMessage(forwardedMessageCaptor)(*)).thenReturn(successful(List(Left(
+      when(certexSdesServiceMock.processMessage(forwardedMessageCaptor)(using *)).thenReturn(successful(List(Left(
         SdesSendNotAttempted("some error")
       ))))
 
       val result = await(service.processInboundMessage(xmlBodyWithAttachment))
 
       result shouldBe SendNotAttempted("some error")
-      verify(certexServiceConnectorMock, times(0))
+      verifyNoInteractions(certexServiceConnectorMock)
     }
 
     "return failure when attempt to forward message fails" in new Setup {
-      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(*)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
+      when(certexServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
 
       val result = await(service.processInboundMessage(xmlBodyNoAttachment))
 

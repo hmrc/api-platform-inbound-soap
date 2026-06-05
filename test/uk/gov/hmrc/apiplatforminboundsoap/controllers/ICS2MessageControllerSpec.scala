@@ -160,8 +160,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       status(result) shouldBe expectedStatus
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-//      xmlRequestCaptor hasCaptured requestBody
-//      isTestCaptor hasCaptured false
+      assert(xmlRequestCaptor.getValue == requestBody)
+      assert(isTestCaptor.getValue == false)
     }
 
     "return 400 when MIME element is too long and referralRequestReference is too long" in new Setup {
@@ -173,7 +173,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       status(result) shouldBe BAD_REQUEST
 
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
-      verify(incomingMessageServiceMock, times(0))
+      verifyNoInteractions(incomingMessageServiceMock)
     }
 
     "return 400 when includedBinaryObject element is blank" in new Setup {
@@ -184,7 +184,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       status(result) shouldBe BAD_REQUEST
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
-      verify(incomingMessageServiceMock, times(0))
+      verifyNoInteractions(incomingMessageServiceMock)
     }
 
     "return 400 when includedBinaryObject element is not base 64 data" in new Setup {
@@ -195,7 +195,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       status(result) shouldBe BAD_REQUEST
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
-      verify(incomingMessageServiceMock, times(0))
+      verifyNoInteractions(incomingMessageServiceMock)
     }
 
     "return 400 when uri element is too short" in new Setup {
@@ -206,7 +206,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       status(result) shouldBe BAD_REQUEST
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
-      verify(incomingMessageServiceMock, times(0))
+      verifyNoInteractions(incomingMessageServiceMock)
     }
 
     "return 400 when action element is missing" in new Setup {
@@ -217,7 +217,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       status(result) shouldBe BAD_REQUEST
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
-      verify(incomingMessageServiceMock, times(0))
+      verifyNoInteractions(incomingMessageServiceMock)
     }
   }
 }

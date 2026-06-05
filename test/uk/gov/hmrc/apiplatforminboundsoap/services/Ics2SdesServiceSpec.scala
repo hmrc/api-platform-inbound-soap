@@ -37,6 +37,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Ics2, SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess, SdesSuccessResult}
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
+import scala.jdk.CollectionConverters._
 
 class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with Ics2XmlHelper {
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -138,7 +139,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       verify(sdesConnectorMock, times(2)).postMessage(*)(using *)
 
-      assert(bodyCaptor.getAllValues == List(expectedFirstSdesRequest, expectedSecondSdesRequest))
+      assert(bodyCaptor.getAllValues.containsAll(List(expectedFirstSdesRequest, expectedSecondSdesRequest).asJava))
     }
 
     "return invalid response when message does not contain includedBinaryObject" in new Setup {
@@ -147,8 +148,8 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(SdesSendNotAttempted("Argument includedBinaryObject was not found in XML")))
-      verify(appConfigMock, times(0))
-      verify(sdesConnectorMock, times(0))
+      verifyNoInteractions(appConfigMock)
+      verifyNoInteractions(sdesConnectorMock)
     }
 
     "return invalid response when message's binaryFile block does not contain filename" in new Setup {
@@ -157,8 +158,8 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(SdesSendNotAttempted("Argument filename was not found in XML")))
-      verify(appConfigMock, times(0))
-      verify(sdesConnectorMock, times(0))
+      verifyNoInteractions(appConfigMock)
+      verifyNoInteractions(sdesConnectorMock)
     }
 
     "return invalid response when message's binaryFile block contains empty filename" in new Setup {
@@ -167,8 +168,8 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(SdesSendNotAttempted("Argument filename found in XML but is empty")))
-      verify(appConfigMock, times(0))
-      verify(sdesConnectorMock, times(0))
+      verifyNoInteractions(appConfigMock)
+      verifyNoInteractions(sdesConnectorMock)
     }
 
     "return upstream response when message sending fails" in new Setup {
