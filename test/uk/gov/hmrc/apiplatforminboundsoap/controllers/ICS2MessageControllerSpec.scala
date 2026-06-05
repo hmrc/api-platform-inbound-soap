@@ -79,12 +79,12 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
       val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
       assert(xmlRequestCaptor.getValue == requestBody)
       assert(isTestCaptor.getValue == false)
     }
@@ -93,12 +93,12 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
       val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
       val requestBody: Elem              = readFromFile("ie4r02-v2-uri-instead-of-includedBinaryObject-element.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
 //      xmlRequestCaptor hasCaptured requestBody
 //      isTestCaptor hasCaptured false
     }
@@ -107,12 +107,12 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
       val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
       val requestBody: Elem              = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
 //      xmlRequestCaptor hasCaptured requestBody
 //      isTestCaptor hasCaptured false
     }
@@ -121,12 +121,12 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
       val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
       val requestBody: Elem              = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
 //      xmlRequestCaptor hasCaptured requestBody
 //      isTestCaptor hasCaptured false
     }
@@ -135,13 +135,13 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
       val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
       val requestBody: Elem              = readFromFile("ie4n09-v2.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
       contentType(result) shouldBe Some("application/soap+xml")
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
       assert(xmlRequestCaptor.getValue == requestBody)
       assert(isTestCaptor.getValue == false)
     }
@@ -153,13 +153,13 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val expectedStatus                 = PRECONDITION_FAILED
       val expectedSoapMessage            = expectedSoapResponse("some error", expectedStatus)
 
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
+      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       status(result) shouldBe expectedStatus
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
+      verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
 //      xmlRequestCaptor hasCaptured requestBody
 //      isTestCaptor hasCaptured false
     }

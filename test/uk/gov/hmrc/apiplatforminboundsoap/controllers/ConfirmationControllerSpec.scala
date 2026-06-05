@@ -221,7 +221,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-      verify(mockOutboundConnector).postMessage(*)(*)
+      verify(mockOutboundConnector).postMessage(*)(using *)
       assert(xmlRequestCaptor == coeRequestBody)
     }
   }
