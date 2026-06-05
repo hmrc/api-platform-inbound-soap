@@ -47,12 +47,16 @@ class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: Ap
   override protected def filter[A](request: Request[A]): Future[Option[Result]] = {
     def passThroughForRoute: Either[Unit, Boolean] = {
       try {
-        routePattern.findFirstIn(request.path).map(_.toLowerCase()) match {
-          case Some("certex") => Right(appConfig.passThroughEnabledCertex)
-          case Some("crdl")   => Right(appConfig.passThroughEnabledCrdl)
-          case Some("ccn2")   => Right(appConfig.passThroughEnabledAck)
-          case Some("ics2")   => Right(appConfig.passThroughEnabledIcs2)
-        }
+        request.path match {
+          case routePattern(context) => {
+            context.toLowerCase() match {
+              case "certex" => Right(appConfig.passThroughEnabledCertex)
+              case "crdl"   => Right(appConfig.passThroughEnabledCrdl)
+              case "ccn2"   => Right(appConfig.passThroughEnabledAck)
+              case "ics2"   => Right(appConfig.passThroughEnabledIcs2)
+            }
+          }
+        } 
       } catch {
         case _: MatchError =>
           logger.warn(s"Received a request on an unexpected path of ${request.path}")
