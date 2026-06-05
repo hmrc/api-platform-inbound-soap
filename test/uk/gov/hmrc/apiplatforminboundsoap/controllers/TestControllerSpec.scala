@@ -30,7 +30,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc.Headers
 import org.mockito.Mockito.*
 import org.mockito.ArgumentMatchers.any as `*`
-
+import org.scalatest.matchers.must.Matchers.{mustBe, mustEqual}
 import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -99,8 +99,8 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
       status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      assert(xmlRequestCaptor.getValue == requestBody)
-      assert(isTestCaptor.getValue == true)
+      xmlRequestCaptor.getValue mustEqual requestBody
+      isTestCaptor.getValue mustBe true
     }
 
     "return response code it received when not successful" in new Setup {
@@ -114,8 +114,8 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
       status(result) shouldBe PRECONDITION_FAILED
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      assert(xmlRequestCaptor.getValue == requestBody)
-      assert(isTestCaptor.getValue == true)
+      xmlRequestCaptor.getValue mustEqual requestBody
+      isTestCaptor.getValue mustBe true
     }
 
     "return 400 when action element is missing" in new Setup {
@@ -125,7 +125,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Element SOAP Header Action is missing", xRequestIdHeaderValue)
-      verify(incomingMessageServiceMock, times(0))
+      verifyNoInteractions(incomingMessageServiceMock)
     }
   }
 }

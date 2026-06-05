@@ -43,7 +43,6 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
-
     val app: Application           = new GuiceApplicationBuilder()
       .configure("passThroughEnabled.ICS2" -> "false")
       .build()
