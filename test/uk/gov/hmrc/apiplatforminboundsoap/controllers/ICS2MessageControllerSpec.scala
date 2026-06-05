@@ -27,6 +27,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.mockito.Mockito.*
 import org.mockito.ArgumentMatchers.any as `*`
+import org.scalatest.matchers.must.Matchers.{mustBe, mustEqual}
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
@@ -85,8 +86,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      assert(xmlRequestCaptor.getValue == requestBody)
-      assert(isTestCaptor.getValue == false)
+      xmlRequestCaptor.getValue mustEqual requestBody
+      isTestCaptor.getValue mustBe false
     }
 
     "return 200 when successful for a message with attached file as URI" in new Setup {
@@ -99,8 +100,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-//      xmlRequestCaptor hasCaptured requestBody
-//      isTestCaptor hasCaptured false
+      xmlRequestCaptor.getValue mustEqual requestBody
+      isTestCaptor.getValue mustBe false
     }
 
     "return 200 when successful for a message with binary file and binary attachment" in new Setup {
@@ -113,8 +114,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-//      xmlRequestCaptor hasCaptured requestBody
-//      isTestCaptor hasCaptured false
+      xmlRequestCaptor.getValue mustEqual requestBody
+      isTestCaptor.getValue mustBe false
     }
 
     "return 200 when successful for a message with a binary file and 2 binary attachments" in new Setup {
@@ -127,8 +128,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-//      xmlRequestCaptor hasCaptured requestBody
-//      isTestCaptor hasCaptured false
+      xmlRequestCaptor.getValue mustEqual requestBody
+      isTestCaptor.getValue mustBe false
     }
 
     "return 200 when successful for a message with no attached file" in new Setup {
@@ -142,8 +143,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       status(result) shouldBe OK
       contentType(result) shouldBe Some("application/soap+xml")
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      assert(xmlRequestCaptor.getValue == requestBody)
-      assert(isTestCaptor.getValue == false)
+      xmlRequestCaptor.getValue mustEqual requestBody
+      isTestCaptor.getValue mustBe false
     }
 
     "return response code it received when not successful" in new Setup {
@@ -160,8 +161,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       status(result) shouldBe expectedStatus
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      assert(xmlRequestCaptor.getValue == requestBody)
-      assert(isTestCaptor.getValue == false)
+      xmlRequestCaptor.getValue mustEqual requestBody
+      isTestCaptor.getValue mustBe false
     }
 
     "return 400 when MIME element is too long and referralRequestReference is too long" in new Setup {

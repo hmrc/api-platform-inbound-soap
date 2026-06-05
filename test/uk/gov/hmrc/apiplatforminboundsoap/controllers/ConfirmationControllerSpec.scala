@@ -46,6 +46,7 @@ import org.scalatest.matchers.should.Matchers
 import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.Mockito.*
 import org.scalatest.TestSuite
+import org.scalatest.matchers.must.Matchers.mustEqual
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.FakeApplicationFactory
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -164,7 +165,6 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().getDifferences.forEach(println)
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
@@ -192,7 +192,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK
       verify(mockOutboundConnector).postMessage(*)(using *)
-      assert(xmlRequestCaptor.getValue == codRequestBody)
+      xmlRequestCaptor.getValue mustEqual codRequestBody
     }
   }
 
@@ -207,7 +207,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK
       verify(mockOutboundConnector).postMessage(*)(using *)
-      assert(xmlRequestCaptor.getValue == coeRequestBody)
+      xmlRequestCaptor.getValue mustEqual coeRequestBody
     }
   }
 
@@ -222,7 +222,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       verify(mockOutboundConnector).postMessage(*)(using *)
-      assert(xmlRequestCaptor.getValue == coeRequestBody)
+      xmlRequestCaptor.getValue mustEqual coeRequestBody
     }
   }
 }
