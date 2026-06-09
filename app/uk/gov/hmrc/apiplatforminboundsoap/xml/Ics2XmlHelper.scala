@@ -17,20 +17,10 @@
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import scala.annotation.tailrec
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.transform.{RewriteRule, RuleTransformer}
+import scala.xml.{Elem, Node, NodeSeq, Text}
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, Base64Encoder}
-import advxml.transform.XmlRule
-import advxml.transform.XmlZoom.root
-import advxml.transform.XmlModifier.*
-import advxml.implicits.*
-
-import scala.util.Try
-import cats.instances.try_.*
-import scala.xml.transform.RuleTransformer
-import scala.xml.transform.RewriteRule
-import scala.xml.Node
-import scala.xml.Text
 
 trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
 
@@ -100,7 +90,7 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
       def add(targets: List[String], elem: Elem): Elem = {
         targets match {
           case Nil       => elem
-          case x :: tail =>
+          case _ :: tail =>
             add(tail, elem)
         }
       }
@@ -109,45 +99,27 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
 
     def replaceAllBinaryObjects(e: Elem, filename: String, replacementIncludedBinaryObject: String): Either[String, Elem] = {
       def replaceText(elem: Elem, nodeName: String): Elem = {
-        // TODO this was replacing nothing when we moved to new xml lib and scala 3 so the tests were failing
-
-        /*******************************
-         * Raw Scala XML traversal
-         *******************************/
-
-        /*******************************
-         * Which node are we targetting?
-         *******************************/
-        // println("*" * 30)
-        // println(s"Node: $nodeName")
-        // println(s"Filename: $filename")
-        // println(s"New Value: $replacementIncludedBinaryObject")
-        // println("*" * 30)
-
-        /*******************************
-         * Scala XML rewrite rules
-         *******************************/ 
         val binaryAttachmentRewriteRule = new RewriteRule {
           def doesNodeHaveMatchingFilename(n: Node, filename: String): Boolean = {
             n.child.exists {
               _ match {
-                case elem: Elem if(elem.label == "filename" && elem.text == filename) => true
-                case _ => false
+                case elem: Elem if (elem.label == "filename" && elem.text == filename) => true
+                case _                                                                 => false
               }
             }
           }
-          
+
           override def transform(root: Node) = {
-            if(root.label == "binaryAttachment" && nodeName == "binaryAttachment") {
-              if(doesNodeHaveMatchingFilename(root, filename)) {
-                val elem = root.asInstanceOf[Elem]
-                val newElem: Elem = elem.copy(child = elem.child.map{
+            if (root.label == "binaryAttachment" && nodeName == "binaryAttachment") {
+              if (doesNodeHaveMatchingFilename(root, filename)) {
+                val elem          = root.asInstanceOf[Elem]
+                val newElem: Elem = elem.copy(child = elem.child.map {
                   _ match {
-                    case e: Elem if(e.label == "includedBinaryObject") => e.copy(child = if(encodeReplacement) Text(encode(replacementIncludedBinaryObject)) else Text(replacementIncludedBinaryObject))
-                    case other => other
+                    case e: Elem if (e.label == "includedBinaryObject") =>
+                      e.copy(child = if (encodeReplacement) Text(encode(replacementIncludedBinaryObject)) else Text(replacementIncludedBinaryObject))
+                    case other                                          => other
                   }
                 })
-                // println(newElem)
                 newElem
               } else {
                 root
@@ -162,23 +134,23 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
           def doesNodeHaveMatchingFilename(n: Node, filename: String): Boolean = {
             n.child.exists {
               _ match {
-                case elem: Elem if(elem.label == "filename" && elem.text == filename) => true
-                case _ => false
+                case elem: Elem if (elem.label == "filename" && elem.text == filename) => true
+                case _                                                                 => false
               }
             }
           }
-          
+
           override def transform(root: Node) = {
-            if(root.label == "binaryFile" && nodeName == "binaryFile") {
-              if(doesNodeHaveMatchingFilename(root, filename)) {
-                val elem = root.asInstanceOf[Elem]
-                val newElem: Elem = elem.copy(child = elem.child.map{
+            if (root.label == "binaryFile" && nodeName == "binaryFile") {
+              if (doesNodeHaveMatchingFilename(root, filename)) {
+                val elem          = root.asInstanceOf[Elem]
+                val newElem: Elem = elem.copy(child = elem.child.map {
                   _ match {
-                    case e: Elem if(e.label == "includedBinaryObject") => e.copy(child = if(encodeReplacement) Text(encode(replacementIncludedBinaryObject)) else Text(replacementIncludedBinaryObject))
-                    case other => other
+                    case e: Elem if (e.label == "includedBinaryObject") =>
+                      e.copy(child = if (encodeReplacement) Text(encode(replacementIncludedBinaryObject)) else Text(replacementIncludedBinaryObject))
+                    case other                                          => other
                   }
                 })
-                // println(newElem)
                 newElem
               } else {
                 root
@@ -189,9 +161,6 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
           }
         }
 
-        /*******************************
-         * Scala XML node transformer
-         *******************************/        
         val transformers = new RuleTransformer(binaryAttachmentRewriteRule, binaryFileRewriteRule)
         transformers.transform(elem).head.asInstanceOf[Elem]
       }

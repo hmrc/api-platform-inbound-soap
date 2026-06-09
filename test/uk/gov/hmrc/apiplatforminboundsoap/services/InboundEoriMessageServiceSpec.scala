@@ -21,12 +21,12 @@ import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
 
 import org.apache.pekko.stream.Materializer
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.ArgumentMatchers.any as `*`
+import org.mockito.Mockito.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.mockito.Mockito.*
-import org.mockito.ArgumentMatchers.any as `*`
 
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK}
@@ -34,7 +34,7 @@ import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
-import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.util.{StaticUuidGenerator, StaticZonedDTHelper, ZonedDateTimeHelper}
 
 class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {

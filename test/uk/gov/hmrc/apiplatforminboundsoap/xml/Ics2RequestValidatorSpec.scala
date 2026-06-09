@@ -17,6 +17,7 @@
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import scala.io.Source
+
 import cats.data.NonEmptyList
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

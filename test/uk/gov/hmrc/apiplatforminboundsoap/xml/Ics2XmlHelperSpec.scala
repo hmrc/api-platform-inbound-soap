@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
+import scala.io.Source
+import scala.xml.{Elem, NodeSeq}
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
@@ -24,9 +27,6 @@ import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.builder.{DiffBuilder, Input}
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
-
-import scala.io.Source
-import scala.xml.{Elem, NodeSeq}
 
 class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with Ics2XmlHelper {
 

@@ -18,6 +18,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar

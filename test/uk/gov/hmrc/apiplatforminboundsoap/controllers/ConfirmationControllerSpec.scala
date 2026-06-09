@@ -18,38 +18,21 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
-import scala.xml.Elem
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.play.guice.{GuiceFakeApplicationFactory, GuiceOneAppPerSuite}
-import org.mockito.Mockito.*
-import play.api.Application
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.Headers
-import play.api.test.Helpers.*
-import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCertexMessageService
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, XML}
+
 import org.apache.pekko.stream.Materializer
-import org.mockito.{ArgumentCaptor, Captor}
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.matchers.should.Matchers
 import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.Mockito.*
+import org.mockito.{ArgumentCaptor, Captor}
 import org.scalatest.TestSuite
 import org.scalatest.matchers.must.Matchers.mustEqual
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.FakeApplicationFactory
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatestplus.play.guice.{GuiceFakeApplicationFactory, GuiceOneAppPerSuite}
+
 import play.api.Application
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -57,10 +40,13 @@ import play.api.mvc.Headers
 import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, PassThroughModeAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCertexMessageService
 
 class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -183,7 +169,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
   "POST acknowledgement endpoint with valid authorisation header and COD request body" should {
     "return 200" in new Setup {
-      val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      val fakeRequest                            = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(codRequestBody)
       val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
@@ -198,7 +184,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
   "POST acknowledgement endpoint with valid authorisation header and COE request body" should {
     "return 200" in new Setup {
-      val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      val fakeRequest                            = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
       val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
@@ -213,7 +199,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
   "POST acknowledgement endpoint with valid authorisation header and COE request body but outbound connector returns 500" should {
     "return 200" in new Setup {
-      val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      val fakeRequest                            = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
       val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()

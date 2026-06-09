@@ -31,7 +31,7 @@ import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
@@ -59,7 +59,7 @@ class ICS2MessageControllerISpec extends AnyWordSpecLike with Matchers
       "microservice.services.secure-data-exchange-proxy.host"                     -> externalWireMockHost,
       "microservice.services.secure-data-exchange-proxy.port"                     -> externalWireMockPort
     ).build()
-  implicit val mat: Materializer            = fakeApplication().injector.instanceOf[Materializer]
+  implicit val mat: Materializer              = fakeApplication().injector.instanceOf[Materializer]
 
   val forwardRequestPath = "/import-control-inbound-soap"
   val receiveRequestPath = "/ics2/NESRiskAnalysisBAS"

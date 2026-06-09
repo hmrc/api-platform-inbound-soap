@@ -56,7 +56,7 @@ class PassThroughModeAction @Inject() (httpClientV2: HttpClientV2, appConfig: Ap
               case "ics2"   => Right(appConfig.passThroughEnabledIcs2)
             }
           }
-        } 
+        }
       } catch {
         case _: MatchError =>
           logger.warn(s"Received a request on an unexpected path of ${request.path}")

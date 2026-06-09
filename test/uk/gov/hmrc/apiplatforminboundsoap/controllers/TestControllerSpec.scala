@@ -16,24 +16,26 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
-import org.mockito.{ArgumentCaptor, Captor}
-
 import java.util.UUID.randomUUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, XML}
-import org.scalatestplus.mockito.MockitoSugar
+
+import org.mockito.ArgumentMatchers.any as `*`
+import org.mockito.Mockito.*
+import org.mockito.{ArgumentCaptor, Captor}
+import org.scalatest.matchers.must.Matchers.{mustBe, mustEqual}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import play.api.mvc.Headers
-import org.mockito.Mockito.*
-import org.mockito.ArgumentMatchers.any as `*`
-import org.scalatest.matchers.must.Matchers.{mustBe, mustEqual}
 import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.testmessage.TestController
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
@@ -92,7 +94,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
     "return 200 when successful for a message with embedded attached file" in new Setup {
       val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
       val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
-      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val requestBody: Elem                      = readFromFile("ie4r02-v2-one-binary-attachment.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(ACCEPTED, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
@@ -106,7 +108,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
     "return response code it received when not successful" in new Setup {
       val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
       val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
-      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val requestBody: Elem                      = readFromFile("ie4r02-v2-one-binary-attachment.xml")
 
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
 

@@ -20,24 +20,26 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
-import org.mockito.Mockito.*
-import org.mockito.ArgumentMatchers.any as `*`
-import org.mockito.ArgumentMatchers.refEq
+
 import org.apache.pekko.stream.Materializer
 import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.{any as `*`, refEq}
+import org.mockito.Mockito.*
 import org.scalatest.matchers.must.Matchers.mustBe
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.builder.{DiffBuilder, Input}
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
+
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
@@ -82,7 +84,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     compare(Input.fromString(expected.toString).build())
       .withTest(Input.fromString(actual.toString()).build())
       .withNodeMatcher(new DefaultNodeMatcher(byName))
-      //todo can we stop ignoring whitespace; we didn't need to before Scala 3
+      // todo can we stop ignoring whitespace; we didn't need to before Scala 3
       .ignoreWhitespace()
       .checkForIdentical()
   }
@@ -111,7 +113,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       result shouldBe SendSuccess(OK, "some body")
       verify(crdlOrchestratorConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using *)
       verify(crdlSdesServiceMock).processMessage(xmlBodyWithAttachment)
-      println (forwardedXmlBody)
+      println(forwardedXmlBody)
       getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().getDifferences.forEach(println)
       getXmlDiff(forwardedMessageCaptor.getValue, forwardedXmlBody).build().hasDifferences mustBe false
       headerCaptor.getValue mustBe forwardedHeadersWithAttachment
