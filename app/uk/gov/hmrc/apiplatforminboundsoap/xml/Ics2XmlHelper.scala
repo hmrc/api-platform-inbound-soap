@@ -193,7 +193,7 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
       def remove(targets: List[String], elem: Elem): Elem = {
         targets match {
           case Nil       => elem
-          case x :: tail =>
+          case _ :: tail =>
             remove(tail, elem)
         }
       }
