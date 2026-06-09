@@ -284,57 +284,57 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
     }
   }
 
-  // "getBinaryBase64Object" should {
-  //   "return binaryObject element value from binaryAttachment element" in new Setup {
-  //     val binaryAttachment = <urn:binaryAttachment>
-  //                             <urn:filename>?</urn:filename>
-  //                             <urn:MIME>?</urn:MIME>
-  //     <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
-  //                             <urn:description>?</urn:description>
-  //                            </urn:binaryAttachment>
-  //     getBinaryBase64Object(binaryAttachment) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
-  //   }
+  "getBinaryBase64Object" should {
+    "return binaryObject element value from binaryAttachment element" in new Setup {
+      val binaryAttachment = <urn:binaryAttachment>
+                              <urn:filename>?</urn:filename>
+                              <urn:MIME>?</urn:MIME>
+      <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                              <urn:description>?</urn:description>
+                             </urn:binaryAttachment>
+      getBinaryBase64Object(binaryAttachment) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
+    }
 
-  //   "return binaryObject element value from binaryFile element" in new Setup {
-  //     val binaryFile = <urn:binaryFile>
-  //                                          <urn:filename>filename2.txt</urn:filename>
-  //                                         <urn:MIME>text/plain</urn:MIME>
-  //       <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
-  //                                         <urn:description>A texty sort of file</urn:description>
-  //                                     </urn:binaryFile>
-  //     getBinaryBase64Object(binaryFile) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
-  //   }
+    "return binaryObject element value from binaryFile element" in new Setup {
+      val binaryFile = <urn:binaryFile>
+                                           <urn:filename>filename2.txt</urn:filename>
+                                          <urn:MIME>text/plain</urn:MIME>
+        <urn:includedBinaryObject>dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=</urn:includedBinaryObject>
+                                          <urn:description>A texty sort of file</urn:description>
+                                      </urn:binaryFile>
+      getBinaryBase64Object(binaryFile) shouldBe Some("dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=")
+    }
 
-  //   "return empty string when no binaryObject is found in SOAP message" in new Setup {
-  //     val binaryAttachment = <urn:binaryAttachment>
-  //                                                <urn:filename>?</urn:filename>
-  //                                                <urn:MIME>?</urn:MIME>
-  //                                                <urn:includedBinaryObject></urn:includedBinaryObject>
-  //                                                <urn:description>?</urn:description>
-  //                                             </urn:binaryAttachment>
-  //     getBinaryBase64Object(binaryAttachment) shouldBe Some("")
-  //   }
+    "return empty string when no binaryObject is found in SOAP message" in new Setup {
+      val binaryAttachment = <urn:binaryAttachment>
+                                                 <urn:filename>?</urn:filename>
+                                                 <urn:MIME>?</urn:MIME>
+                                                 <urn:includedBinaryObject></urn:includedBinaryObject>
+                                                 <urn:description>?</urn:description>
+                                              </urn:binaryAttachment>
+      getBinaryBase64Object(binaryAttachment) shouldBe Some("")
+    }
 
-  //   "getBinaryUri" should {
-  //     "return binaryObject URI element value when one is found in SOAP message within binaryAttachment element" in new Setup {
-  //       val binaryAttachment = <urn:binaryAttachment>
-  //                                                  <urn:filename>?</urn:filename>
-  //                                                  <urn:URI>https://dummyhost.ec.eu</urn:URI>
-  //                                                  <urn:MIME>?</urn:MIME>
-  //                                                  <urn:description>?</urn:description>
-  //                                               </urn:binaryAttachment>
-  //       getBinaryUri(binaryAttachment) shouldBe Some("https://dummyhost.ec.eu")
-  //     }
+    "getBinaryUri" should {
+      "return binaryObject URI element value when one is found in SOAP message within binaryAttachment element" in new Setup {
+        val binaryAttachment = <urn:binaryAttachment>
+                                                   <urn:filename>?</urn:filename>
+                                                   <urn:URI>https://dummyhost.ec.eu</urn:URI>
+                                                   <urn:MIME>?</urn:MIME>
+                                                   <urn:description>?</urn:description>
+                                                </urn:binaryAttachment>
+        getBinaryUri(binaryAttachment) shouldBe Some("https://dummyhost.ec.eu")
+      }
 
-  //     "return empty string when no binaryAttachment URI element is found in SOAP message" in new Setup {
-  //       val binaryAttachment = <urn:binaryAttachment>
-  //                                                  <urn:filename>?</urn:filename>
-  //                                                  <urn:MIME>?</urn:MIME>
-  //                                                  <urn:includedBinaryObject></urn:includedBinaryObject>
-  //                                                  <urn:description>?</urn:description>
-  //                                               </urn:binaryAttachment>
-  //       getBinaryUri(binaryAttachment) shouldBe None
-  //     }
-  //   }
-  // }
+      "return empty string when no binaryAttachment URI element is found in SOAP message" in new Setup {
+        val binaryAttachment = <urn:binaryAttachment>
+                                                   <urn:filename>?</urn:filename>
+                                                   <urn:MIME>?</urn:MIME>
+                                                   <urn:includedBinaryObject></urn:includedBinaryObject>
+                                                   <urn:description>?</urn:description>
+                                                </urn:binaryAttachment>
+        getBinaryUri(binaryAttachment) shouldBe None
+      }
+    }
+  }
 }
