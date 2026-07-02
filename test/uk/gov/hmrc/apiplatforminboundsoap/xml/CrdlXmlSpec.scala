@@ -33,7 +33,6 @@ class CrdlXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite wit
     compare(Input.fromString(expected.toString).build())
       .withTest(Input.fromString(actual.toString()).build())
       .withNodeMatcher(new DefaultNodeMatcher(byName))
-      .ignoreWhitespace()
       .checkForIdentical()
   }
 

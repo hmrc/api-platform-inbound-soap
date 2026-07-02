@@ -83,6 +83,8 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
   def replaceEmbeddedAttachments(replacements: Map[String, String], methodCallNs: NodeSeq, encodeReplacement: Boolean = false): Either[Set[String], NodeSeq] = {
     val xmlStringBuilder = Utility.serialize(methodCallNs.head)
 
+    // The complex types that contain the `includedBinaryObject` element (binaryFile and binaryAttachment) are both defined in the XSD as of type `sequence`.
+    // This means that we can rely on the `includedBinaryObject` element always appearing _after_ the filename element
     def replaceForFilename(filename: String, replacement: String): Either[String, StringBuilder] = {
       val filenameIndex  = xmlStringBuilder.indexOf(filename)
       val soughtElemOpen = "includedBinaryObject"
