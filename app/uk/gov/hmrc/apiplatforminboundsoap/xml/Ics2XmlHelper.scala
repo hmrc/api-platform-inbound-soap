@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
-import scala.annotation.tailrec
-import scala.xml.transform.{RewriteRule, RuleTransformer}
-import scala.xml.{Elem, Node, NodeSeq, Text}
+import scala.xml.*
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, Base64Encoder}
 
@@ -82,130 +80,32 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
     if (includedBinaryObject.isEmpty) None else Some(includedBinaryObject.text)
   }
 
-  def replaceEmbeddedAttachments(replacement: Map[String, String], completeXML: NodeSeq, encodeReplacement: Boolean = false): Either[Set[String], NodeSeq] = {
-    val xmlElem = completeXML.asInstanceOf[Elem]
+  def replaceEmbeddedAttachments(replacements: Map[String, String], methodCallNs: NodeSeq, encodeReplacement: Boolean = false): Either[Set[String], NodeSeq] = {
+    val xmlStringBuilder = Utility.serialize(methodCallNs.head)
 
-    def addForAttrs(elem: Elem): Elem = {
-      @tailrec
-      def add(targets: List[String], elem: Elem): Elem = {
-        targets match {
-          case Nil       => elem
-          case _ :: tail =>
-            add(tail, elem)
-        }
-      }
-      add(List("binaryAttachment", "binaryFile"), elem)
-    }
-
-    def replaceAllBinaryObjects(e: Elem, filename: String, replacementIncludedBinaryObject: String): Either[String, Elem] = {
-      def replaceText(elem: Elem, nodeName: String): Elem = {
-        val binaryAttachmentRewriteRule = new RewriteRule {
-          def doesNodeHaveMatchingFilename(n: Node, filename: String): Boolean = {
-            n.child.exists {
-              _ match {
-                case elem: Elem if (elem.label == "filename" && elem.text == filename) => true
-                case _                                                                 => false
-              }
-            }
-          }
-
-          override def transform(root: Node) = {
-            if (root.label == "binaryAttachment" && nodeName == "binaryAttachment") {
-              if (doesNodeHaveMatchingFilename(root, filename)) {
-                val elem          = root.asInstanceOf[Elem]
-                val newElem: Elem = elem.copy(child = elem.child.map {
-                  _ match {
-                    case e: Elem if (e.label == "includedBinaryObject") =>
-                      e.copy(child = if (encodeReplacement) Text(encode(replacementIncludedBinaryObject)) else Text(replacementIncludedBinaryObject))
-                    case other                                          => other
-                  }
-                })
-                newElem
-              } else {
-                root
-              }
-            } else {
-              root
-            }
-          }
-        }
-
-        val binaryFileRewriteRule = new RewriteRule {
-          def doesNodeHaveMatchingFilename(n: Node, filename: String): Boolean = {
-            n.child.exists {
-              _ match {
-                case elem: Elem if (elem.label == "filename" && elem.text == filename) => true
-                case _                                                                 => false
-              }
-            }
-          }
-
-          override def transform(root: Node) = {
-            if (root.label == "binaryFile" && nodeName == "binaryFile") {
-              if (doesNodeHaveMatchingFilename(root, filename)) {
-                val elem          = root.asInstanceOf[Elem]
-                val newElem: Elem = elem.copy(child = elem.child.map {
-                  _ match {
-                    case e: Elem if (e.label == "includedBinaryObject") =>
-                      e.copy(child = if (encodeReplacement) Text(encode(replacementIncludedBinaryObject)) else Text(replacementIncludedBinaryObject))
-                    case other                                          => other
-                  }
-                })
-                newElem
-              } else {
-                root
-              }
-            } else {
-              root
-            }
-          }
-        }
-
-        val transformers = new RuleTransformer(binaryAttachmentRewriteRule, binaryFileRewriteRule)
-        transformers.transform(elem).head.asInstanceOf[Elem]
-      }
-
-      @tailrec
-      def replaceBinaryObject(targets: List[String], elem: Elem): Elem = {
-        targets match {
-          case Nil       => elem
-          case x :: tail =>
-            replaceBinaryObject(tail, replaceText(elem, x))
-        }
-      }
-
-      val transformed = replaceBinaryObject(List("binaryAttachment", "binaryFile"), e)
-      if (transformed == e) Left(filename) else Right(transformed)
-    }
-
-    def doReplace(r: Map[String, String], elem: Elem): Either[String, Elem] = {
-      if (r.isEmpty) Right(elem)
+    def replaceForFilename(filename: String, replacement: String): Either[String, StringBuilder] = {
+      val filenameIndex  = xmlStringBuilder.indexOf(filename)
+      val soughtElemOpen = "includedBinaryObject"
+      // find position of end of opening tag
+      val startIndex     = xmlStringBuilder.indexOf(">", xmlStringBuilder.indexOf(soughtElemOpen, filenameIndex) + 1)
+      if (filenameIndex < 1) Left(filename)
       else {
-        replaceAllBinaryObjects(elem, r.head._1, r.head._2) match {
-          case Right(e) => doReplace(r.tail, e)
-          case _        => Left(r.head._1)
+        // find position of start of closing tag
+        val endIndex = xmlStringBuilder.indexOf("<", startIndex)
+        if (encodeReplacement) {
+          Right(xmlStringBuilder.replace(startIndex + 1, endIndex, encode(replacement)))
+        } else {
+          Right(xmlStringBuilder.replace(startIndex + 1, endIndex, replacement))
         }
       }
     }
 
-    def removeForLabels(elem: Elem): Elem = {
-      @tailrec
-      def remove(targets: List[String], elem: Elem): Elem = {
-        targets match {
-          case Nil       => elem
-          case _ :: tail =>
-            remove(tail, elem)
-        }
-      }
-      remove(List("binaryAttachment", "binaryFile"), elem)
-    }
-
-    val withForFileAttrs    = addForAttrs(xmlElem)
-    val attachmentsReplaced = doReplace(replacement, withForFileAttrs)
-
-    attachmentsReplaced match {
-      case Right(elem)            => Right(removeForLabels(elem).asInstanceOf[NodeSeq])
-      case Left(notFoundFilename) => Left(Set(notFoundFilename))
+    val results = replacements.map((filename, replacement) => replaceForFilename(filename, replacement))
+    val fails   = results.collect { case Left(value) => value }
+    if (fails.nonEmpty) {
+      Left(fails.toSet)
+    } else {
+      Right(XML.loadString(xmlStringBuilder.toString))
     }
   }
 

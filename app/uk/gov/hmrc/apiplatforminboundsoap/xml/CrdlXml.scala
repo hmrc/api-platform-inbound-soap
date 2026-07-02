@@ -19,7 +19,6 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 import scala.util.{Failure, Success, Try}
 import scala.xml.{Elem, NodeSeq, Text}
 
-import advxml.implicits.*
 import advxml.transform.XmlModifier.*
 import advxml.transform.XmlRule
 import advxml.transform.XmlZoom.root
@@ -35,6 +34,8 @@ class NoChangeTransformer extends XmlTransformer {
 
 class CrdlAttachmentReplacingTransformer extends XmlTransformer {
 
+  import advxml.implicits.*
+
   def replaceAttachment: (NodeSeq, String) => NodeSeq = {
     (m, s) =>
       // TODO this implementation has us closely tied to the structure of the document whereas before we searched for the attachment XML element at any point in the document
@@ -47,16 +48,14 @@ class CrdlAttachmentReplacingTransformer extends XmlTransformer {
       }
   }
 
-  def doTransform(ns: NodeSeq, replacement: String): NodeSeq = ns.theSeq.map(n =>
-    n match {
-      case elem: Elem if elem.label == "ReceiveReferenceDataRequestResult" =>
-        elem.copy(child = elem.child collect {
-          case Text(_) => Text(replacement)
-        })
-      case n                                                               =>
-        n
-    }
-  )
+  def doTransform(ns: NodeSeq, replacement: String): NodeSeq = ns.theSeq.map {
+    case elem: Elem if elem.label == "ReceiveReferenceDataRequestResult" =>
+      elem.copy(child = elem.child collect {
+        case Text(_) => Text(replacement)
+      })
+    case n                                                               =>
+      n
+  }
 }
 
 trait CrdlXml extends ApplicationLogger {
