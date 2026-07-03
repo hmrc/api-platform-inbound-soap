@@ -60,8 +60,8 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
 
   "get messageId" should {
     "return messageId from SOAP message" in new Setup {
-      val xmlBody: Elem   = readFromFile("ie4n09-v2.xml")
-      val Some(messageId) = getMessageId(xmlBody)
+      val xmlBody: Elem = readFromFile("ie4n09-v2.xml")
+      val messageId     = getMessageId(xmlBody).get
       messageId shouldBe "ad7f2ad2d4f5-4606-99a0-0dd4e52be116"
     }
 

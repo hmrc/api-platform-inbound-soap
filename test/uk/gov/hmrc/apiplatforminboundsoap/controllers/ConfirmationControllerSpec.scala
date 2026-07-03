@@ -22,16 +22,14 @@ import scala.io.Source
 import scala.xml.{Elem, XML}
 
 import org.apache.pekko.stream.Materializer
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.Mockito.*
-import org.mockito.{ArgumentCaptor, Captor}
-import org.scalatest.TestSuite
 import org.scalatest.matchers.must.Matchers.mustEqual
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.FakeApplicationFactory
-import org.scalatestplus.play.guice.{GuiceFakeApplicationFactory, GuiceOneAppPerSuite}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
 import play.api.http.Status
@@ -43,10 +41,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, PassThroughModeAction, VerifyJwtTokenAction}
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCertexMessageService
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 
 class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()

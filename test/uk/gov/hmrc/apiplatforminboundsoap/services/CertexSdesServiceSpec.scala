@@ -91,7 +91,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(using *)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
 
       val result = await(service.processMessage(xmlBody))
 
@@ -113,7 +113,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(using *)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
 
       val result = await(service.processMessage(xmlBody))
 
@@ -135,7 +135,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(using *)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
 
       val result = await(service.processMessage(xmlBody))
 
@@ -156,7 +156,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Left(SdesSendFailExternal("500 returned from SDES call due to some error", INTERNAL_SERVER_ERROR))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Left(SdesSendFailExternal("some error", INTERNAL_SERVER_ERROR))))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(using *)).thenReturn(successful(Left(SdesSendFailExternal("some error", INTERNAL_SERVER_ERROR))))
 
       val result = await(service.processMessage(xmlBody))
 
@@ -207,7 +207,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(using *)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
 
       val result = await(service.processMessage(xmlBody))
 
@@ -228,7 +228,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(using *)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
 
       val result = await(service.processMessage(xmlBody))
 
@@ -250,7 +250,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      when(sdesConnectorMock.postMessage(bodyCaptor)(using *)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
 
       val result = await(service.processMessage(xmlBody))
 

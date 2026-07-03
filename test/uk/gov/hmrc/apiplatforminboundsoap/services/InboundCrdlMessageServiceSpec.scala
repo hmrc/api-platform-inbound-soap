@@ -22,7 +22,6 @@ import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
 
 import org.apache.pekko.stream.Materializer
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.{any as `*`, refEq}
 import org.mockito.Mockito.*
 import org.scalatest.matchers.must.Matchers.mustBe

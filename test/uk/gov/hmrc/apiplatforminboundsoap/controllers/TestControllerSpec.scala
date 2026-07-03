@@ -22,9 +22,9 @@ import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, XML}
 
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.Mockito.*
-import org.mockito.{ArgumentCaptor, Captor}
 import org.scalatest.matchers.must.Matchers.{mustBe, mustEqual}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

@@ -71,14 +71,6 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
   "processInboundMessage for production" should {
     val xmlBody = readFromFile("ie4n09-v2.xml")
 
-    val forwardedHeaders = Seq[(String, String)](
-      "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
-      "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
-      "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
-      "x-files-included" -> isFileIncluded(xmlBody).toString,
-      "x-version-id"     -> "V2"
-    )
-
     "return success when connector returns success" in new Setup {
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
@@ -268,14 +260,6 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
   "processInboundMessage for test" should {
     val xmlBody = readFromFile("ie4n09-v2.xml")
-
-    val forwardedHeaders = Seq[(String, String)](
-      "x-soap-action"    -> getSoapAction(xmlBody).getOrElse(""),
-      "x-correlation-id" -> getMessageId(xmlBody).getOrElse(""),
-      "x-message-id"     -> getMessageId(xmlBody).getOrElse(""),
-      "x-files-included" -> isFileIncluded(xmlBody).toString,
-      "x-version-id"     -> "V2"
-    )
 
     "return success when connector returns success" in new Setup {
       when(inboundConnectorMock.postMessage(bodyCaptor, headerCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(ACCEPTED, "some body")))
