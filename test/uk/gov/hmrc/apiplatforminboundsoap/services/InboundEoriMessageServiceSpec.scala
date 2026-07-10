@@ -16,28 +16,30 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
-import scala.concurrent.Future.successful
-import scala.io.Source
-import scala.xml.{Elem, NodeSeq}
-
 import org.apache.pekko.stream.Materializer
 import org.mockito.ArgumentMatchers.any as `*`
+import org.mockito.IdiomaticMockito.WithExpect.willBe
+import org.mockito.IdiomaticMockito.{called, returned, was}
 import org.mockito.Mockito.*
+import org.mockito.captor.ArgCaptor
+import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
-import uk.gov.hmrc.http.HeaderCarrier
-
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.util.{StaticUuidGenerator, StaticZonedDTHelper, ZonedDateTimeHelper}
+import uk.gov.hmrc.http.HeaderCarrier
 
-class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
+import scala.concurrent.Future.successful
+import scala.io.Source
+import scala.xml.{Elem, NodeSeq}
+
+class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
@@ -53,7 +55,7 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
   trait Setup {
     val authToken = "some-auth-token-value"
 
-    val forwardedHeaders = Seq[(String, String)](
+    private val forwardedHeaders = Seq[(String, String)](
       "Accept"           -> "application/xml",
       "Authorization"    -> s"Bearer $authToken",
       "Content-Type"     -> "application/soap+xml; charset=UTF-8",
@@ -69,12 +71,8 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     when(configMock.authToken).thenReturn(authToken)
     val uuidGenerator: StaticUuidGenerator             = new StaticUuidGenerator()
     val staticZonedDTHelper: ZonedDateTimeHelper       = new StaticZonedDTHelper()
-    val forwardedMessageCaptor                         = capture[NodeSeq]
-    val wholeMessageCaptor                             = capture[NodeSeq]
-    val binaryElementsCaptor                           = capture[NodeSeq]
-    val headerCaptor                                   = capture[Seq[(String, String)]]
-    val sdesRequestHeaderCaptor                        = capture[Seq[(String, String)]]
-    val hcCaptor                                       = capture[HeaderCarrier]
+    val forwardedMessageCaptor                         = ArgCaptor[NodeSeq]
+    val headerCaptor                                   = ArgCaptor[Seq[(String, String)]]
     val xmlBodyIsAlive                                 = readFromFile("eori/isAliveRequest.xml")
 
     val service: InboundEoriMessageService =
@@ -94,9 +92,9 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(requestBody))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(eoriServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using hcCaptor)
-      assert(forwardedMessageCaptor.getValue == requestBody)
-      assert(headerCaptor.getValue == forwardedHeadersNoAttachment)
+      eoriServiceConnectorMock.postMessage(requestBody, forwardedHeadersNoAttachment) was called
+      forwardedMessageCaptor.hasCaptured(requestBody)
+      headerCaptor.hasCaptured(forwardedHeadersNoAttachment)
     }
 
     "return success for isAlive message and not invoke connector" in new Setup {
@@ -114,8 +112,8 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(requestBody))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      verify(eoriServiceConnectorMock).postMessage(forwardedMessageCaptor, headerCaptor)(using hcCaptor)
-      assert(forwardedMessageCaptor.getValue == requestBody)
+      eoriServiceConnectorMock.postMessage(requestBody, forwardedHeadersNoAttachment) was called
+      forwardedMessageCaptor.hasCaptured(requestBody)
     }
   }
 }

@@ -20,13 +20,12 @@ import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
-import scala.jdk.CollectionConverters.*
 import scala.xml.Elem
 
 import org.apache.pekko.stream.Materializer
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.Mockito.*
+import org.mockito.captor.ArgCaptor
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
@@ -38,7 +37,7 @@ import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Ics2, SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess, SdesSuccessResult}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.*
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
@@ -53,8 +52,8 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
   trait Setup {
     val sdesConnectorMock: SdesConnector = mock[SdesConnector]
-    val bodyCaptor                       = ArgumentCaptor.forClass(classOf[SdesRequest])
-    val headerCaptor                     = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
+    val bodyCaptor                       = ArgCaptor[SdesRequest]
+    val headerCaptor                     = ArgCaptor[Seq[(String, String)]]
 
     val httpStatus: Int                     = Status.OK
     val appConfigMock: SdesConnector.Config = mock[SdesConnector.Config]
@@ -94,7 +93,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      assert(bodyCaptor.getValue == expectedSdesRequest)
+      bodyCaptor.hasCaptured(expectedSdesRequest)
     }
 
     "make two requests to SDES when XML message contains two binaryAttachment elements" in new Setup {
@@ -142,7 +141,7 @@ class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       )
       verify(sdesConnectorMock, times(2)).postMessage(*)(using *)
 
-      assert(bodyCaptor.getAllValues.containsAll(List(expectedFirstSdesRequest, expectedSecondSdesRequest).asJava))
+      bodyCaptor.hasCaptured(expectedFirstSdesRequest, expectedSecondSdesRequest)
     }
 
     "return invalid response when message does not contain includedBinaryObject" in new Setup {

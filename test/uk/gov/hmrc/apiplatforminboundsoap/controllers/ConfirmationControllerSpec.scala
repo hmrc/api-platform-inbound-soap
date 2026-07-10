@@ -19,12 +19,13 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
-import scala.xml.{Elem, XML}
+import scala.xml.{Elem, NodeSeq, XML}
 
 import org.apache.pekko.stream.Materializer
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.Mockito.*
+import org.mockito.captor.{ArgCaptor, Captor}
 import org.scalatest.matchers.must.Matchers.mustEqual
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -165,46 +166,46 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
   "POST acknowledgement endpoint with valid authorisation header and COD request body" should {
     "return 200" in new Setup {
-      val fakeRequest                            = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      val fakeRequest      = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(codRequestBody)
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
+      val xmlRequestCaptor = ArgCaptor[NodeSeq]
       when(mockOutboundConnector.postMessage(xmlRequestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK
       verify(mockOutboundConnector).postMessage(*)(using *)
-      xmlRequestCaptor.getValue mustEqual codRequestBody
+      xmlRequestCaptor hasCaptured codRequestBody
     }
   }
 
   "POST acknowledgement endpoint with valid authorisation header and COE request body" should {
     "return 200" in new Setup {
-      val fakeRequest                            = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      val fakeRequest      = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
+      val xmlRequestCaptor = ArgCaptor[Elem]
       when(mockOutboundConnector.postMessage(xmlRequestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK
       verify(mockOutboundConnector).postMessage(*)(using *)
-      xmlRequestCaptor.getValue mustEqual coeRequestBody
+      xmlRequestCaptor hasCaptured coeRequestBody
     }
   }
 
   "POST acknowledgement endpoint with valid authorisation header and COE request body but outbound connector returns 500" should {
     "return 200" in new Setup {
-      val fakeRequest                            = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      val fakeRequest      = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
+      val xmlRequestCaptor = ArgCaptor[Elem]
       when(mockOutboundConnector.postMessage(xmlRequestCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", INTERNAL_SERVER_ERROR)))
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       verify(mockOutboundConnector).postMessage(*)(using *)
-      xmlRequestCaptor.getValue mustEqual coeRequestBody
+      xmlRequestCaptor hasCaptured coeRequestBody
     }
   }
 }

@@ -22,10 +22,9 @@ import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, XML}
 
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.Mockito.*
-import org.scalatest.matchers.must.Matchers.{mustBe, mustEqual}
+import org.mockito.captor.ArgCaptor
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
@@ -45,6 +44,8 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
+    val xmlRequestCaptor           = ArgCaptor[Elem]
+    val isTestCaptor               = ArgCaptor[Boolean]
     val incomingMessageServiceMock = mock[InboundIcs2MessageService]
     val xRequestIdHeaderValue      = randomUUID.toString
 
@@ -92,23 +93,20 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
   "POST test message endpoint " should {
     "return 200 when successful for a message with embedded attached file" in new Setup {
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
-      val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
-      val requestBody: Elem                      = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val requestBody: Elem = readFromFile("ie4r02-v2-one-binary-attachment.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(ACCEPTED, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      xmlRequestCaptor.getValue mustEqual requestBody
-      isTestCaptor.getValue mustBe true
+      xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured true
     }
 
     "return response code it received when not successful" in new Setup {
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
-      val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
-      val requestBody: Elem                      = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+
+      val requestBody: Elem = readFromFile("ie4r02-v2-one-binary-attachment.xml")
 
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
 
@@ -116,8 +114,8 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
       status(result) shouldBe PRECONDITION_FAILED
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      xmlRequestCaptor.getValue mustEqual requestBody
-      isTestCaptor.getValue mustBe true
+      xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured true
     }
 
     "return 400 when action element is missing" in new Setup {

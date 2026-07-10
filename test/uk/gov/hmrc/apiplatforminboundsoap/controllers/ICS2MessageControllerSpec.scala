@@ -20,9 +20,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.xml.Elem
 
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.Mockito.*
+import org.mockito.captor.ArgCaptor
 import org.scalatest.matchers.must.Matchers.{mustBe, mustEqual}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -79,65 +79,65 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
   "POST CCN2 message endpoint " should {
     "return 200 when successful for a message with embedded attached file" in new Setup {
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
-      val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
-      val requestBody: Elem                      = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val xmlRequestCaptor  = ArgCaptor[Elem]
+      val isTestCaptor      = ArgCaptor[Boolean]
+      val requestBody: Elem = readFromFile("ie4r02-v2-one-binary-attachment.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      xmlRequestCaptor.getValue mustEqual requestBody
-      isTestCaptor.getValue mustBe false
+      xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return 200 when successful for a message with attached file as URI" in new Setup {
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
-      val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
-      val requestBody: Elem                      = readFromFile("ie4r02-v2-uri-instead-of-includedBinaryObject-element.xml")
+      val xmlRequestCaptor  = ArgCaptor[Elem]
+      val isTestCaptor      = ArgCaptor[Boolean]
+      val requestBody: Elem = readFromFile("ie4r02-v2-uri-instead-of-includedBinaryObject-element.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      xmlRequestCaptor.getValue mustEqual requestBody
-      isTestCaptor.getValue mustBe false
+      xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return 200 when successful for a message with binary file and binary attachment" in new Setup {
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
-      val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
-      val requestBody: Elem                      = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
+      val xmlRequestCaptor  = ArgCaptor[Elem]
+      val isTestCaptor      = ArgCaptor[Boolean]
+      val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      xmlRequestCaptor.getValue mustEqual requestBody
-      isTestCaptor.getValue mustBe false
+      xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return 200 when successful for a message with a binary file and 2 binary attachments" in new Setup {
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
-      val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
-      val requestBody: Elem                      = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
+      val xmlRequestCaptor  = ArgCaptor[Elem]
+      val isTestCaptor      = ArgCaptor[Boolean]
+      val requestBody: Elem = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      xmlRequestCaptor.getValue mustEqual requestBody
-      isTestCaptor.getValue mustBe false
+      xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return 200 when successful for a message with no attached file" in new Setup {
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
-      val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
-      val requestBody: Elem                      = readFromFile("ie4n09-v2.xml")
+      val xmlRequestCaptor  = ArgCaptor[Elem]
+      val isTestCaptor      = ArgCaptor[Boolean]
+      val requestBody: Elem = readFromFile("ie4n09-v2.xml")
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
@@ -145,16 +145,16 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       status(result) shouldBe OK
       contentType(result) shouldBe Some("application/soap+xml")
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      xmlRequestCaptor.getValue mustEqual requestBody
-      isTestCaptor.getValue mustBe false
+      xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return response code it received when not successful" in new Setup {
-      val xmlRequestCaptor: ArgumentCaptor[Elem] = ArgumentCaptor.captor()
-      val isTestCaptor: ArgumentCaptor[Boolean]  = ArgumentCaptor.captor()
-      val requestBody: Elem                      = readFromFile("ie4r02-v2-one-binary-attachment.xml")
-      val expectedStatus                         = PRECONDITION_FAILED
-      val expectedSoapMessage                    = expectedSoapResponse("some error", expectedStatus)
+      val xmlRequestCaptor    = ArgCaptor[Elem]
+      val isTestCaptor        = ArgCaptor[Boolean]
+      val requestBody: Elem   = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val expectedStatus      = PRECONDITION_FAILED
+      val expectedSoapMessage = expectedSoapResponse("some error", expectedStatus)
 
       when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
 
@@ -163,8 +163,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       status(result) shouldBe expectedStatus
       verify(incomingMessageServiceMock).processInboundMessage(*, *)(using *)
-      xmlRequestCaptor.getValue mustEqual requestBody
-      isTestCaptor.getValue mustBe false
+      xmlRequestCaptor hasCaptured requestBody
+      isTestCaptor hasCaptured false
     }
 
     "return 400 when MIME element is too long and referralRequestReference is too long" in new Setup {

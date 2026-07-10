@@ -14,7 +14,7 @@ object AppDependencies {
 
   val test = Seq(
     "uk.gov.hmrc"             %% "bootstrap-test-play-30"     % bootstrapVersion,
-    "org.scalatestplus"       %% "mockito-5-18"               % "3.2.19.0",
+    "org.mockito"             %% "mockito-scala-scalatest"    % "2.2.1",
     "com.sun.activation"      % "javax.activation"            % "1.2.0",
     "org.xmlunit"             %  "xmlunit-core"               % "2.9.0",
     "jakarta.xml.bind"        % "jakarta.xml.bind-api"        % "2.3.2",

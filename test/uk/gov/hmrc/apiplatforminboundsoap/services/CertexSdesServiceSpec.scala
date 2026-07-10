@@ -24,9 +24,9 @@ import scala.io.Source
 import scala.xml.Elem
 
 import org.apache.pekko.stream.Materializer
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.Mockito.*
+import org.mockito.captor.ArgCaptor
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
@@ -54,8 +54,8 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
   trait Setup {
     val sdesConnectorMock: SdesConnector = mock[SdesConnector]
-    val bodyCaptor                       = ArgumentCaptor.forClass(classOf[SdesRequest])
-    val headerCaptor                     = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
+    val bodyCaptor                       = ArgCaptor[SdesRequest]
+    val headerCaptor                     = ArgCaptor[Seq[(String, String)]]
 
     val sdesRequestTime: Instant            = Instant.parse("2020-01-02T03:04:05.006Z")
     val sdesRequestClock: Clock             = Clock.fixed(sdesRequestTime, ZoneId.of("UTC"))
@@ -97,7 +97,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      assert(bodyCaptor.getValue == expectedSdesRequest)
+      bodyCaptor hasCaptured expectedSdesRequest
     }
 
     "correctly set metadata properties header on SDES request" in new Setup {
@@ -119,7 +119,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      assert(bodyCaptor.getValue == expectedSdesRequest)
+      bodyCaptor hasCaptured expectedSdesRequest
     }
 
     "omit messageId metadata property on SDES request when one cannot be found in the XML" in new Setup {
@@ -141,7 +141,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      assert(bodyCaptor.getValue == expectedSdesRequest)
+      bodyCaptor hasCaptured expectedSdesRequest
     }
 
     "process response when connector returns error" in new Setup {
@@ -162,7 +162,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      assert(bodyCaptor.getValue == expectedSdesRequest)
+      bodyCaptor hasCaptured expectedSdesRequest
     }
 
     "not make a call to SDES when message contains empty attachment element" in new Setup {
@@ -213,7 +213,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      assert(bodyCaptor.getValue == expectedSdesRequest)
+      bodyCaptor hasCaptured expectedSdesRequest
     }
     "generate random UUID for filename when messageId in message can't supply one" in new Setup {
       val xmlBody: Elem              = readFromFile("certex/responseIES002-unexpected-messageid-format.xml")
@@ -234,7 +234,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      assert(bodyCaptor.getValue == expectedSdesRequest)
+      bodyCaptor hasCaptured expectedSdesRequest
     }
 
     "generate random UUID for filename when UUID from messageId in message is invalid" in new Setup {
@@ -256,7 +256,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
 
       result shouldBe List(expectedServiceResult)
       verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      assert(bodyCaptor.getValue == expectedSdesRequest)
+      bodyCaptor hasCaptured expectedSdesRequest
     }
   }
 }

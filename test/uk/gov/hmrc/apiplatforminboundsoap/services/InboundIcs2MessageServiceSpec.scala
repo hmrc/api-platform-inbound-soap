@@ -19,15 +19,15 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future.successful
 import scala.io.Source
-import scala.xml.NodeSeq
+import scala.xml.{Elem, NodeSeq}
 
 import org.apache.pekko.stream.Materializer
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.{any as `*`, refEq}
 import org.mockito.Mockito.*
+import org.mockito.captor.ArgCaptor
+import org.mockito.quality.Strictness
+import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.http.Status
@@ -35,12 +35,12 @@ import play.api.http.Status.{ACCEPTED, IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Ics2, SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess, SdesSuccessResult}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.*
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.{ImportControlInboundSoapConnector, SdesConnector}
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
-class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with Ics2XmlHelper {
+class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito with Ics2XmlHelper {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
@@ -50,15 +50,16 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
   }
 
   trait Setup {
+    // some of the mocks aren't involved in some of the tests which causes UnnecessaryStubbingExceptions so these are marked `lenient`
     val ics2SdesServiceMock: Ics2SdesService                    = mock[Ics2SdesService]
-    val inboundConnectorMock: ImportControlInboundSoapConnector = mock[ImportControlInboundSoapConnector]
-    val sdesConnectorConfig: SdesConnector.Config               = mock[SdesConnector.Config]
-    val bodyCaptor                                              = capture[NodeSeq]
-    val wholeMessageCaptor                                      = capture[NodeSeq]
-    val binaryElementsCaptor                                    = capture[NodeSeq]
-    val headerCaptor                                            = capture[Seq[(String, String)]]
-    val sdesRequestHeaderCaptor                                 = capture[Seq[(String, String)]]
-    val isTestCaptor                                            = ArgumentCaptor.forClass(classOf[Boolean])
+    val inboundConnectorMock: ImportControlInboundSoapConnector = mock[ImportControlInboundSoapConnector](withSettings.strictness(Strictness.LENIENT))
+    val sdesConnectorConfig: SdesConnector.Config               = mock[SdesConnector.Config](withSettings.strictness(Strictness.LENIENT))
+    val bodyCaptor                                              = ArgCaptor[NodeSeq]
+    val wholeMessageCaptor                                      = ArgCaptor[NodeSeq]
+    val binaryElementsCaptor                                    = ArgCaptor[NodeSeq]
+    val headerCaptor                                            = ArgCaptor[Seq[(String, String)]]
+    val sdesRequestHeaderCaptor                                 = ArgCaptor[Seq[(String, String)]]
+    val isTestCaptor                                            = ArgCaptor[Boolean]
 
     val httpStatus: Int          = Status.OK
     val xmlHelper: Ics2XmlHelper = mock[Ics2XmlHelper]
@@ -77,8 +78,8 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendSuccess(OK, "some body")
-      verify(inboundConnectorMock).postMessage(bodyCaptor, headerCaptor, isTestCaptor)(using *)
-      assert(bodyCaptor.getValue == xmlBody)
+      inboundConnectorMock.postMessage(any[Elem], anySeq[(String, String)], anyBoolean) was called
+      bodyCaptor.hasCaptured(xmlBody)
     }
 
     "invoke SDESConnector when message contains embedded file attachment" in new Setup {
@@ -102,9 +103,9 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody))
 
       result shouldBe SendSuccess(OK, "some body")
-      assert(bodyCaptor.getValue == forwardedXmlBody)
-      assert(wholeMessageCaptor.getValue == xmlBody)
-      assert(headerCaptor.getValue == forwardedHeaders)
+      bodyCaptor.hasCaptured(forwardedXmlBody)
+      wholeMessageCaptor.hasCaptured(xmlBody)
+      headerCaptor.hasCaptured(forwardedHeaders)
       verify(inboundConnectorMock).postMessage(forwardedXmlBody, forwardedHeaders, false)
       verify(ics2SdesServiceMock).processMessage(xmlBody)
     }
@@ -131,9 +132,9 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody))
 
       result shouldBe SendSuccess(OK, "some body")
-      assert(bodyCaptor.getValue == forwardedXmlBody)
-      assert(wholeMessageCaptor.getValue == xmlBody)
-      assert(headerCaptor.getValue == forwardedHeaders)
+      bodyCaptor.hasCaptured(forwardedXmlBody)
+      wholeMessageCaptor.hasCaptured(xmlBody)
+      headerCaptor.hasCaptured(forwardedHeaders)
       verify(inboundConnectorMock).postMessage(forwardedXmlBody, forwardedHeaders, false)
       verify(ics2SdesServiceMock).processMessage(xmlBody)
     }
@@ -179,8 +180,8 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody))
 
       result shouldBe SendSuccess(OK, "some body")
-      assert(bodyCaptor.getValue == xmlBody)
-      assert(headerCaptor.getValue == forwardedHeaders)
+      bodyCaptor.hasCaptured(xmlBody)
+      headerCaptor.hasCaptured(forwardedHeaders)
       verify(inboundConnectorMock).postMessage(xmlBody, forwardedHeaders, false)
       verifyNoInteractions(ics2SdesServiceMock)
     }
@@ -253,8 +254,8 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      verify(inboundConnectorMock).postMessage(bodyCaptor, headerCaptor, isTestCaptor)(using *)
-      assert(bodyCaptor.getValue == xmlBody)
+      inboundConnectorMock.postMessage(eqTo(xmlBody), anySeq[(String, String)], eqTo(true)) was called
+      bodyCaptor.hasCaptured(xmlBody)
     }
   }
 
@@ -267,8 +268,8 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendSuccess(ACCEPTED, "some body")
-      verify(inboundConnectorMock).postMessage(bodyCaptor, headerCaptor, isTestCaptor)(using *)
-      assert(bodyCaptor.getValue == xmlBody)
+      inboundConnectorMock.postMessage(eqTo(xmlBody), anySeq[(String, String)], eqTo(true)) was called
+      bodyCaptor.hasCaptured(xmlBody)
     }
 
     "return failure when connector returns failure" in new Setup {
@@ -277,8 +278,8 @@ class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with Guice
       val result = await(service.processInboundMessage(xmlBody, isTest = true))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      verify(inboundConnectorMock).postMessage(bodyCaptor, headerCaptor, isTestCaptor)(using *)
-      assert(bodyCaptor.getValue == xmlBody)
+      inboundConnectorMock.postMessage(any[Elem], anySeq[(String, String)], anyBoolean) was called
+      bodyCaptor.hasCaptured(xmlBody)
     }
   }
 }
