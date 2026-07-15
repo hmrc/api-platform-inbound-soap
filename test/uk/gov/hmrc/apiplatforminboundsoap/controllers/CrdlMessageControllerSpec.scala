@@ -17,14 +17,10 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
 import scala.xml.Elem
 
-import org.mockito.ArgumentMatchers.any as `*`
-import org.mockito.Mockito.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
@@ -36,13 +32,12 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.crdl.CrdlMessageController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCrdlMessageService
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.CrdlMessageServiceMockModule
 
-class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar {
+class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  trait Setup {
+  trait Setup extends CrdlMessageServiceMockModule {
 
     val app: Application = new GuiceApplicationBuilder()
       .configure("passThroughEnabled.CRDL" -> "false")
@@ -60,17 +55,16 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
     private val passThroughModeAction = app.injector.instanceOf[PassThroughModeAction]
     private val verifyJwtTokenAction  = app.injector.instanceOf[VerifyJwtTokenAction]
-    val mockService                   = mock[InboundCrdlMessageService]
 
     val controller  =
-      new CrdlMessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, mockService)
+      new CrdlMessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, CrdlMessageServiceMock.theMock)
     val fakeRequest = FakeRequest("POST", "/crdl/incoming").withHeaders(headersWithValidBearerToken)
   }
 
   "POST CRDL message endpoint" should {
     "return success when connector returns success" in new Setup {
       val requestBody: Elem = readFromFile("crdl/crdl-request-no-attachment.xml")
-      when(mockService.processInboundMessage(*)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
+      CrdlMessageServiceMock.ProcessRequest.succeeds("some body")
       val result            = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
@@ -81,8 +75,9 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val requestBody: Elem   = readFromFile("crdl/crdl-request-no-attachment.xml")
       val expectedStatus      = SERVICE_UNAVAILABLE
       val expectedSoapMessage = expectedSoapResponse("some error", expectedStatus)
-      when(mockService.processInboundMessage(*)(using *)).thenReturn(successful(SendFailExternal("some error", expectedStatus)))
-      val result              = controller.message()(fakeRequest.withBody(requestBody))
+      CrdlMessageServiceMock.ProcessRequest.failsInSending("some error", expectedStatus)
+
+      val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe SERVICE_UNAVAILABLE
       getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
@@ -91,7 +86,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     "return failure when message is found to be invalid" in new Setup {
       val requestBody: Elem   = readFromFile("crdl/crdl-request-no-attachment.xml")
       val expectedSoapMessage = expectedSoapResponse("some error")
-      when(mockService.processInboundMessage(*)(using *)).thenReturn(successful(SendNotAttempted("some error")))
+      CrdlMessageServiceMock.ProcessRequest.abortsBeforeSending("some error")
       val result              = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST

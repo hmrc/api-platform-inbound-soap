@@ -22,14 +22,12 @@ import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
 
 import org.apache.pekko.stream.Materializer
-import org.mockito.ArgumentMatchers.{any as `*`, refEq}
 import org.mockito.Mockito.*
 import org.mockito.captor.ArgCaptor
 import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.builder.{DiffBuilder, Input}

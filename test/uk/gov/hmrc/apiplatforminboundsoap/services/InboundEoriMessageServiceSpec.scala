@@ -16,6 +16,10 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
+import scala.concurrent.Future.successful
+import scala.io.Source
+import scala.xml.{Elem, NodeSeq}
+
 import org.apache.pekko.stream.Materializer
 import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.IdiomaticMockito.WithExpect.willBe
@@ -27,17 +31,15 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.util.{StaticUuidGenerator, StaticZonedDTHelper, ZonedDateTimeHelper}
-import uk.gov.hmrc.http.HeaderCarrier
-
-import scala.concurrent.Future.successful
-import scala.io.Source
-import scala.xml.{Elem, NodeSeq}
 
 class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
   implicit val hc: HeaderCarrier = HeaderCarrier()
