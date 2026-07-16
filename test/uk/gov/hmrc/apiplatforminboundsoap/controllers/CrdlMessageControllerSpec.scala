@@ -64,7 +64,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
   "POST CRDL message endpoint" should {
     "return success when connector returns success" in new Setup {
       val requestBody: Elem = readFromFile("crdl/crdl-request-no-attachment.xml")
-      CrdlMessageServiceMock.ProcessRequest.succeeds("some body")
+      CrdlMessageServiceMock.ProcessInboundMessage.succeeds("some body")
       val result            = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
@@ -75,7 +75,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val requestBody: Elem   = readFromFile("crdl/crdl-request-no-attachment.xml")
       val expectedStatus      = SERVICE_UNAVAILABLE
       val expectedSoapMessage = expectedSoapResponse("some error", expectedStatus)
-      CrdlMessageServiceMock.ProcessRequest.failsInSending("some error", expectedStatus)
+      CrdlMessageServiceMock.ProcessInboundMessage.failsInSending("some error", expectedStatus)
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -86,7 +86,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     "return failure when message is found to be invalid" in new Setup {
       val requestBody: Elem   = readFromFile("crdl/crdl-request-no-attachment.xml")
       val expectedSoapMessage = expectedSoapResponse("some error")
-      CrdlMessageServiceMock.ProcessRequest.abortsBeforeSending("some error")
+      CrdlMessageServiceMock.ProcessInboundMessage.abortsBeforeSending("some error")
       val result              = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST

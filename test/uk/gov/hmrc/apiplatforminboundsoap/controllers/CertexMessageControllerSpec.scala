@@ -65,7 +65,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
   "POST Certex message endpoint" should {
     "return 200 for all lower case path" in new Setup {
       val requestBody: Elem = <xml>foobar</xml>
-      CertexMessageServiceMock.ProcessRequest.succeeds("some body")
+      CertexMessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -74,7 +74,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
 
     "return 200 for part upper case path" in new Setup {
       val requestBody: Elem = <xml>foobar</xml>
-      CertexMessageServiceMock.ProcessRequest.succeeds("some body")
+      CertexMessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
@@ -84,7 +84,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
     "return error when unsuccessful with failure in connector sending" in new Setup {
       val requestBody: Elem   = <xml>foobar</xml>
       val expectedSoapMessage = expectedSoapResponse("some error", SERVICE_UNAVAILABLE)
-      CertexMessageServiceMock.ProcessRequest.failsInSending("some error", SERVICE_UNAVAILABLE)
+      CertexMessageServiceMock.ProcessInboundMessage.failsInSending("some error", SERVICE_UNAVAILABLE)
 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
@@ -95,7 +95,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
     "return error when send not attempted due to detected error in message format" in new Setup {
       val requestBody: Elem   = <xml>foobar</xml>
       val expectedSoapMessage = expectedSoapResponse("problem")
-      CertexMessageServiceMock.ProcessRequest.abortsBeforeSending("problem")
+      CertexMessageServiceMock.ProcessInboundMessage.abortsBeforeSending("problem")
 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 

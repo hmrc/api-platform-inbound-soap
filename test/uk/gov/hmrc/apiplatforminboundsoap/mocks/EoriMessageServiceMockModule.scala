@@ -23,12 +23,12 @@ import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import play.api.http.Status.OK
 
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendResult, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCrdlMessageService
+import uk.gov.hmrc.apiplatforminboundsoap.services.{InboundCertexMessageService, InboundCrdlMessageService, InboundEoriMessageService}
 
-trait CrdlMessageServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
+trait EoriMessageServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
 
-  protected trait BaseCrdlMessageServiceMock {
-    def theMock: InboundCrdlMessageService
+  protected trait BaseEoriMessageServiceMock {
+    def theMock: InboundEoriMessageService
 
     object ProcessInboundMessage {
 
@@ -46,7 +46,7 @@ trait CrdlMessageServiceMockModule extends MockitoSugar with ArgumentMatchersSug
     }
   }
 
-  object CrdlMessageServiceMock extends BaseCrdlMessageServiceMock {
-    val theMock = mock[InboundCrdlMessageService]
+  object EoriMessageServiceMock extends BaseEoriMessageServiceMock {
+    val theMock = mock[InboundEoriMessageService]
   }
 }

@@ -30,9 +30,9 @@ trait CertexMessageServiceMockModule extends MockitoSugar with ArgumentMatchersS
   protected trait BaseCertexMessageServiceMock {
     def theMock: InboundCertexMessageService
 
-    object ProcessRequest {
+    object ProcessInboundMessage {
 
-      def succeeds(responseBody: String)                    = {
+      def succeeds(responseBody: String) = {
         when(theMock.processInboundMessage(*)(using *)).thenReturn(successful(SendSuccess(OK, responseBody)))
       }
 
@@ -40,7 +40,7 @@ trait CertexMessageServiceMockModule extends MockitoSugar with ArgumentMatchersS
         when(theMock.processInboundMessage(*)(using *)).thenReturn(successful(SendFailExternal(responseBody, status)))
       }
 
-      def abortsBeforeSending(reason: String)               = {
+      def abortsBeforeSending(reason: String) = {
         when(theMock.processInboundMessage(*)(using *)).thenReturn(successful(SendNotAttempted(reason)))
       }
     }
