@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.mocks
+package uk.gov.hmrc.apiplatforminboundsoap.mocks.services
 
 import scala.concurrent.Future.successful
 import scala.xml.NodeSeq
@@ -25,12 +25,12 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.CertexSdesService
+import uk.gov.hmrc.apiplatforminboundsoap.services.CrdlSdesService
 
-trait CertexSdesServiceMockModule extends AnyWordSpec with IdiomaticMockito with Matchers {
+trait CrdlSdesServiceMockModule extends AnyWordSpec with IdiomaticMockito with Matchers {
 
-  protected trait BaseCertexSdesServiceMock {
-    def theMock: CertexSdesService
+  protected trait BaseCrdlSdesServiceMock {
+    def theMock: CrdlSdesService
 
     object ProcessMessage {
 
@@ -52,7 +52,7 @@ trait CertexSdesServiceMockModule extends AnyWordSpec with IdiomaticMockito with
     }
   }
 
-  object CertexSdesServiceMock extends BaseCertexSdesServiceMock {
-    val theMock = mock[CertexSdesService]
+  object CrdlSdesServiceMock extends BaseCrdlSdesServiceMock {
+    val theMock = mock[CrdlSdesService]
   }
 }

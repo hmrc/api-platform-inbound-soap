@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.mocks
+package uk.gov.hmrc.apiplatforminboundsoap.mocks.services
 
 import scala.concurrent.Future.successful
 
@@ -23,12 +23,12 @@ import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import play.api.http.Status.OK
 
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendResult, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.{InboundCertexMessageService, InboundCrdlMessageService, InboundEoriMessageService}
+import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCrdlMessageService
 
-trait EoriMessageServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
+trait CrdlMessageServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
 
-  protected trait BaseEoriMessageServiceMock {
-    def theMock: InboundEoriMessageService
+  protected trait BaseCrdlMessageServiceMock {
+    def theMock: InboundCrdlMessageService
 
     object ProcessInboundMessage {
 
@@ -46,7 +46,7 @@ trait EoriMessageServiceMockModule extends MockitoSugar with ArgumentMatchersSug
     }
   }
 
-  object EoriMessageServiceMock extends BaseEoriMessageServiceMock {
-    val theMock = mock[InboundEoriMessageService]
+  object CrdlMessageServiceMock extends BaseCrdlMessageServiceMock {
+    val theMock = mock[InboundCrdlMessageService]
   }
 }

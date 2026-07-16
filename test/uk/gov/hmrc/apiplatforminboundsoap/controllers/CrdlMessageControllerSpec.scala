@@ -32,7 +32,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.crdl.CrdlMessageController
-import uk.gov.hmrc.apiplatforminboundsoap.mocks.CrdlMessageServiceMockModule
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.CrdlMessageServiceMockModule
 
 class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = HeaderCarrier()

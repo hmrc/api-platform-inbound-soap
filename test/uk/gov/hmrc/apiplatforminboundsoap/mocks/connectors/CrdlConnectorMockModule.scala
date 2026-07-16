@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.mocks
+package uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors
 
 import scala.concurrent.Future.successful
 import scala.xml.NodeSeq
@@ -24,20 +24,19 @@ import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.{CertexServiceConnector, CrdlOrchestratorConnector}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.CertexSdesService
 
-trait CertexServiceConnectorMockModule extends AnyWordSpec with IdiomaticMockito with Matchers {
+trait CrdlOrchestratorConnectorMockModule extends AnyWordSpec with IdiomaticMockito with Matchers {
 
-  protected trait BaseCertexServiceConnectorMock {
-    def theMock: CertexServiceConnector
+  protected trait BaseCrdlOrchestratorConnectorMock {
+    def theMock: CrdlOrchestratorConnector
 
     object PostMessage {
 
-      def succeeds(request: NodeSeq, headers: Seq[(String, String)], status: Int, body: String)            = {
-        //        when(theMock.postMessage(*, *)(using *)).thenReturn(successful(SendSuccess(status, body)))
+      def succeeds(request: NodeSeq, headers: Seq[(String, String)], status: Int, body: String) = {
         when(theMock.postMessage(refEq(request), refEq(headers))(using *)).thenReturn(successful(SendSuccess(status, body)))
       }
 
@@ -49,17 +48,17 @@ trait CertexServiceConnectorMockModule extends AnyWordSpec with IdiomaticMockito
         when(theMock.postMessage(refEq(request), refEq(headers))(using *)).thenReturn(successful(SendFailExternal(body, status)))
       }
 
-      def verifyCalledWithBodyAndHeaders(body: NodeSeq, headers: Seq[(String, String)]) = {
-        theMock.postMessage(*, headers)(using *) was called
+      def verifyCalled() = {
+        theMock.postMessage(any[NodeSeq], anySeq[(String, String)])(using *) was called
       }
 
-      def verifyNotCalled()                                                             = {
+      def verifyNotCalled() = {
         verifyNoInteractions(theMock)
       }
     }
   }
 
-  object CertexServiceConnectorMock extends BaseCertexServiceConnectorMock {
-    val theMock = mock[CertexServiceConnector]
+  object CrdlOrchestratorConnectorMock extends BaseCrdlOrchestratorConnectorMock {
+    val theMock = mock[CrdlOrchestratorConnector]
   }
 }

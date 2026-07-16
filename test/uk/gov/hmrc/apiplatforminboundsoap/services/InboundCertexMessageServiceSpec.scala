@@ -39,7 +39,8 @@ import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
-import uk.gov.hmrc.apiplatforminboundsoap.mocks.{CertexSdesServiceMockModule, CertexServiceConnectorMockModule}
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.CertexServiceConnectorMockModule
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.CertexSdesServiceMockModule
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.util.{StaticUuidGenerator, StaticZonedDTHelper, ZonedDateTimeHelper}
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexAttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}

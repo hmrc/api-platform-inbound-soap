@@ -36,7 +36,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.eori.EoriMessageController
-import uk.gov.hmrc.apiplatforminboundsoap.mocks.EoriMessageServiceMockModule
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.EoriMessageServiceMockModule
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundEoriMessageService
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apiplatforminboundsoap.mocks
+package uk.gov.hmrc.apiplatforminboundsoap.mocks.services
 
 import scala.concurrent.Future.successful
 

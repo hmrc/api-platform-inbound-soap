@@ -32,7 +32,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
-import uk.gov.hmrc.apiplatforminboundsoap.mocks.CertexMessageServiceMockModule
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.CertexMessageServiceMockModule
 
 class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = HeaderCarrier()
