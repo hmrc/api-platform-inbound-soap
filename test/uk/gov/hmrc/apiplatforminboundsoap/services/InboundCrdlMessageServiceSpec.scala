@@ -16,6 +16,10 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.io.Source
+import scala.xml.{Elem, NodeSeq}
+
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
 import org.mockito.scalatest.IdiomaticMockito
@@ -27,18 +31,16 @@ import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.builder.{DiffBuilder, Input}
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
+
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.CrdlOrchestratorConnectorMockModule
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.CrdlSdesServiceMockModule
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlAttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
-import uk.gov.hmrc.http.HeaderCarrier
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.io.Source
-import scala.xml.{Elem, NodeSeq}
 
 class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
   implicit val hc: HeaderCarrier = HeaderCarrier()

@@ -62,7 +62,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
     private val messageValidateAction = fakeApplication().injector.instanceOf[AcknowledgementMessageValidateAction]
     private val passThroughModeAction = fakeApplication().injector.instanceOf[PassThroughModeAction]
 
-    val controller                    = new ConfirmationController(
+    val controller = new ConfirmationController(
       ApiPlatformOutboundSoapConnectorMock.theMock,
       Helpers.stubControllerComponents(),
       passThroughModeAction,

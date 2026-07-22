@@ -36,11 +36,11 @@ trait Ics2SdesServiceMockModule extends AnyWordSpec with IdiomaticMockito with M
 
     object ProcessMessage {
 
-      def succeeds(request: NodeSeq, sdesReference: (String, String)*)    = {
+      def succeeds(request: NodeSeq, sdesReference: (String, String)*) = {
         when(theMock.processMessage(refEq(request))(using *)).thenReturn(successful(sdesReference.map((f, u) => Right(SdesSuccessResult(SdesReference(f, u)))).toList))
       }
 
-      def failsInSending(message: String, status: Int)                    = {
+      def failsInSending(message: String, status: Int) = {
         when(theMock.processMessage(*)(using *)).thenReturn(successful(List(Left(SdesSendFailExternal(message, status)))))
       }
 
@@ -48,19 +48,19 @@ trait Ics2SdesServiceMockModule extends AnyWordSpec with IdiomaticMockito with M
         when(theMock.processMessage(*)(using *)).thenReturn(successful(List(Right(SdesSuccess("some-uuid")), Left(SdesSendFailExternal(failedMessage, failedStatus)))))
       }
 
-      def abortsBeforeSending(message: String)                            = {
+      def abortsBeforeSending(message: String) = {
         when(theMock.processMessage(*)(using *)).thenReturn(successful(List(Left(SdesSendNotAttempted(message)))))
       }
 
-      def verifyCalledWithBody(body: NodeSeq)                             = {
+      def verifyCalledWithBody(body: NodeSeq) = {
         theMock.processMessage(body)(using *) was called
       }
 
-      def verifyNotCalled()                                               = {
+      def verifyNotCalled() = {
         theMock.processMessage(*)(using *) wasNever called
       }
 
-      def verifyNotCalledAgain()                                          = {
+      def verifyNotCalledAgain() = {
         verifyNoMoreInteractions(theMock)
       }
     }
