@@ -25,7 +25,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.models.{SdesRequest, SendSuccess}
 
 trait SdesConnectorMockModule extends AnyWordSpec with IdiomaticMockito with Matchers {
 

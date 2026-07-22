@@ -19,17 +19,14 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 import java.time.{Clock, Instant, ZoneId}
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.Elem
 
 import org.apache.pekko.stream.Materializer
-import org.mockito.ArgumentMatchers.any as `*`
 import org.mockito.Mockito.*
 import org.mockito.captor.ArgCaptor
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.http.Status

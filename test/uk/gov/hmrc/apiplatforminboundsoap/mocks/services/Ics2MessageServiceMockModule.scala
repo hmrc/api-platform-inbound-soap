@@ -47,12 +47,20 @@ trait Ics2MessageServiceMockModule extends IdiomaticMockito with ArgumentMatcher
         when(theMock.processInboundMessage(any[NodeSeq], refEq(false))(using *)).thenReturn(successful(SendFailExternal(responseBody, status)))
       }
 
+      def failsInSendingTestMessage(responseBody: String, status: Int) = {
+        when(theMock.processInboundMessage(any[NodeSeq], refEq(true))(using *)).thenReturn(successful(SendFailExternal(responseBody, status)))
+      }
+
       def abortsBeforeSending(reason: String) = {
         when(theMock.processInboundMessage(*)(using *)).thenReturn(successful(SendNotAttempted(reason)))
       }
 
       def verifyCalledWithBody(body: NodeSeq) = {
-        theMock.processInboundMessage(body, false)(using *) was called
+        theMock.processInboundMessage(body)(using *) was called
+      }
+
+      def verifyCalledWithBodyForTestMessage(body: NodeSeq, isTest: Boolean) = {
+        theMock.processInboundMessage(body, isTest)(using *) was called
       }
 
       def verifyNotCalled() = {

@@ -17,14 +17,10 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
 import scala.xml.Elem
 
-import org.mockito.ArgumentMatchers.any as `*`
-import org.mockito.Mockito.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
@@ -37,8 +33,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.eori.EoriMessageController
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.EoriMessageServiceMockModule
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundEoriMessageService
 
 class EoriMessageControllerSpec extends AnyWordSpec with Matchers with SoapMessageTest with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = HeaderCarrier()

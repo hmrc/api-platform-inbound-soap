@@ -17,13 +17,8 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
 import scala.xml.Elem
 
-import org.mockito.ArgumentMatchers.any as `*`
-import org.mockito.Mockito.*
-import org.mockito.captor.ArgCaptor
-import org.scalatest.matchers.must.Matchers.{mustBe, mustEqual}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
@@ -39,8 +34,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.Ics2MessageServiceMockModule
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundIcs2MessageService
 
 class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -99,8 +92,6 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     }
 
     "return 200 when successful for a message with binary file and binary attachment" in new Setup {
-      val xmlRequestCaptor  = ArgCaptor[Elem]
-      val isTestCaptor      = ArgCaptor[Boolean]
       val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
       Ics2MessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
@@ -111,8 +102,6 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     }
 
     "return 200 when successful for a message with a binary file and 2 binary attachments" in new Setup {
-      val xmlRequestCaptor  = ArgCaptor[Elem]
-      val isTestCaptor      = ArgCaptor[Boolean]
       val requestBody: Elem = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
       Ics2MessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
@@ -123,8 +112,6 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     }
 
     "return 200 when successful for a message with no attached file" in new Setup {
-      val xmlRequestCaptor  = ArgCaptor[Elem]
-      val isTestCaptor      = ArgCaptor[Boolean]
       val requestBody: Elem = readFromFile("ie4n09-v2.xml")
       Ics2MessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
