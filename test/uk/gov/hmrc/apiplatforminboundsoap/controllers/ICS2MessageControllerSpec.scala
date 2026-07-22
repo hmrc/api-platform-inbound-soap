@@ -50,7 +50,6 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     val app: Application = new GuiceApplicationBuilder()
       .configure("passThroughEnabled.ICS2" -> "false")
       .build()
-//    val incomingMessageServiceMock = mock[InboundIcs2MessageService]
 
     val commonHeaders = Headers(
       "Host"              -> "localhost",

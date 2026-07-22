@@ -16,26 +16,28 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
+import java.util.UUID
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.io.Source
+import scala.xml.Elem
+
 import org.apache.pekko.stream.Materializer
 import org.mockito.Mockito.*
 import org.mockito.captor.ArgCaptor
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import play.api.http.Status
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.*
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.SdesConnectorMockModule
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
-import uk.gov.hmrc.http.HeaderCarrier
-
-import java.util.UUID
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.io.Source
-import scala.xml.Elem
 
 class Ics2SdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with Ics2XmlHelper {
   implicit val hc: HeaderCarrier = HeaderCarrier()
