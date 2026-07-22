@@ -35,7 +35,7 @@ trait CertexSdesServiceMockModule extends AnyWordSpec with IdiomaticMockito with
     object ProcessMessage {
 
       def succeeds(request: NodeSeq, sdesUuid: String) = {
-        when(theMock.processMessage(refEq(request))(using *)).thenReturn(successful(List(Right(SdesSuccess(s"$sdesUuid")))))
+        when(theMock.processMessage(refEq(request))(using *)).thenReturn(successful(List(Right(SdesSuccess(sdesUuid)))))
       }
 
       def failsInSending(message: String, status: Int) = {

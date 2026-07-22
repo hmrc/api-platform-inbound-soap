@@ -25,9 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CertexServiceConnector
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.CertexSdesService
 
 trait CertexServiceConnectorMockModule extends AnyWordSpec with IdiomaticMockito with Matchers {
 
