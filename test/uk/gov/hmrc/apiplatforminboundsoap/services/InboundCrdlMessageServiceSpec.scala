@@ -57,8 +57,6 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
   }
 
   trait Setup extends CrdlOrchestratorConnectorMockModule with CrdlSdesServiceMockModule {
-    //    val crdlSdesServiceMock: CrdlSdesService                     = mock[CrdlSdesService]
-    //    val crdlOrchestratorConnectorMock: CrdlOrchestratorConnector = mock[CrdlOrchestratorConnector]
     val workingXmlTransformer: XmlTransformer = new CrdlAttachmentReplacingTransformer()
     val failingXmlTransformer: XmlTransformer = new NoChangeTransformer()
     val forwardedMessageCaptor                = ArgCaptor[NodeSeq]

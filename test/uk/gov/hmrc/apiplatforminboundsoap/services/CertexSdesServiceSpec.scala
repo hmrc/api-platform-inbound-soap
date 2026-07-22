@@ -54,7 +54,6 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
   }
 
   trait Setup extends SdesConnectorMockModule {
-    //    val sdesConnectorMock: SdesConnector = mock[SdesConnector]
     val bodyCaptor   = ArgCaptor[SdesRequest]
     val headerCaptor = ArgCaptor[Seq[(String, String)]]
 

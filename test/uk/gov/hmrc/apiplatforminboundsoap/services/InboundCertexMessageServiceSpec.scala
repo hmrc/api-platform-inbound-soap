@@ -83,7 +83,6 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557",
       "x-files-included" -> "false"
     )
-//    val certexServiceConnectorMock: CertexServiceConnector = mock[CertexServiceConnector]
     val configMock: CertexServiceConnector.Config = mock[CertexServiceConnector.Config]
     when(configMock.authToken).thenReturn(authToken)
     val workingXmlTransformer: XmlTransformer     = new CertexAttachmentReplacingTransformer()
@@ -107,7 +106,6 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     val service: InboundCertexMessageService =
       new InboundCertexMessageService(
         CertexServiceConnectorMock.theMock,
-//        certexServiceConnectorMock,
         CertexSdesServiceMock.theMock,
         staticUuidGenerator,
         staticZonedDTHelper,
@@ -118,7 +116,6 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
     val serviceForError: InboundCertexMessageService =
       new InboundCertexMessageService(
         CertexServiceConnectorMock.theMock,
-//        certexServiceConnectorMock,
         CertexSdesServiceMock.theMock,
         staticUuidGenerator,
         staticZonedDTHelper,
