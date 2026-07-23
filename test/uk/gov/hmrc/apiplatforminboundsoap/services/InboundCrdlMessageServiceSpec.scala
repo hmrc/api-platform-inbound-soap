@@ -22,7 +22,6 @@ import scala.xml.{Elem, NodeSeq}
 
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
-import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -40,9 +39,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.CrdlOrchestratorConnectorMockModule
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.CrdlSdesServiceMockModule
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
-import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlAttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlAttachmentReplacingTransformer, NoChangeTransformer, XmlTestHelper, XmlTransformer}
 
-class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
+class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with XmlTestHelper {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
@@ -74,14 +73,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     val serviceForError: InboundCrdlMessageService =
       new InboundCrdlMessageService(CrdlOrchestratorConnectorMock.theMock, CrdlSdesServiceMock.theMock, failingXmlTransformer)
   }
-
-  private def getXmlDiff(actual: NodeSeq, expected: Elem): DiffBuilder = {
-    compare(Input.fromString(expected.toString).build())
-      .withTest(Input.fromString(actual.toString()).build())
-      .withNodeMatcher(new DefaultNodeMatcher(byName))
-      .checkForIdentical()
-  }
-
+  
   "processInboundMessage" should {
     "return success when connector returns success" in new Setup {
       CrdlOrchestratorConnectorMock.PostMessage.succeedsWithCaptors(forwardedMessageCaptor, headerCaptor, OK, "some body")

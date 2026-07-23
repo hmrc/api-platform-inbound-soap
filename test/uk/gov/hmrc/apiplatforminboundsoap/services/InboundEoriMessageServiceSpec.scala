@@ -16,14 +16,11 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.services
 
-import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
 
 import org.apache.pekko.stream.Materializer
 import org.mockito.Mockito.*
-import org.mockito.captor.ArgCaptor
-import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -34,10 +31,11 @@ import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.EoriServiceConnectorMockModule
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.util.{StaticUuidGenerator, StaticZonedDTHelper, ZonedDateTimeHelper}
 
-class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
+class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
@@ -50,8 +48,9 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     xml.XML.load(Source.fromResource(fileName).bufferedReader())
   }
 
-  trait Setup {
+  trait Setup extends EoriServiceConnectorMockModule {
     val authToken = "some-auth-token-value"
+    val requestBody: Elem = <xml>foo</xml>
 
     private val forwardedHeaders = Seq[(String, String)](
       "Accept"           -> "application/xml",
@@ -64,18 +63,15 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     val forwardedHeadersNoAttachment                   = forwardedHeaders ++ Map(
       "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557"
     )
-    val eoriServiceConnectorMock: EoriServiceConnector = mock[EoriServiceConnector]
     val configMock: EoriServiceConnector.Config        = mock[EoriServiceConnector.Config]
     when(configMock.authToken).thenReturn(authToken)
     val uuidGenerator: StaticUuidGenerator             = new StaticUuidGenerator()
     val staticZonedDTHelper: ZonedDateTimeHelper       = new StaticZonedDTHelper()
-    val forwardedMessageCaptor                         = ArgCaptor[NodeSeq]
-    val headerCaptor                                   = ArgCaptor[Seq[(String, String)]]
     val xmlBodyIsAlive                                 = readFromFile("eori/isAliveRequest.xml")
 
     val service: InboundEoriMessageService =
       new InboundEoriMessageService(
-        eoriServiceConnectorMock,
+        EoriServiceConnectorMock.theMock,
         uuidGenerator,
         staticZonedDTHelper,
         configMock
@@ -84,34 +80,28 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
 
   "processInboundMessage" should {
     "return success when connector returns success" in new Setup {
-      private val requestBody: Elem = <xml>foo</xml>
-      when(eoriServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendSuccess(OK, "some body")))
+      EoriServiceConnectorMock.PostMessage.succeeds(requestBody, forwardedHeadersNoAttachment, OK, "some body")
 
       val result = await(service.processInboundMessage(requestBody))
 
       result shouldBe SendSuccess(OK, "some body")
-      eoriServiceConnectorMock.postMessage(requestBody, forwardedHeadersNoAttachment) was called
-      forwardedMessageCaptor.hasCaptured(requestBody)
-      headerCaptor.hasCaptured(forwardedHeadersNoAttachment)
+      EoriServiceConnectorMock.PostMessage.verifyCalledWithBodyAndHeaders(requestBody, forwardedHeadersNoAttachment)
     }
 
     "return success for isAlive message and not invoke connector" in new Setup {
-
       val result = await(service.processInboundMessage(xmlBodyIsAlive))
 
       result shouldBe SendSuccess(OK, "")
-      verifyNoInteractions(eoriServiceConnectorMock)
+      EoriServiceConnectorMock.PostMessage.verifyNotCalled()
     }
 
     "return failure when attempt to forward message fails" in new Setup {
-      private val requestBody: Elem = <xml>foo</xml>
-      when(eoriServiceConnectorMock.postMessage(forwardedMessageCaptor, headerCaptor)(using *)).thenReturn(successful(SendFailExternal("some error", IM_A_TEAPOT)))
+      EoriServiceConnectorMock.PostMessage.failsInSending(requestBody, forwardedHeadersNoAttachment, IM_A_TEAPOT, "some error")
 
       val result = await(service.processInboundMessage(requestBody))
 
       result shouldBe SendFailExternal("some error", IM_A_TEAPOT)
-      eoriServiceConnectorMock.postMessage(requestBody, forwardedHeadersNoAttachment) was called
-      forwardedMessageCaptor.hasCaptured(requestBody)
+      EoriServiceConnectorMock.PostMessage.verifyCalledWithBodyAndHeaders(requestBody, forwardedHeadersNoAttachment)
     }
   }
 }

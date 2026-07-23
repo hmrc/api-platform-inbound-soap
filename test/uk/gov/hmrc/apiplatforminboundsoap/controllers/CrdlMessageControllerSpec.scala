@@ -80,7 +80,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe SERVICE_UNAVAILABLE
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return failure when message is found to be invalid" in new Setup {
@@ -90,7 +90,7 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val result              = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
 }

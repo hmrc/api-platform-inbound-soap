@@ -23,7 +23,6 @@ import scala.xml.{Elem, NodeSeq}
 import org.apache.pekko.stream.Materializer
 import org.mockito.Mockito.*
 import org.mockito.captor.ArgCaptor
-import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -43,9 +42,9 @@ import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.CertexServiceConnecto
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.CertexSdesServiceMockModule
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.util.{StaticUuidGenerator, StaticZonedDTHelper, ZonedDateTimeHelper}
-import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexAttachmentReplacingTransformer, NoChangeTransformer, XmlTransformer}
+import uk.gov.hmrc.apiplatforminboundsoap.xml.{CertexAttachmentReplacingTransformer, NoChangeTransformer, XmlTestHelper, XmlTransformer}
 
-class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
+class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with XmlTestHelper {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
@@ -122,13 +121,6 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
         configMock,
         failingXmlTransformer
       )
-  }
-
-  private def getXmlDiff(actual: NodeSeq, expected: Elem): DiffBuilder = {
-    compare(Input.fromString(expected.toString).build())
-      .withTest(Input.fromString(actual.toString()).build())
-      .withNodeMatcher(new DefaultNodeMatcher(byName))
-      .checkForIdentical()
   }
 
   "processInboundMessage" should {

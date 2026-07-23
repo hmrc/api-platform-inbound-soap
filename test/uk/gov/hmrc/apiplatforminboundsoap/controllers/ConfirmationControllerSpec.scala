@@ -128,7 +128,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return 400 for empty Action element" in new Setup {
@@ -141,7 +141,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return 400 for empty MessageID element" in new Setup {
@@ -153,7 +153,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
 

@@ -25,7 +25,9 @@ import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
 
-trait SoapMessageTest {
+import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlTestHelper
+
+trait SoapMessageTest extends XmlTestHelper {
   val xRequestIdHeaderValue = randomUUID.toString
 
   def readFromFile(fileName: String) = {
@@ -51,13 +53,4 @@ trait SoapMessageTest {
        |</soap:Body>
        |</soap:Envelope>
        |""".stripMargin
-
-  def getXmlDiff(actual: String, expected: String): DiffBuilder = {
-    compare(expected)
-      .withTest(actual)
-      .withNodeMatcher(new DefaultNodeMatcher(byName))
-      .checkForIdentical
-      .ignoreComments
-      .ignoreWhitespace
-  }
 }

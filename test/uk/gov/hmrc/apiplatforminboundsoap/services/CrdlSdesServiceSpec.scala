@@ -40,7 +40,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.SdesConnectorMockModu
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{Ics2XmlHelper, NoChangeTransformer}
 
-class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
+class CrdlSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]

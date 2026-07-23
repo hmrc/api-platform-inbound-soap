@@ -80,7 +80,7 @@ class EoriMessageControllerSpec extends AnyWordSpec with Matchers with SoapMessa
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe SERVICE_UNAVAILABLE
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return error when send not attempted due to detected error in message format" in new Setup {
@@ -91,7 +91,7 @@ class EoriMessageControllerSpec extends AnyWordSpec with Matchers with SoapMessa
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
 }

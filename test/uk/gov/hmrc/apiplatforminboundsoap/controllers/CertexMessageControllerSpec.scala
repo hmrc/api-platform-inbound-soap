@@ -33,8 +33,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.CertexMessageServiceMockModule
+import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlTestHelper
 
-class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite {
+class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with XmlTestHelper {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup extends CertexMessageServiceMockModule {
@@ -89,7 +90,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
       status(result) shouldBe SERVICE_UNAVAILABLE
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return error when send not attempted due to detected error in message format" in new Setup {
@@ -100,7 +101,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
 }

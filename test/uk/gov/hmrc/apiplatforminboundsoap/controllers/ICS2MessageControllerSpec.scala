@@ -131,7 +131,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       status(result) shouldBe expectedStatus
       Ics2MessageServiceMock.ProcessInboundMessage.verifyCalledWithBody(requestBody)
     }
@@ -144,7 +144,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       status(result) shouldBe BAD_REQUEST
 
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
 
@@ -155,7 +155,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
 
@@ -166,7 +166,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
 
@@ -177,7 +177,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
 
@@ -188,7 +188,7 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
   }

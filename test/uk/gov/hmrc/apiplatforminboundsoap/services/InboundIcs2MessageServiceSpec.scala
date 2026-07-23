@@ -24,7 +24,6 @@ import org.apache.pekko.stream.Materializer
 import org.mockito.Mockito.*
 import org.mockito.captor.ArgCaptor
 import org.mockito.quality.Strictness
-import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -41,7 +40,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.Ics2SdesServiceMockModu
 import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.xml.Ics2XmlHelper
 
-class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito with Ics2XmlHelper {
+class InboundIcs2MessageServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with Ics2XmlHelper {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
