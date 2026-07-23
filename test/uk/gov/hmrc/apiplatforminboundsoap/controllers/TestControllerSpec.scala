@@ -18,32 +18,31 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import java.util.UUID.randomUUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.{Elem, XML}
 
-import org.mockito.captor.{ArgCaptor, Captor}
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import org.mockito.captor.ArgCaptor
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.mvc.Headers
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.testmessage.TestController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundIcs2MessageService
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.Ics2MessageServiceMockModule
 
-class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  trait Setup {
-    val incomingMessageServiceMock = mock[InboundIcs2MessageService]
-    val xRequestIdHeaderValue      = randomUUID.toString
+  trait Setup extends Ics2MessageServiceMockModule {
+    val xmlRequestCaptor      = ArgCaptor[Elem]
+    val isTestCaptor          = ArgCaptor[Boolean]
+    val xRequestIdHeaderValue = randomUUID.toString
 
     val headers                           = Headers(
       "Host"              -> "localhost",
@@ -58,7 +57,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
       Helpers.stubControllerComponents(),
       verifyJwtTokenAction,
       soapMessageValidateAction,
-      incomingMessageServiceMock
+      Ics2MessageServiceMock.theMock
     )
     val fakeRequest = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headers)
 
@@ -89,32 +88,25 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
   "POST test message endpoint " should {
     "return 200 when successful for a message with embedded attached file" in new Setup {
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(ACCEPTED, "some body")))
+      val requestBody: Elem = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      Ics2MessageServiceMock.ProcessInboundMessage.succeedsForTestMessage("some body")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
-      xmlRequestCaptor hasCaptured requestBody
-      isTestCaptor hasCaptured true
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyCalledWithBodyForTestMessage(requestBody, true)
     }
 
     "return response code it received when not successful" in new Setup {
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
 
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
+      val requestBody: Elem = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+
+      Ics2MessageServiceMock.ProcessInboundMessage.failsInSendingTestMessage("some error", PRECONDITION_FAILED)
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe PRECONDITION_FAILED
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
-      xmlRequestCaptor hasCaptured requestBody
-      isTestCaptor hasCaptured true
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyCalledWithBodyForTestMessage(requestBody, true)
     }
 
     "return 400 when action element is missing" in new Setup {
@@ -124,7 +116,7 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
       status(result) shouldBe BAD_REQUEST
       contentAsString(result) shouldBe getExpectedSoapFault(400, "Element SOAP Header Action is missing", xRequestIdHeaderValue)
-      verifyZeroInteractions(incomingMessageServiceMock)
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
   }
 }

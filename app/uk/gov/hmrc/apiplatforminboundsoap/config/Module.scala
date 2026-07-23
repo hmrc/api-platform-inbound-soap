@@ -33,7 +33,7 @@ class Module extends AbstractModule {
     bind(classOf[Clock]).toInstance(Clock.systemUTC())
     bind(classOf[ZonedDateTimeHelper]).toInstance(new ZonedCurrentDTHelper())
     bind(classOf[UuidGenerator]).toInstance(new RandomUuidGenerator())
-    bind(classOf[XmlTransformer]).annotatedWith(Names.named("crdl")) toInstance new CrdlAttachmentReplacingTransformer()
-    bind(classOf[XmlTransformer]).annotatedWith(Names.named("certex")) toInstance new CertexAttachmentReplacingTransformer()
+    bind(classOf[XmlTransformer]).annotatedWith(Names.named("crdl")).toInstance(new CrdlAttachmentReplacingTransformer())
+    bind(classOf[XmlTransformer]).annotatedWith(Names.named("certex")).toInstance(new CertexAttachmentReplacingTransformer())
   }
 }

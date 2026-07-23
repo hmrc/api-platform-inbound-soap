@@ -17,36 +17,32 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
 import scala.xml.Elem
 
-import org.mockito.captor.{ArgCaptor, Captor}
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundIcs2MessageService
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.Ics2MessageServiceMockModule
 
-class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  trait Setup {
+  trait Setup extends Ics2MessageServiceMockModule {
 
-    val app: Application           = new GuiceApplicationBuilder()
+    val app: Application = new GuiceApplicationBuilder()
       .configure("passThroughEnabled.ICS2" -> "false")
       .build()
-    val incomingMessageServiceMock = mock[InboundIcs2MessageService]
 
     val commonHeaders = Headers(
       "Host"              -> "localhost",
@@ -70,98 +66,74 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     private val soapMessageValidateAction   = app.injector.instanceOf[SoapMessageValidateAction]
 
     val controller  =
-      new ICS2MessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, soapMessageValidateAction, incomingMessageServiceMock)
+      new ICS2MessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, soapMessageValidateAction, Ics2MessageServiceMock.theMock)
     val fakeRequest = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headersWithValidBearerToken)
   }
 
   "POST CCN2 message endpoint " should {
     "return 200 when successful for a message with embedded attached file" in new Setup {
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      val requestBody: Elem = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      Ics2MessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
-      xmlRequestCaptor hasCaptured requestBody
-      isTestCaptor hasCaptured false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyCalledWithBody(requestBody)
     }
 
     "return 200 when successful for a message with attached file as URI" in new Setup {
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4r02-v2-uri-instead-of-includedBinaryObject-element.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      val requestBody: Elem = readFromFile("ie4r02-v2-uri-instead-of-includedBinaryObject-element.xml")
+      Ics2MessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
-      xmlRequestCaptor hasCaptured requestBody
-      isTestCaptor hasCaptured false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyCalledWithBody(requestBody)
     }
 
     "return 200 when successful for a message with binary file and binary attachment" in new Setup {
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      val requestBody: Elem = readFromFile("uriAndBinaryObject/ie4r02-v2-both-binaryFile-and-binaryAttachment-elements-files-inline.xml")
+      Ics2MessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
-      xmlRequestCaptor hasCaptured requestBody
-      isTestCaptor hasCaptured false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyCalledWithBody(requestBody)
     }
 
     "return 200 when successful for a message with a binary file and 2 binary attachments" in new Setup {
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      val requestBody: Elem = readFromFile("ie4r02-v2-one-binaryFile-and-two-binaryAttachment-elements-files-inline.xml")
+      Ics2MessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
-      xmlRequestCaptor hasCaptured requestBody
-      isTestCaptor hasCaptured false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyCalledWithBody(requestBody)
     }
 
     "return 200 when successful for a message with no attached file" in new Setup {
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4n09-v2.xml")
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      val requestBody: Elem = readFromFile("ie4n09-v2.xml")
+      Ics2MessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe OK
       contentType(result) shouldBe Some("application/soap+xml")
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
-      xmlRequestCaptor hasCaptured requestBody
-      isTestCaptor hasCaptured false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyCalledWithBody(requestBody)
     }
 
     "return response code it received when not successful" in new Setup {
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      val isTestCaptor: Captor[Boolean]  = ArgCaptor[Boolean]
-      val requestBody: Elem              = readFromFile("ie4r02-v2-one-binary-attachment.xml")
-      val expectedStatus                 = PRECONDITION_FAILED
-      val expectedSoapMessage            = expectedSoapResponse("some error", expectedStatus)
+      val requestBody: Elem   = readFromFile("ie4r02-v2-one-binary-attachment.xml")
+      val expectedStatus      = PRECONDITION_FAILED
+      val expectedSoapMessage = expectedSoapResponse("some error", expectedStatus)
 
-      when(incomingMessageServiceMock.processInboundMessage(xmlRequestCaptor, isTestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", PRECONDITION_FAILED)))
+      Ics2MessageServiceMock.ProcessInboundMessage.failsInSending("some error", PRECONDITION_FAILED)
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
       status(result) shouldBe expectedStatus
-      verify(incomingMessageServiceMock).processInboundMessage(*, *)(*)
-      xmlRequestCaptor hasCaptured requestBody
-      isTestCaptor hasCaptured false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyCalledWithBody(requestBody)
     }
 
     "return 400 when MIME element is too long and referralRequestReference is too long" in new Setup {
@@ -172,8 +144,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
       status(result) shouldBe BAD_REQUEST
 
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
-      verifyZeroInteractions(incomingMessageServiceMock)
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
 
     "return 400 when includedBinaryObject element is blank" in new Setup {
@@ -183,8 +155,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
-      verifyZeroInteractions(incomingMessageServiceMock)
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
 
     "return 400 when includedBinaryObject element is not base 64 data" in new Setup {
@@ -194,8 +166,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
-      verifyZeroInteractions(incomingMessageServiceMock)
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
 
     "return 400 when uri element is too short" in new Setup {
@@ -205,8 +177,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
-      verifyZeroInteractions(incomingMessageServiceMock)
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
 
     "return 400 when action element is missing" in new Setup {
@@ -216,8 +188,8 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
-      verifyZeroInteractions(incomingMessageServiceMock)
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      Ics2MessageServiceMock.ProcessInboundMessage.verifyNotCalled()
     }
   }
 }

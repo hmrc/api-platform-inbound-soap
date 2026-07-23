@@ -24,7 +24,8 @@ import scala.util.control.NonFatal
 
 import play.api.http.Status
 import play.api.libs.json.{JsObject, JsString, Json}
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import play.api.libs.ws.writeableOf_String
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 
@@ -67,9 +68,9 @@ class SdesConnector @Inject() (httpClientV2: HttpClientV2, appConfig: SdesConnec
 
   private def postHttpRequest(sdesRequest: SdesRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
     val combinedHeaders = sdesRequest.headers ++ List("Metadata" -> constructMetadataHeader(sdesRequest.metadata, sdesRequest.metadataProperties))
-    httpClientV2.post(new URI(s"${appConfig.baseUrl}/${appConfig.uploadPath}").toURL).setHeader(requiredHeaders: _*)
+    httpClientV2.post(new URI(s"${appConfig.baseUrl}/${appConfig.uploadPath}").toURL).setHeader(requiredHeaders*)
       .withBody(sdesRequest.body)
-      .transform(_.addHttpHeaders(combinedHeaders: _*))
+      .transform(_.addHttpHeaders(combinedHeaders*))
       .execute[Either[UpstreamErrorResponse, HttpResponse]]
   }
 

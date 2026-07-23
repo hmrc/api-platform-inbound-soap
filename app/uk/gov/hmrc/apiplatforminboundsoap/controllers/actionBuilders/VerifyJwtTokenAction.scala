@@ -24,7 +24,7 @@ import _root_.uk.gov.hmrc.http.HttpErrorFunctions
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.JWTVerifier
 
-import play.api.mvc.Results._
+import play.api.mvc.Results.*
 import play.api.mvc.{ActionFilter, Request, Result}
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger

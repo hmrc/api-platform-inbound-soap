@@ -31,7 +31,7 @@ import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.crdl.CrdlMessageController
@@ -47,7 +47,7 @@ class CrdlControllerPassThroughISpec extends AnyWordSpecLike with Matchers
   val crdlRequestBody: Elem = readFromFile("requests/crdl/crdl-request-no-attachment.xml")
   val responseBody: Elem    = <xml>response</xml>
 
-  override def fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure(
       "metrics.enabled"         -> false,
       "auditing.enabled"        -> false,

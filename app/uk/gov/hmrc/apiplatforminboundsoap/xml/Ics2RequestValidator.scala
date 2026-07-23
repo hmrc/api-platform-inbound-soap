@@ -19,9 +19,9 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 import java.util.Base64
 import scala.xml.NodeSeq
 
-import cats.data.Validated._
-import cats.data._
-import cats.implicits._
+import cats.data.*
+import cats.data.Validated.*
+import cats.implicits.*
 
 import uk.gov.hmrc.http.HttpErrorFunctions
 

@@ -24,7 +24,7 @@ import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 class CertexAttachmentReplacingTransformer extends XmlTransformer {
 
   def replaceAttachment: (NodeSeq, String) => NodeSeq = {
-    (m, s) =>
+    (m, _) =>
       {
         def rewrite = new RewriteRule {
           override def transform(n: Node): Seq[Node] = n match {

@@ -17,10 +17,8 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
 import scala.xml.Elem
 
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -28,19 +26,19 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundCertexMessageService
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.CertexMessageServiceMockModule
+import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlTestHelper
 
-class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with XmlTestHelper {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  trait Setup {
+  trait Setup extends CertexMessageServiceMockModule {
 
     val app: Application = new GuiceApplicationBuilder()
       .configure("passThroughEnabled.CERTEX" -> "false", "microservice.services.certex-service.authToken" -> "auth")
@@ -58,10 +56,9 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
 
     private val passThroughModeAction = app.injector.instanceOf[PassThroughModeAction]
     private val verifyJwtTokenAction  = app.injector.instanceOf[VerifyJwtTokenAction]
-    val mockService                   = mock[InboundCertexMessageService]
 
     val controller                     =
-      new CertexMessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, mockService)
+      new CertexMessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, CertexMessageServiceMock.theMock)
     val fakeRequest                    = FakeRequest("POST", "/certex/inbound").withHeaders(headersWithValidBearerToken)
     val fakeRequestPartlyUpperCasePath = FakeRequest("POST", "/CERTEX/inbound").withHeaders(headersWithValidBearerToken)
   }
@@ -69,7 +66,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
   "POST Certex message endpoint" should {
     "return 200 for all lower case path" in new Setup {
       val requestBody: Elem = <xml>foobar</xml>
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      CertexMessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -78,7 +75,7 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
 
     "return 200 for part upper case path" in new Setup {
       val requestBody: Elem = <xml>foobar</xml>
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      CertexMessageServiceMock.ProcessInboundMessage.succeeds("some body")
 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
@@ -88,23 +85,23 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
     "return error when unsuccessful with failure in connector sending" in new Setup {
       val requestBody: Elem   = <xml>foobar</xml>
       val expectedSoapMessage = expectedSoapResponse("some error", SERVICE_UNAVAILABLE)
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", SERVICE_UNAVAILABLE)))
+      CertexMessageServiceMock.ProcessInboundMessage.failsInSending("some error", SERVICE_UNAVAILABLE)
 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
       status(result) shouldBe SERVICE_UNAVAILABLE
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return error when send not attempted due to detected error in message format" in new Setup {
       val requestBody: Elem   = <xml>foobar</xml>
       val expectedSoapMessage = expectedSoapResponse("problem")
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendNotAttempted("problem")))
+      CertexMessageServiceMock.ProcessInboundMessage.abortsBeforeSending("problem")
 
       val result = controller.message()(fakeRequestPartlyUpperCasePath.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
 }

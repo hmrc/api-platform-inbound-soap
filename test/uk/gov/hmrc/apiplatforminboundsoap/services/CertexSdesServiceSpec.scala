@@ -19,13 +19,12 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 import java.time.{Clock, Instant, ZoneId}
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
 import scala.io.Source
 import scala.xml.Elem
 
 import org.apache.pekko.stream.Materializer
+import org.mockito.Mockito.*
 import org.mockito.captor.ArgCaptor
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -37,11 +36,12 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{Certex, SdesSendFailExternal, SdesSendNotAttempted, SdesSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.SdesConnectorMockModule
+import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.util.StaticUuidGenerator
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{Ics2XmlHelper, NoChangeTransformer}
 
-class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
@@ -50,10 +50,9 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     xml.XML.load(Source.fromResource(fileName).bufferedReader())
   }
 
-  trait Setup {
-    val sdesConnectorMock: SdesConnector = mock[SdesConnector]
-    val bodyCaptor                       = ArgCaptor[SdesRequest]
-    val headerCaptor                     = ArgCaptor[Seq[(String, String)]]
+  trait Setup extends SdesConnectorMockModule {
+    val bodyCaptor   = ArgCaptor[SdesRequest]
+    val headerCaptor = ArgCaptor[Seq[(String, String)]]
 
     val sdesRequestTime: Instant            = Instant.parse("2020-01-02T03:04:05.006Z")
     val sdesRequestClock: Clock             = Clock.fixed(sdesRequestTime, ZoneId.of("UTC"))
@@ -64,7 +63,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     val uuidGenerator: StaticUuidGenerator  = new StaticUuidGenerator()
 
     val service: CertexSdesService =
-      new CertexSdesService(appConfigMock, sdesConnectorMock, uuidGenerator)
+      new CertexSdesService(appConfigMock, SdesConnectorMock.theMock, uuidGenerator)
 
     val sdesUrl      = "SDES url"
     val certexConfig = Certex(srn = "CERTEX SRN", informationType = "CERTEX info type")
@@ -89,13 +88,12 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      SdesConnectorMock.PostMessage.succeeds(expectedSdesRequest, expectedSdesUuid)
 
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
-      verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      SdesConnectorMock.PostMessage.verifyCalledWithBody(expectedSdesRequest)
     }
 
     "correctly set metadata properties header on SDES request" in new Setup {
@@ -111,13 +109,12 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      SdesConnectorMock.PostMessage.succeeds(expectedSdesRequest, expectedSdesUuid)
 
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
-      verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      SdesConnectorMock.PostMessage.verifyCalledWithBody(expectedSdesRequest)
     }
 
     "omit messageId metadata property on SDES request when one cannot be found in the XML" in new Setup {
@@ -133,13 +130,12 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      SdesConnectorMock.PostMessage.succeeds(expectedSdesRequest, expectedSdesUuid)
 
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
-      verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      SdesConnectorMock.PostMessage.verifyCalledWithBody(expectedSdesRequest)
     }
 
     "process response when connector returns error" in new Setup {
@@ -154,13 +150,12 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Left(SdesSendFailExternal("500 returned from SDES call due to some error", INTERNAL_SERVER_ERROR))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Left(SdesSendFailExternal("some error", INTERNAL_SERVER_ERROR))))
+      SdesConnectorMock.PostMessage.failsInSending(INTERNAL_SERVER_ERROR, "some error")
 
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
-      verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      SdesConnectorMock.PostMessage.verifyCalledWithBody(expectedSdesRequest)
     }
 
     "not make a call to SDES when message contains empty attachment element" in new Setup {
@@ -171,7 +166,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
-      verifyZeroInteractions(sdesConnectorMock)
+      SdesConnectorMock.PostMessage.verifyNotCalled()
     }
 
     "not make a call to SDES when message has no attachment element" in new Setup {
@@ -180,7 +175,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List.empty
-      verifyZeroInteractions(sdesConnectorMock)
+      SdesConnectorMock.PostMessage.verifyNotCalled()
     }
 
     "not make a call to SDES when message attachment is not base 64 data" in new Setup {
@@ -189,7 +184,7 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(Left(SdesSendNotAttempted("Embedded attachment element pcaDocumentPdf is not valid base 64 data")))
-      verifyZeroInteractions(sdesConnectorMock)
+      SdesConnectorMock.PostMessage.verifyNotCalled()
     }
 
     "generate random UUID for filename when messageId in message is blank" in new Setup {
@@ -205,14 +200,14 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      SdesConnectorMock.PostMessage.succeeds(expectedSdesRequest, expectedSdesUuid)
 
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
-      verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      SdesConnectorMock.PostMessage.verifyCalledWithBody(expectedSdesRequest)
     }
+
     "generate random UUID for filename when messageId in message can't supply one" in new Setup {
       val xmlBody: Elem              = readFromFile("certex/responseIES002-unexpected-messageid-format.xml")
       val expectedSdesUuid           = UUID.randomUUID().toString
@@ -226,13 +221,12 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      SdesConnectorMock.PostMessage.succeeds(expectedSdesRequest, expectedSdesUuid)
 
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
-      verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      SdesConnectorMock.PostMessage.verifyCalledWithBody(expectedSdesRequest)
     }
 
     "generate random UUID for filename when UUID from messageId in message is invalid" in new Setup {
@@ -248,13 +242,12 @@ class CertexSdesServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
       val expectedSdesRequest        = SdesRequest(Seq.empty, expectedMetadata, expectedMetadataProperties, attachmentElementContents)
       val expectedServiceResult      = Right(SdesSuccess(uuid = expectedSdesUuid))
 
-      when(sdesConnectorMock.postMessage(bodyCaptor)(*)).thenReturn(successful(Right(SdesSuccess(expectedSdesUuid))))
+      SdesConnectorMock.PostMessage.succeeds(expectedSdesRequest, expectedSdesUuid)
 
       val result = await(service.processMessage(xmlBody))
 
       result shouldBe List(expectedServiceResult)
-      verify(sdesConnectorMock).postMessage(expectedSdesRequest)
-      bodyCaptor hasCaptured expectedSdesRequest
+      SdesConnectorMock.PostMessage.verifyCalledWithBody(expectedSdesRequest)
     }
   }
 }

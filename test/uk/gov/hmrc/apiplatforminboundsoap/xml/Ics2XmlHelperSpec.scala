@@ -19,22 +19,30 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
 
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.xmlunit.builder.DiffBuilder.compare
 import org.xmlunit.builder.{DiffBuilder, Input}
 import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
 
-class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with Ics2XmlHelper {
+class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with Ics2XmlHelper {
 
   private def getXmlDiff(actual: Either[Set[String], NodeSeq], expected: Elem): DiffBuilder = {
     compare(Input.fromString(expected.toString).build())
       .withTest(Input.fromString(actual.getOrElse(NodeSeq.Empty).toString).build())
       .withNodeMatcher(new DefaultNodeMatcher(byName))
       .checkForIdentical()
+  }
+
+  trait Setup {
+    val xmlBodyForElementNotFoundScenario: NodeSeq = <xml>blah</xml>
+
+    def readFromFile(fileName: String) = {
+      xml.XML.load(Source.fromResource(fileName).bufferedReader())
+    }
   }
 
   "getSoapAction" should {
@@ -52,8 +60,8 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
 
   "get messageId" should {
     "return messageId from SOAP message" in new Setup {
-      val xmlBody: Elem   = readFromFile("ie4n09-v2.xml")
-      val Some(messageId) = getMessageId(xmlBody)
+      val xmlBody: Elem = readFromFile("ie4n09-v2.xml")
+      val messageId     = getMessageId(xmlBody).get
       messageId shouldBe "ad7f2ad2d4f5-4606-99a0-0dd4e52be116"
     }
 
@@ -199,6 +207,7 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
       getBinaryElementsWithEmbeddedData(xmlBody).size shouldBe 1
     }
   }
+
   "replaceEmbeddedAttachments" should {
     "replace includedBinaryObject element in a message containing one binaryFile element" in new Setup {
       val xmlBody                    = readFromFile("ie4s03-v2.xml")
@@ -272,7 +281,6 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
       val replacement = Map("test-filename.txt" -> "some-uuid-like-string", "invented-filename.duf" -> "will-not-be-used-as-replacement")
       val result      = replaceEmbeddedAttachments(replacement, xmlBody)
       result shouldBe Left(Set("invented-filename.duf"))
-
     }
   }
 
@@ -327,14 +335,6 @@ class Ics2XmlHelperSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSui
                                                 </urn:binaryAttachment>
         getBinaryUri(binaryAttachment) shouldBe None
       }
-    }
-  }
-
-  trait Setup {
-    val xmlBodyForElementNotFoundScenario: NodeSeq = <xml>blah</xml>
-
-    def readFromFile(fileName: String) = {
-      xml.XML.load(Source.fromResource(fileName).bufferedReader())
     }
   }
 }

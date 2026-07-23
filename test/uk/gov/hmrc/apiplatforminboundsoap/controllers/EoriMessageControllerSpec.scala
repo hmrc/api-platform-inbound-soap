@@ -17,10 +17,8 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
 import scala.xml.Elem
 
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -28,19 +26,18 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.eori.EoriMessageController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.services.InboundEoriMessageService
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.EoriMessageServiceMockModule
 
-class EoriMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class EoriMessageControllerSpec extends AnyWordSpec with Matchers with SoapMessageTest with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  trait Setup {
+  trait Setup extends EoriMessageServiceMockModule {
 
     val app: Application = new GuiceApplicationBuilder()
       .configure("microservice.services.certex-service.authToken" -> "auth")
@@ -57,10 +54,9 @@ class EoriMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     )
 
     private val verifyJwtTokenAction = app.injector.instanceOf[VerifyJwtTokenAction]
-    val mockService                  = mock[InboundEoriMessageService]
 
     val controller  =
-      new EoriMessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, mockService)
+      new EoriMessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, EoriMessageServiceMock.theMock)
     val fakeRequest = FakeRequest("POST", "/crs/receiveDataChangeEvents/v1").withHeaders(headersWithValidBearerToken)
   }
 
@@ -68,7 +64,7 @@ class EoriMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     "return 200 for successful request" in new Setup {
       val requestBody: Elem    = <xml>foobar</xml>
       val responseBody: String = <xml>some response body</xml>.text
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendSuccess(OK, responseBody)))
+      EoriMessageServiceMock.ProcessInboundMessage.succeeds(responseBody)
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
@@ -79,23 +75,23 @@ class EoriMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     "return error when unsuccessful with failure in connector sending" in new Setup {
       val requestBody: Elem   = <xml>foobar</xml>
       val expectedSoapMessage = expectedSoapResponse("some error", SERVICE_UNAVAILABLE)
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendFailExternal("some error", SERVICE_UNAVAILABLE)))
+      EoriMessageServiceMock.ProcessInboundMessage.failsInSending("some error", SERVICE_UNAVAILABLE)
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe SERVICE_UNAVAILABLE
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return error when send not attempted due to detected error in message format" in new Setup {
       val requestBody: Elem   = <xml>foobar</xml>
       val expectedSoapMessage = expectedSoapResponse("problem")
-      when(mockService.processInboundMessage(*)(*)).thenReturn(successful(SendNotAttempted("problem")))
+      EoriMessageServiceMock.ProcessInboundMessage.abortsBeforeSending("problem")
 
       val result = controller.message()(fakeRequest.withBody(requestBody))
 
       status(result) shouldBe BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
 }

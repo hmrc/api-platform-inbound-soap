@@ -16,10 +16,7 @@
 
 package uk.gov.hmrc.apiplatforminboundsoap.xml
 
-import scala.annotation.tailrec
-import scala.xml.{Elem, NodeSeq, Text}
-
-import jstengel.ezxml.core.SimpleWrapper.ElemWrapper
+import scala.xml.*
 
 import uk.gov.hmrc.apiplatforminboundsoap.util.{ApplicationLogger, Base64Encoder}
 
@@ -83,68 +80,34 @@ trait Ics2XmlHelper extends ApplicationLogger with Base64Encoder {
     if (includedBinaryObject.isEmpty) None else Some(includedBinaryObject.text)
   }
 
-  def replaceEmbeddedAttachments(replacement: Map[String, String], completeXML: NodeSeq, encodeReplacement: Boolean = false): Either[Set[String], NodeSeq] = {
-    val xmlElem                       = completeXML.asInstanceOf[Elem]
-    def addForAttrs(elem: Elem): Elem = {
-      @tailrec
-      def add(targets: List[String], elem: Elem): Elem = {
-        targets match {
-          case Nil       => elem
-          case x :: tail =>
-            add(tail, (elem \\~ x transformTargetRoot (n => n.setAttribute("for", n.filterChildren(c => c.label == "filename").text))).getOrElse(elem))
-        }
-      }
-      add(List("binaryAttachment", "binaryFile"), elem)
-    }
+  def replaceEmbeddedAttachments(replacements: Map[String, String], methodCallNs: NodeSeq, encodeReplacement: Boolean = false): Either[Set[String], NodeSeq] = {
+    val xmlStringBuilder = Utility.serialize(methodCallNs.head)
 
-    def replaceAllBinaryObjects(e: Elem, filename: String, replacement: String): Either[String, Elem] = {
-      def replaceText(elem: Elem, x: String): Elem = {
-        (elem \\~ (x, _ \@ "for" == filename)) mapChildren {
-          case e: Elem =>
-            if (e.label == "includedBinaryObject") e.copy(child = if (encodeReplacement) new Text(encode(replacement)) else new Text(replacement)) else e
-          case n       => n
-        }
-      }.getOrElse(elem)
-
-      @tailrec
-      def replaceBinaryObject(targets: List[String], elem: Elem): Elem = {
-        targets match {
-          case Nil       => elem
-          case x :: tail =>
-            replaceBinaryObject(tail, replaceText(elem, x))
-        }
-      }
-      val transformed                                                  = replaceBinaryObject(List("binaryAttachment", "binaryFile"), e)
-      if (transformed == e) Left(filename) else Right(transformed)
-    }
-
-    def doReplace(r: Map[String, String], elem: Elem): Either[String, Elem] = {
-      if (r.isEmpty) Right(elem)
+    // The complex types that contain the `includedBinaryObject` element (binaryFile and binaryAttachment) are both defined in the XSD as of type `sequence`.
+    // This means that we can rely on the `includedBinaryObject` element always appearing _after_ the filename element
+    def replaceForFilename(filename: String, replacement: String): Either[String, StringBuilder] = {
+      val filenameIndex  = xmlStringBuilder.indexOf(filename)
+      val soughtElemOpen = "includedBinaryObject"
+      // find position of end of opening tag
+      val startIndex     = xmlStringBuilder.indexOf(">", xmlStringBuilder.indexOf(soughtElemOpen, filenameIndex) + 1)
+      if (filenameIndex < 1) Left(filename)
       else {
-        replaceAllBinaryObjects(elem, r.head._1, r.head._2) match {
-          case Right(e) => doReplace(r.tail, e)
-          case _        => Left(r.head._1)
+        // find position of start of closing tag
+        val endIndex = xmlStringBuilder.indexOf("<", startIndex)
+        if (encodeReplacement) {
+          Right(xmlStringBuilder.replace(startIndex + 1, endIndex, encode(replacement)))
+        } else {
+          Right(xmlStringBuilder.replace(startIndex + 1, endIndex, replacement))
         }
       }
     }
 
-    def removeForLabels(elem: Elem): Elem = {
-      @tailrec
-      def remove(targets: List[String], elem: Elem): Elem = {
-        targets match {
-          case Nil       => elem
-          case x :: tail =>
-            remove(tail, (elem \\~ x transformTargetRoot (e => e.copy(attributes = e.attributes.remove("for")))).getOrElse(elem))
-        }
-      }
-      remove(List("binaryAttachment", "binaryFile"), elem)
-    }
-
-    val withForFileAttrs    = addForAttrs(xmlElem)
-    val attachmentsReplaced = doReplace(replacement, withForFileAttrs)
-    attachmentsReplaced match {
-      case Right(elem)            => Right(removeForLabels(elem).asInstanceOf[NodeSeq])
-      case Left(notFoundFilename) => Left(Set(notFoundFilename))
+    val results = replacements.map((filename, replacement) => replaceForFilename(filename, replacement))
+    val fails   = results.collect { case Left(value) => value }
+    if (fails.nonEmpty) {
+      Left(fails.toSet)
+    } else {
+      Right(XML.loadString(xmlStringBuilder.toString))
     }
   }
 

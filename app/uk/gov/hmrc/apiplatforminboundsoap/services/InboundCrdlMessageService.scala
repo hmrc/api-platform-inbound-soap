@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.CrdlOrchestratorConnector
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.SdesConnector.{SdesSendFail, SdesSendResult, SdesSuccess}
-import uk.gov.hmrc.apiplatforminboundsoap.models._
+import uk.gov.hmrc.apiplatforminboundsoap.models.*
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 import uk.gov.hmrc.apiplatforminboundsoap.xml.{CrdlXml, XmlTransformer}
 
@@ -52,7 +52,7 @@ class InboundCrdlMessageService @Inject() (
 
   private def sendToSdesThenForwardMessage(wholeMessage: NodeSeq, extraHeaders: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[SendResult] = {
     sdesService.processMessage(wholeMessage) flatMap {
-      sendResults: List[Either[SdesSendFail, SdesSendResult]] =>
+      (sendResults: List[Either[SdesSendFail, SdesSendResult]]) =>
         val haveErrors   = sendResults.exists(_.isLeft)
         val badResults   = sendResults.collect { case Left(value) => value }
         val happyResults = sendResults.collect { case Right(value) => value }

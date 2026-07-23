@@ -17,13 +17,9 @@
 package uk.gov.hmrc.apiplatforminboundsoap.controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future.successful
-import scala.io.Source
-import scala.xml.{Elem, XML}
+import scala.xml.Elem
 
 import org.apache.pekko.stream.Materializer
-import org.mockito.captor.{ArgCaptor, Captor}
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -32,24 +28,23 @@ import play.api.Application
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, PassThroughModeAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController
-import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
+import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.ApiPlatformOutboundSoapConnectorMockModule
 
-class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar {
+class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with Matchers with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
-  override def fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure("passThroughEnabled.ACK" -> "false")
     .build()
 
-  trait Setup {
+  trait Setup extends ApiPlatformOutboundSoapConnectorMockModule {
 
     val headers = Headers(
       "Host"              -> "localhost",
@@ -60,18 +55,20 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
     val validBearerToken =
       "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU"
 
-    def readFromFile(fileName: String) = {
-      XML.load(Source.fromResource(fileName).bufferedReader())
-    }
-
     val codRequestBody: Elem = readFromFile("acknowledgement/requests/cod_request.xml")
     val coeRequestBody: Elem = readFromFile("acknowledgement/requests/coe_request.xml")
 
     private val verifyJwtTokenAction  = fakeApplication().injector.instanceOf[VerifyJwtTokenAction]
     private val messageValidateAction = fakeApplication().injector.instanceOf[AcknowledgementMessageValidateAction]
     private val passThroughModeAction = fakeApplication().injector.instanceOf[PassThroughModeAction]
-    val mockOutboundConnector         = mock[ApiPlatformOutboundSoapConnector]
-    val controller                    = new ConfirmationController(mockOutboundConnector, Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, messageValidateAction)
+
+    val controller = new ConfirmationController(
+      ApiPlatformOutboundSoapConnectorMock.theMock,
+      Helpers.stubControllerComponents(),
+      passThroughModeAction,
+      verifyJwtTokenAction,
+      messageValidateAction
+    )
   }
 
   "POST acknowledgement endpoint with no authorisation header" should {
@@ -131,7 +128,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return 400 for empty Action element" in new Setup {
@@ -144,8 +141,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().getDifferences.forEach(println)
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
 
     "return 400 for empty MessageID element" in new Setup {
@@ -157,52 +153,47 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
-      getXmlDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
+      getXmlAsStringDiff(contentAsString(result), expectedSoapMessage).build().hasDifferences shouldBe false
     }
   }
 
   "POST acknowledgement endpoint with valid authorisation header and COD request body" should {
     "return 200" in new Setup {
-      val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(codRequestBody)
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      ApiPlatformOutboundSoapConnectorMock.PostMessage.succeeds(codRequestBody, OK, "some body")
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK
-      verify(mockOutboundConnector).postMessage(*)(*)
-      xmlRequestCaptor hasCaptured codRequestBody
+
+      ApiPlatformOutboundSoapConnectorMock.PostMessage.verifyCalledWithBody(codRequestBody)
     }
   }
 
   "POST acknowledgement endpoint with valid authorisation header and COE request body" should {
     "return 200" in new Setup {
-      val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
+      val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendSuccess(OK, "some body")))
+      ApiPlatformOutboundSoapConnectorMock.PostMessage.succeeds(coeRequestBody, OK, "some body")
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.OK
-      verify(mockOutboundConnector).postMessage(*)(*)
-      xmlRequestCaptor hasCaptured coeRequestBody
+      ApiPlatformOutboundSoapConnectorMock.PostMessage.verifyCalledWithBody(coeRequestBody)
     }
   }
 
   "POST acknowledgement endpoint with valid authorisation header and COE request body but outbound connector returns 500" should {
-    "return 200" in new Setup {
-      val fakeRequest                    = FakeRequest("POST", "/ccn2/acknowledgementV2")
+    "return 500" in new Setup {
+      val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
         .withHeaders(headers.add(validBearerToken))
         .withBody(coeRequestBody)
-      val xmlRequestCaptor: Captor[Elem] = ArgCaptor[Elem]
-      when(mockOutboundConnector.postMessage(xmlRequestCaptor)(*)).thenReturn(successful(SendFailExternal("some error", INTERNAL_SERVER_ERROR)))
+      ApiPlatformOutboundSoapConnectorMock.PostMessage.failsInSending(coeRequestBody, INTERNAL_SERVER_ERROR, "some error")
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-      verify(mockOutboundConnector).postMessage(*)(*)
-      xmlRequestCaptor hasCaptured coeRequestBody
+      ApiPlatformOutboundSoapConnectorMock.PostMessage.verifyCalledWithBody(coeRequestBody)
     }
   }
 }

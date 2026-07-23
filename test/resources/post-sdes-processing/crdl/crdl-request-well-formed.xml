@@ -1,4 +1,3 @@
-
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v4="http://xmlns.ec.eu/CallbackService/CSRD2/IReferenceDataSubmissionResultReceiverCBS/V4" xmlns:v41="http://xmlns.ec.eu/BusinessObjects/CSRD2/ReferenceDataSubmissionResultReceiverCBSServiceType/V4" xmlns:v2="http://xmlns.ec.eu/BusinessObjects/CSRD2/MessageHeaderType/V2">
    <soap:Header>
       <Action xmlns="http://www.w3.org/2005/08/addressing">CCN2.Service.Customs.Default.CSRD.ReferenceDataExportReceiverCBS/ReceiveReferenceData</Action>

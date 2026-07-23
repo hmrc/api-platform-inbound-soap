@@ -31,7 +31,7 @@ import play.api.http.{MimeTypes, Status}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Headers
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.http.test.{ExternalWireMockSupport, HttpClientV2Support}
 
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
@@ -47,7 +47,7 @@ class CertexMessageControllerISpec extends AnyWordSpecLike with Matchers
   val certexRequestBody: Elem = readFromFile("requests/certex/certex-request-no-attachment.xml")
   val responseBody            = <xml>response</xml>
 
-  override def fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure(
       "metrics.enabled"                           -> false,
       "auditing.enabled"                          -> false,
@@ -55,7 +55,7 @@ class CertexMessageControllerISpec extends AnyWordSpecLike with Matchers
       "microservice.services.certex-service.host" -> externalWireMockHost,
       "microservice.services.certex-service.port" -> externalWireMockPort
     ).build()
-  implicit val mat: Materializer            = fakeApplication().injector.instanceOf[Materializer]
+  implicit val mat: Materializer              = fakeApplication().injector.instanceOf[Materializer]
 
   val forwardRequestPath = "/cls/receive-ies-messages-from-eu/v1"
   val receiveRequestPath = "/CERTEX/inbound"

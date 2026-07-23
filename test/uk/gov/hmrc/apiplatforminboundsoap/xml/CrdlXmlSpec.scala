@@ -19,24 +19,11 @@ package uk.gov.hmrc.apiplatforminboundsoap.xml
 import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
 
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.xmlunit.builder.DiffBuilder.compare
-import org.xmlunit.builder.{DiffBuilder, Input}
-import org.xmlunit.diff.DefaultNodeMatcher
-import org.xmlunit.diff.ElementSelectors.byName
 
-class CrdlXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar with ArgumentMatchersSugar with CrdlXml {
-
-  private def getXmlDiff(actual: NodeSeq, expected: Elem): DiffBuilder = {
-    compare(Input.fromString(expected.toString).build())
-      .withTest(Input.fromString(actual.toString()).build())
-      .withNodeMatcher(new DefaultNodeMatcher(byName))
-      .checkForIdentical()
-  }
-
+class CrdlXmlSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CrdlXml with XmlTestHelper {
   "taskIdentifier" should {
     "return task identifier from SOAP message" in new Setup {
       val xmlBody: Elem       = readFromFile("crdl/crdl-request-well-formed.xml")
