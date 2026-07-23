@@ -24,6 +24,7 @@ import org.xmlunit.diff.DefaultNodeMatcher
 import org.xmlunit.diff.ElementSelectors.byName
 
 trait XmlTestHelper {
+
   def getXmlDiff(actual: NodeSeq, expected: Elem): DiffBuilder = {
     compare(Input.fromString(expected.toString).build())
       .withTest(Input.fromString(actual.toString()).build())

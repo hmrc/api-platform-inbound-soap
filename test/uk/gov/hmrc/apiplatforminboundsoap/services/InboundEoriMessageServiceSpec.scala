@@ -49,7 +49,7 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
   }
 
   trait Setup extends EoriServiceConnectorMockModule {
-    val authToken = "some-auth-token-value"
+    val authToken         = "some-auth-token-value"
     val requestBody: Elem = <xml>foo</xml>
 
     private val forwardedHeaders = Seq[(String, String)](
@@ -60,14 +60,14 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       "x-forwarded-host" -> "MDTP"
     )
 
-    val forwardedHeadersNoAttachment                   = forwardedHeaders ++ Map(
+    val forwardedHeadersNoAttachment             = forwardedHeaders ++ Map(
       "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557"
     )
-    val configMock: EoriServiceConnector.Config        = mock[EoriServiceConnector.Config]
+    val configMock: EoriServiceConnector.Config  = mock[EoriServiceConnector.Config]
     when(configMock.authToken).thenReturn(authToken)
-    val uuidGenerator: StaticUuidGenerator             = new StaticUuidGenerator()
-    val staticZonedDTHelper: ZonedDateTimeHelper       = new StaticZonedDTHelper()
-    val xmlBodyIsAlive                                 = readFromFile("eori/isAliveRequest.xml")
+    val uuidGenerator: StaticUuidGenerator       = new StaticUuidGenerator()
+    val staticZonedDTHelper: ZonedDateTimeHelper = new StaticZonedDTHelper()
+    val xmlBodyIsAlive                           = readFromFile("eori/isAliveRequest.xml")
 
     val service: InboundEoriMessageService =
       new InboundEoriMessageService(

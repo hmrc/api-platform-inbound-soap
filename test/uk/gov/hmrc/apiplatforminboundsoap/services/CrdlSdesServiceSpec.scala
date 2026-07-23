@@ -26,7 +26,6 @@ import org.apache.pekko.stream.Materializer
 import org.mockito.Mockito.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import play.api.http.Status

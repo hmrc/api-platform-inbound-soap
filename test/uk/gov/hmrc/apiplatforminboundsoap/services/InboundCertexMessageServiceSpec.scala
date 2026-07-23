@@ -18,7 +18,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.NodeSeq
 
 import org.apache.pekko.stream.Materializer
 import org.mockito.Mockito.*
@@ -27,10 +27,6 @@ import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.xmlunit.builder.DiffBuilder.compare
-import org.xmlunit.builder.{DiffBuilder, Input}
-import org.xmlunit.diff.DefaultNodeMatcher
-import org.xmlunit.diff.ElementSelectors.byName
 
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}

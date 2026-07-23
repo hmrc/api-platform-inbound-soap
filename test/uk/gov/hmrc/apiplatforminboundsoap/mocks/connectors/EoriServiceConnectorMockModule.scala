@@ -24,7 +24,7 @@ import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import uk.gov.hmrc.apiplatforminboundsoap.connectors.{EoriServiceConnector, ImportControlInboundSoapConnector}
+import uk.gov.hmrc.apiplatforminboundsoap.connectors.EoriServiceConnector
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendSuccess}
 
 trait EoriServiceConnectorMockModule extends AnyWordSpec with IdiomaticMockito with Matchers {
@@ -42,7 +42,7 @@ trait EoriServiceConnectorMockModule extends AnyWordSpec with IdiomaticMockito w
         when(theMock.postMessage(request, headers)(using *)).thenReturn(successful(SendSuccess(status, body)))
       }
 
-      def failsInSending(request: NodeSeq, headers: Seq[(String, String)], status: Int, body: String, isTest: Boolean = false) = {
+      def failsInSending(request: NodeSeq, headers: Seq[(String, String)], status: Int, body: String) = {
         when(theMock.postMessage(refEq(request), refEq(headers))(using *)).thenReturn(successful(SendFailExternal(body, status)))
       }
 

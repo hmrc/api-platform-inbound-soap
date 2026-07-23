@@ -20,11 +20,6 @@ import java.util.UUID.randomUUID
 import scala.io.Source
 import scala.xml.XML
 
-import org.xmlunit.builder.DiffBuilder
-import org.xmlunit.builder.DiffBuilder.compare
-import org.xmlunit.diff.DefaultNodeMatcher
-import org.xmlunit.diff.ElementSelectors.byName
-
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlTestHelper
 
 trait SoapMessageTest extends XmlTestHelper {

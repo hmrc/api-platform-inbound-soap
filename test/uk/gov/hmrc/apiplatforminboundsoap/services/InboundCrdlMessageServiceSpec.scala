@@ -18,7 +18,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.services
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.NodeSeq
 
 import org.apache.pekko.stream.Materializer
 import org.mockito.captor.ArgCaptor
@@ -26,10 +26,6 @@ import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.xmlunit.builder.DiffBuilder.compare
-import org.xmlunit.builder.{DiffBuilder, Input}
-import org.xmlunit.diff.DefaultNodeMatcher
-import org.xmlunit.diff.ElementSelectors.byName
 
 import play.api.http.Status
 import play.api.http.Status.{IM_A_TEAPOT, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
@@ -73,7 +69,7 @@ class InboundCrdlMessageServiceSpec extends AnyWordSpec with Matchers with Guice
     val serviceForError: InboundCrdlMessageService =
       new InboundCrdlMessageService(CrdlOrchestratorConnectorMock.theMock, CrdlSdesServiceMock.theMock, failingXmlTransformer)
   }
-  
+
   "processInboundMessage" should {
     "return success when connector returns success" in new Setup {
       CrdlOrchestratorConnectorMock.PostMessage.succeedsWithCaptors(forwardedMessageCaptor, headerCaptor, OK, "some body")
