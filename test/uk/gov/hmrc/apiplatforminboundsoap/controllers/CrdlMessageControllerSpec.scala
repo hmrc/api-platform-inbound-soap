@@ -39,7 +39,10 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
   trait Setup extends CrdlMessageServiceMockModule {
 
-    val app: Application = new GuiceApplicationBuilder().build()
+    val app: Application = new GuiceApplicationBuilder().configure(
+      "metrics.enabled"  -> false,
+      "auditing.enabled" -> false
+    ).build()
 
     val commonHeaders = Headers(
       "Host"              -> "localhost",
