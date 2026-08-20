@@ -26,21 +26,20 @@ import cats.data.NonEmptyList
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapErrorResponse, SoapMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapErrorResponse, SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundIcs2MessageService
 
 @Singleton()
 class ICS2MessageController @Inject() (
     cc: ControllerComponents,
-    passThroughModeAction: PassThroughModeAction,
     verifyJwtTokenAction: VerifyJwtTokenAction,
     soapMessageValidateAction: SoapMessageValidateAction,
     incomingMessageService: InboundIcs2MessageService
   )(implicit ec: ExecutionContext
   ) extends BackendController(cc) with SoapErrorResponse {
 
-  def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
+  def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction andThen soapMessageValidateAction).async(parse.xml) {
     implicit request =>
       val requestId = request.headers.get("http_x_request_id").getOrElse("unable to obtain http_x_request_id")
       incomingMessageService.processInboundMessage(request.body) flatMap {

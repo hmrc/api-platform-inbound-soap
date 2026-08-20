@@ -27,7 +27,7 @@ import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import uk.gov.hmrc.apiplatforminboundsoap.connectors.ApiPlatformOutboundSoapConnector
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, PassThroughModeAction, SoapErrorResponse, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, SoapErrorResponse, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 
@@ -35,13 +35,12 @@ import uk.gov.hmrc.apiplatforminboundsoap.util.ApplicationLogger
 class ConfirmationController @Inject() (
     apiPlatformOutboundSoapConnector: ApiPlatformOutboundSoapConnector,
     cc: ControllerComponents,
-    passThroughModeAction: PassThroughModeAction,
     verifyJwtTokenAction: VerifyJwtTokenAction,
     messageValidateAction: AcknowledgementMessageValidateAction
   )(implicit ec: ExecutionContext
   ) extends BackendController(cc) with ApplicationLogger with SoapErrorResponse {
 
-  def message(): Action[NodeSeq] = (Action andThen passThroughModeAction andThen verifyJwtTokenAction andThen messageValidateAction).async(parse.xml) { implicit request =>
+  def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction andThen messageValidateAction).async(parse.xml) { implicit request =>
     val requestId = request.headers.get("x_request_id").getOrElse("unable to obtain x_request_id")
     apiPlatformOutboundSoapConnector.postMessage(request.body) flatMap {
       case SendSuccess(status, body)         =>

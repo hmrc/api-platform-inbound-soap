@@ -32,7 +32,7 @@ import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, PassThroughModeAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.ApiPlatformOutboundSoapConnectorMockModule
 
@@ -40,9 +40,10 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
-  override def fakeApplication(): Application = new GuiceApplicationBuilder()
-    .configure("passThroughEnabled.ACK" -> "false")
-    .build()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(
+    "metrics.enabled"  -> false,
+    "auditing.enabled" -> false
+  ).build()
 
   trait Setup extends ApiPlatformOutboundSoapConnectorMockModule {
 
@@ -60,12 +61,10 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
 
     private val verifyJwtTokenAction  = fakeApplication().injector.instanceOf[VerifyJwtTokenAction]
     private val messageValidateAction = fakeApplication().injector.instanceOf[AcknowledgementMessageValidateAction]
-    private val passThroughModeAction = fakeApplication().injector.instanceOf[PassThroughModeAction]
 
     val controller = new ConfirmationController(
       ApiPlatformOutboundSoapConnectorMock.theMock,
       Helpers.stubControllerComponents(),
-      passThroughModeAction,
       verifyJwtTokenAction,
       messageValidateAction
     )
