@@ -52,7 +52,6 @@ class ICS2MessageControllerISpec extends AnyWordSpecLike with Matchers
     .configure(
       "metrics.enabled"                                                           -> false,
       "auditing.enabled"                                                          -> false,
-      "passThroughEnabled.ICS2"                                                   -> false,
       "microservice.services.secure-data-exchange-proxy.ics2.encodeSdesReference" -> false,
       "microservice.services.import-control-inbound-soap.host"                    -> externalWireMockHost,
       "microservice.services.import-control-inbound-soap.port"                    -> externalWireMockPort,

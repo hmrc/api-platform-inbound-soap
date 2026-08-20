@@ -51,7 +51,6 @@ class CertexMessageControllerISpec extends AnyWordSpecLike with Matchers
     .configure(
       "metrics.enabled"                           -> false,
       "auditing.enabled"                          -> false,
-      "passThroughEnabled.CERTEX"                 -> false,
       "microservice.services.certex-service.host" -> externalWireMockHost,
       "microservice.services.certex-service.port" -> externalWireMockPort
     ).build()

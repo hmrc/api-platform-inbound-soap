@@ -31,7 +31,7 @@ import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, SoapMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.Ics2MessageServiceMockModule
 
@@ -40,9 +40,10 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
 
   trait Setup extends Ics2MessageServiceMockModule {
 
-    val app: Application = new GuiceApplicationBuilder()
-      .configure("passThroughEnabled.ICS2" -> "false")
-      .build()
+    val app: Application = new GuiceApplicationBuilder().configure(
+      "metrics.enabled"  -> false,
+      "auditing.enabled" -> false
+    ).build()
 
     val commonHeaders = Headers(
       "Host"              -> "localhost",
@@ -61,12 +62,11 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
     val headersWithInvalidIssuerBearerToken = commonHeaders.add(
       "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImFueSBvbGQgY3JhcCJ9.ANiEhrg1ZDCXA5axh4G2RXpyZwGuX7_AU1V3FJdX5DU"
     )
-    private val passThroughModeAction       = app.injector.instanceOf[PassThroughModeAction]
     private val verifyJwtTokenAction        = app.injector.instanceOf[VerifyJwtTokenAction]
     private val soapMessageValidateAction   = app.injector.instanceOf[SoapMessageValidateAction]
 
     val controller  =
-      new ICS2MessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, soapMessageValidateAction, Ics2MessageServiceMock.theMock)
+      new ICS2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, Ics2MessageServiceMock.theMock)
     val fakeRequest = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headersWithValidBearerToken)
   }
 

@@ -30,7 +30,7 @@ import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{PassThroughModeAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.certex.CertexMessageController
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.CertexMessageServiceMockModule
 import uk.gov.hmrc.apiplatforminboundsoap.xml.XmlTestHelper
@@ -40,8 +40,11 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
 
   trait Setup extends CertexMessageServiceMockModule {
 
-    val app: Application = new GuiceApplicationBuilder()
-      .configure("passThroughEnabled.CERTEX" -> "false", "microservice.services.certex-service.authToken" -> "auth")
+    val app: Application = new GuiceApplicationBuilder().configure(
+      "metrics.enabled"                                -> false,
+      "auditing.enabled"                               -> false,
+      "microservice.services.certex-service.authToken" -> "auth"
+    )
       .build()
 
     val commonHeaders = Headers(
@@ -54,11 +57,10 @@ class CertexMessageControllerSpec extends AnyWordSpec with SoapMessageTest with 
       "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU"
     )
 
-    private val passThroughModeAction = app.injector.instanceOf[PassThroughModeAction]
-    private val verifyJwtTokenAction  = app.injector.instanceOf[VerifyJwtTokenAction]
+    private val verifyJwtTokenAction = app.injector.instanceOf[VerifyJwtTokenAction]
 
     val controller                     =
-      new CertexMessageController(Helpers.stubControllerComponents(), passThroughModeAction, verifyJwtTokenAction, CertexMessageServiceMock.theMock)
+      new CertexMessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, CertexMessageServiceMock.theMock)
     val fakeRequest                    = FakeRequest("POST", "/certex/inbound").withHeaders(headersWithValidBearerToken)
     val fakeRequestPartlyUpperCasePath = FakeRequest("POST", "/CERTEX/inbound").withHeaders(headersWithValidBearerToken)
   }
