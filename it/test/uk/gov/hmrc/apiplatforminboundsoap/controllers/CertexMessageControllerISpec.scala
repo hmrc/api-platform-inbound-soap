@@ -19,7 +19,7 @@ package uk.gov.hmrc.apiplatforminboundsoap.controllers
 import scala.io.Source
 import scala.xml.{Elem, XML}
 
-import com.github.tomakehurst.wiremock.client.WireMock.{havingExactly, postRequestedFor, urlPathEqualTo, verify}
+import com.github.tomakehurst.wiremock.client.WireMock.{postRequestedFor, urlPathEqualTo, verify}
 import com.github.tomakehurst.wiremock.http.Fault
 import org.apache.pekko.stream.Materializer
 import org.scalatest.matchers.should.Matchers
@@ -61,13 +61,12 @@ class CertexMessageControllerISpec extends AnyWordSpecLike with Matchers
   val fakeRequest        = FakeRequest("POST", receiveRequestPath)
 
   val expectedRequestHeaders = Headers(
-    "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU",
-    "Content-Type"  -> "application/xml"
+    "Content-Type" -> "application/xml"
   )
   val expectedSdesStatus     = Status.ACCEPTED
 
   val expectedForwardedHeaders =
-    Seq[(String, String)]("Authorization" -> "Bearer provided", "Content-Type" -> "application/xml;charset=utf-8", "Source" -> "MDTP", "Accept" -> MimeTypes.XML)
+    Seq[(String, String)]("Content-Type" -> "application/xml;charset=utf-8", "Source" -> "MDTP", "Accept" -> MimeTypes.XML)
 
   val underTest: CertexMessageController = fakeApplication().injector.instanceOf[CertexMessageController]
   "message" should {
@@ -78,7 +77,7 @@ class CertexMessageControllerISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedRequestStatus
 
       verifyRequestBody(certexRequestBody.toString, forwardRequestPath)
-      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("Authorization", havingExactly("Bearer provided")))
+      verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)))
       expectedForwardedHeaders.foreach(h => verifyHeader(h._1, h._2, path = forwardRequestPath))
     }
 

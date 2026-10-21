@@ -5,8 +5,7 @@ The following shows the processing of a SOAP message containing an attachment
 ```mermaid
 sequenceDiagram
     CCN2->>Scrubbing Centre:  SOAP request
-    Scrubbing Centre->>api-platform-inbound-soap: SOAP request with JWT Auth header
-    api-platform-inbound-soap->>api-platform-inbound-soap: validate JWT
+    Scrubbing Centre->>api-platform-inbound-soap: SOAP request
     api-platform-inbound-soap->>api-platform-inbound-soap: extract attachment
     api-platform-inbound-soap->>SDES: send attachment
     SDES-->>api-platform-inbound-soap: return UUID 
@@ -21,8 +20,7 @@ The following shows the processing of a SOAP message with no attachment
 ```mermaid
 sequenceDiagram
     CCN2->>Scrubbing Centre:  SOAP request
-    Scrubbing Centre->>api-platform-inbound-soap: SOAP request with JWT Auth header
-    api-platform-inbound-soap->>api-platform-inbound-soap: validate JWT
+    Scrubbing Centre->>api-platform-inbound-soap: SOAP request
     api-platform-inbound-soap->>api-platform-inbound-soap: add headers
     api-platform-inbound-soap->>final-consumer: send modified SOAP request
     final-consumer-->>api-platform-inbound-soap: response status with optional body
@@ -64,11 +62,11 @@ This code is open source software licensed under the [Apache 2.0 License]("http:
 ### Sample cURL requests
 For a successful 2xx response (you'll need to alter the path to the XML file in the `-d` argument, according to where you have the project checked out):
 ```
-curl -v localhost:6707/ics2/NESReferralBASV2  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU" -H "Content-Type: application/soap+xml" -d @/<your projects directory>/api-platform-inbound-soap/test/resources/ie4n09-v2.xml
+curl -v localhost:6707/ics2/NESReferralBASV2  -H "Content-Type: application/soap+xml" -d @/<your projects directory>/api-platform-inbound-soap/test/resources/ie4n09-v2.xml
 ``` 
 One example of a bad request is:
 ```
-curl -v localhost:6707/ics2/NESReferralBASV2  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU" -H "x-request-id: cc901cd5-3348-4713-8a6b-4c803e308dc1" -H "Content-Type: application/soap+xml" -d @/<your projects directory>/api-platform-inbound-soap/test/resources/ie4r02-v2-missing-description-element.xml
+curl -v localhost:6707/ics2/NESReferralBASV2  -H "x-request-id: cc901cd5-3348-4713-8a6b-4c803e308dc1" -H "Content-Type: application/soap+xml" -d @/<your projects directory>/api-platform-inbound-soap/test/resources/ie4r02-v2-missing-description-element.xml
 ```
 which will result in a response like:
 ```
@@ -90,8 +88,7 @@ which will result in a response like:
     </soap:Body>
 </soap:Envelope>
 ```
-Note that requests are accompanied by an `Authorization: Bearer` header. This must be a JWT with the correct issuer 
-and a valid expiry date. Confluence has instructions on generating an appropriate JWT, in the CCN2 Gateway page.
+
 ### Request validation
 Bad requests will be met with a SOAP response detailing the problem e.g.:
 ```

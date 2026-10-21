@@ -31,7 +31,7 @@ import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.SoapMessageValidateAction
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.ics2.ICS2MessageController
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.Ics2MessageServiceMockModule
 
@@ -45,29 +45,17 @@ class ICS2MessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       "auditing.enabled" -> false
     ).build()
 
-    val commonHeaders = Headers(
+    val headers = Headers(
       "Host"              -> "localhost",
       "http_x_request_id" -> xRequestIdHeaderValue,
       "Content-Type"      -> "text/xml"
     )
 
-    val headersWithValidBearerToken = commonHeaders.add(
-      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU"
-    )
-
-    val headersWithExpiredBearerToken = commonHeaders.add(
-      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0MTI0MTgwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.VJSs1FfegklhoX_2d2s-uFMYhx2FpzX8pnSvQ1NpdLU"
-    )
-
-    val headersWithInvalidIssuerBearerToken = commonHeaders.add(
-      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImFueSBvbGQgY3JhcCJ9.ANiEhrg1ZDCXA5axh4G2RXpyZwGuX7_AU1V3FJdX5DU"
-    )
-    private val verifyJwtTokenAction        = app.injector.instanceOf[VerifyJwtTokenAction]
-    private val soapMessageValidateAction   = app.injector.instanceOf[SoapMessageValidateAction]
+    private val soapMessageValidateAction = app.injector.instanceOf[SoapMessageValidateAction]
 
     val controller  =
-      new ICS2MessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, soapMessageValidateAction, Ics2MessageServiceMock.theMock)
-    val fakeRequest = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headersWithValidBearerToken)
+      new ICS2MessageController(Helpers.stubControllerComponents(), soapMessageValidateAction, Ics2MessageServiceMock.theMock)
+    val fakeRequest = FakeRequest("POST", "/ics2/NESControlBASV2").withHeaders(headers)
   }
 
   "POST CCN2 message endpoint " should {

@@ -26,19 +26,18 @@ import cats.data.NonEmptyList
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapErrorResponse, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.SoapErrorResponse
 import uk.gov.hmrc.apiplatforminboundsoap.models.{SendFailExternal, SendNotAttempted, SendSuccess}
 import uk.gov.hmrc.apiplatforminboundsoap.services.InboundEoriMessageService
 
 @Singleton()
 class EoriMessageController @Inject() (
     cc: ControllerComponents,
-    verifyJwtTokenAction: VerifyJwtTokenAction,
     inboundEoriMessageService: InboundEoriMessageService
   )(implicit ec: ExecutionContext
   ) extends BackendController(cc) with SoapErrorResponse {
 
-  def message(): Action[NodeSeq] = (Action andThen verifyJwtTokenAction).async(parse.xml) {
+  def message(): Action[NodeSeq] = Action.async(parse.xml) {
     implicit request =>
       val requestId = request.headers.get("x_request_id").getOrElse("unable to obtain x_request_id")
       inboundEoriMessageService.processInboundMessage(request.body) flatMap {

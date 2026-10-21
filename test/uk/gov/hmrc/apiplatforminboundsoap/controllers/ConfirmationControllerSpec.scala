@@ -32,7 +32,7 @@ import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{AcknowledgementMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.AcknowledgementMessageValidateAction
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.confirmation.ConfirmationController
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.connectors.ApiPlatformOutboundSoapConnectorMockModule
 
@@ -53,64 +53,22 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
       "Content-Type"      -> "text/xml"
     )
 
-    val validBearerToken =
-      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU"
-
     val codRequestBody: Elem = readFromFile("acknowledgement/requests/cod_request.xml")
     val coeRequestBody: Elem = readFromFile("acknowledgement/requests/coe_request.xml")
 
-    private val verifyJwtTokenAction  = fakeApplication().injector.instanceOf[VerifyJwtTokenAction]
     private val messageValidateAction = fakeApplication().injector.instanceOf[AcknowledgementMessageValidateAction]
 
     val controller = new ConfirmationController(
       ApiPlatformOutboundSoapConnectorMock.theMock,
       Helpers.stubControllerComponents(),
-      verifyJwtTokenAction,
       messageValidateAction
     )
-  }
-
-  "POST acknowledgement endpoint with no authorisation header" should {
-    "return 403" in new Setup {
-      val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers)
-        .withBody(codRequestBody)
-
-      val result = controller.message()(fakeRequest)
-      status(result) shouldBe Status.UNAUTHORIZED
-    }
-  }
-
-  "POST acknowledgement endpoint with empty authorisation header" should {
-    "return 403" in new Setup {
-      val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add("Authorization" -> "Bearer"))
-        .withBody(codRequestBody)
-
-      val result = controller.message()(fakeRequest)
-      status(result) shouldBe Status.UNAUTHORIZED
-    }
-  }
-
-  "POST acknowledgement endpoint with exp claim in the past" should {
-    "return 403" in new Setup {
-      val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(
-          "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTIzNTkxNDJ9.SLEu_OlkHea19WwAYq_wG5nRJ43-uBv013QH3U_Gqvs"
-        ))
-        .withBody(codRequestBody)
-
-      val result = controller.message()(fakeRequest)
-      status(result) shouldBe Status.UNAUTHORIZED
-    }
   }
 
   "POST acknowledgement endpoint with no request body" should {
     "return 400" in new Setup {
       val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(
-          "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDc5NzcwNzd9.bgdyMvTvicf5FvAlQXN-311k0WTZg0-72wqR4hb66dQ"
-        ))
+        .withHeaders(headers)
 
       val result = controller.message()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
@@ -122,7 +80,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
       val codRequestBodyMissingAction: Elem = readFromFile("acknowledgement/requests/cod_request_missing_action.xml")
       val expectedSoapMessage               = expectedSoapResponse("Element SOAP Header Action is missing")
       val fakeRequest                       = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(validBearerToken, "Content-Type" -> "application/soap+xml"))
+        .withHeaders(headers.add("Content-Type" -> "application/soap+xml"))
         .withBody(codRequestBodyMissingAction)
 
       val result = controller.message()(fakeRequest)
@@ -135,7 +93,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
       val expectedSoapMessage               = expectedSoapResponse("""SOAP Header Action should contain / character but does not
                                                        |Value of element SOAP Header Action is too short""".stripMargin)
       val fakeRequest                       = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(validBearerToken, "Content-Type" -> "application/soap+xml"))
+        .withHeaders(headers.add("Content-Type" -> "application/soap+xml"))
         .withBody(codRequestBodyMissingAction)
 
       val result = controller.message()(fakeRequest)
@@ -147,7 +105,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
       val codRequestBodyMissingAction: Elem = readFromFile("acknowledgement/requests/cod_request_empty_messageid.xml")
       val expectedSoapMessage               = expectedSoapResponse("Value of element SOAP Header MessageID is too short")
       val fakeRequest                       = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(validBearerToken, "Content-Type" -> "application/soap+xml"))
+        .withHeaders(headers.add("Content-Type" -> "application/soap+xml"))
         .withBody(codRequestBodyMissingAction)
 
       val result = controller.message()(fakeRequest)
@@ -159,7 +117,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
   "POST acknowledgement endpoint with valid authorisation header and COD request body" should {
     "return 200" in new Setup {
       val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(validBearerToken))
+        .withHeaders(headers)
         .withBody(codRequestBody)
       ApiPlatformOutboundSoapConnectorMock.PostMessage.succeeds(codRequestBody, OK, "some body")
 
@@ -173,7 +131,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
   "POST acknowledgement endpoint with valid authorisation header and COE request body" should {
     "return 200" in new Setup {
       val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(validBearerToken))
+        .withHeaders(headers)
         .withBody(coeRequestBody)
       ApiPlatformOutboundSoapConnectorMock.PostMessage.succeeds(coeRequestBody, OK, "some body")
 
@@ -186,7 +144,7 @@ class ConfirmationControllerSpec extends AnyWordSpec with SoapMessageTest with M
   "POST acknowledgement endpoint with valid authorisation header and COE request body but outbound connector returns 500" should {
     "return 500" in new Setup {
       val fakeRequest = FakeRequest("POST", "/ccn2/acknowledgementV2")
-        .withHeaders(headers.add(validBearerToken))
+        .withHeaders(headers)
         .withBody(coeRequestBody)
       ApiPlatformOutboundSoapConnectorMock.PostMessage.failsInSending(coeRequestBody, INTERNAL_SERVER_ERROR, "some error")
 

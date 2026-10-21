@@ -58,17 +58,13 @@ class ConfirmationControllerISpec extends AnyWordSpecLike with Matchers
   val forwardPath        = "/acknowledgement"
   val fakeRequest        = FakeRequest("POST", receiveRequestPath)
 
-  val authBearerJwt =
-    "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU"
-
   val underTest: ConfirmationController = app.injector.instanceOf[ConfirmationController]
   "message" should {
     "forward an XML message" in {
       val expectedStatus = Status.OK
 
       val requestHeaders   = Headers(
-        "Authorization" -> authBearerJwt,
-        "Content-Type"  -> "text/xml"
+        "Content-Type" -> "text/xml"
       )
       val forwardedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
       primeStubForXMLSuccess(codRequestBody, responseBody, expectedStatus, forwardPath)
@@ -76,13 +72,12 @@ class ConfirmationControllerISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedStatus
 
       verifyRequestBody(codRequestBody.toString, forwardPath)
-      verifyHeaderAbsent("Authorization", forwardPath)
       forwardedHeaders.headers.foreach(h => verifyHeader(h._1, h._2, path = forwardPath))
     }
 
     "reject an non-XML message" in {
       val expectedStatus  = Status.BAD_REQUEST
-      val expectedHeaders = Headers("Authorization" -> "Bearer blah", "Content-Type" -> "text/xml; charset=UTF-8")
+      val expectedHeaders = Headers("Content-Type" -> "text/xml; charset=UTF-8")
       val result          = underTest.message()(fakeRequest.withBody("foobar").withHeaders(expectedHeaders))
       status(result) shouldBe expectedStatus
     }
