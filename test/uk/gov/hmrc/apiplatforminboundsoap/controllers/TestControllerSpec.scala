@@ -32,7 +32,7 @@ import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.{SoapMessageValidateAction, VerifyJwtTokenAction}
+import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.SoapMessageValidateAction
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.testmessage.TestController
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.Ics2MessageServiceMockModule
 
@@ -46,16 +46,13 @@ class TestControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSu
 
     val headers                           = Headers(
       "Host"              -> "localhost",
-      "Authorization"     -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU",
       "http_x_request_id" -> xRequestIdHeaderValue,
       "Content-Type"      -> "text/xml"
     )
-    private val verifyJwtTokenAction      = app.injector.instanceOf[VerifyJwtTokenAction]
     private val soapMessageValidateAction = app.injector.instanceOf[SoapMessageValidateAction]
 
     val controller  = new TestController(
       Helpers.stubControllerComponents(),
-      verifyJwtTokenAction,
       soapMessageValidateAction,
       Ics2MessageServiceMock.theMock
     )

@@ -99,7 +99,6 @@ class InboundCertexMessageService @Inject() (
     }
     List(
       "Accept" -> MimeTypes.XML,
-      "Authorization"    -> s"Bearer ${config.authToken}",
       "Content-Type"     -> "application/xml;charset=utf-8",
       "date"             -> formattedDate,
       "source"           -> "MDTP",

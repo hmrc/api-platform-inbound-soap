@@ -62,16 +62,13 @@ class CrdlControllerISpec extends AnyWordSpecLike with Matchers
   val receiveRequestPath = "/crdl/incoming"
   val fakeRequest        = FakeRequest("POST", receiveRequestPath)
 
-  private val authBearerJwt =
-    "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E5YTEwMS05MzdiLTQ3YzEtYmMzNS1iZGIyNGIxMmU0ZTUiLCJleHAiOjIwNTU0MTQ5NzN9.T2tTGStmVttHtj2Hruk5N1yh4AUyPVuy6t5d-gH0tZU"
-
   val expectedRequestHeaders = Headers(
-    "Authorization" -> authBearerJwt,
-    "Content-Type"  -> "application/xml"
+    "Content-Type" -> "application/xml"
   )
   val expectedSdesStatus     = Status.ACCEPTED
 
   val underTest: CrdlMessageController = fakeApplication().injector.instanceOf[CrdlMessageController]
+
   "message" should {
     "forward an XML message" in {
       val expectedRequestStatus = Status.OK
@@ -80,7 +77,6 @@ class CrdlControllerISpec extends AnyWordSpecLike with Matchers
       status(result) shouldBe expectedRequestStatus
 
       verifyRequestBody(crdlRequestBody.toString, forwardRequestPath)
-      verifyHeaderAbsent("Authorization", forwardRequestPath)
       verify(postRequestedFor(urlPathEqualTo(forwardRequestPath)).withHeader("x-files-included", havingExactly("false")))
     }
 

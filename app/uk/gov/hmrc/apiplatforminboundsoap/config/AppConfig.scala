@@ -24,8 +24,6 @@ import play.api.Configuration
 class AppConfig @Inject() (config: Configuration) {
 
   val appName: String               = config.get[String]("appName")
-  val hmacSecret: String            = config.get[String]("hmacSecret")
-  val jwtIssuer: String             = config.get[String]("jwtIssuer")
   val testForwardMessageUrl: String = config.get[String]("testForwardMessageUrl")
   val proxyRequired: Boolean        = config.get[Boolean]("http-verbs.proxy.enabled")
 }

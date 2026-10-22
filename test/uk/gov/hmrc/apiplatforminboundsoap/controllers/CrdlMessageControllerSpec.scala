@@ -30,7 +30,6 @@ import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.apiplatforminboundsoap.controllers.actionBuilders.VerifyJwtTokenAction
 import uk.gov.hmrc.apiplatforminboundsoap.controllers.crdl.CrdlMessageController
 import uk.gov.hmrc.apiplatforminboundsoap.mocks.services.CrdlMessageServiceMockModule
 
@@ -44,21 +43,15 @@ class CrdlMessageControllerSpec extends AnyWordSpec with SoapMessageTest with Ma
       "auditing.enabled" -> false
     ).build()
 
-    val commonHeaders = Headers(
+    val headers = Headers(
       "Host"              -> "localhost",
       "http_x_request_id" -> xRequestIdHeaderValue,
       "Content-Type"      -> "text/xml"
     )
 
-    val headersWithValidBearerToken = commonHeaders.add(
-      "Authorization" -> "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwNDM1NzAwNDUsImlzcyI6ImMzYTlhMTAxLTkzN2ItNDdjMS1iYzM1LWJkYjI0YjEyZTRlNSJ9.00ASmOrt3Ze6DNNGYhWLXWRWWO2gvPjC15G2K5D8fXU"
-    )
-
-    private val verifyJwtTokenAction = app.injector.instanceOf[VerifyJwtTokenAction]
-
     val controller  =
-      new CrdlMessageController(Helpers.stubControllerComponents(), verifyJwtTokenAction, CrdlMessageServiceMock.theMock)
-    val fakeRequest = FakeRequest("POST", "/crdl/incoming").withHeaders(headersWithValidBearerToken)
+      new CrdlMessageController(Helpers.stubControllerComponents(), CrdlMessageServiceMock.theMock)
+    val fakeRequest = FakeRequest("POST", "/crdl/incoming").withHeaders(headers)
   }
 
   "POST CRDL message endpoint" should {
