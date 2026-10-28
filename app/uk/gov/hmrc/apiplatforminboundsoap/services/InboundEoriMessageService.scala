@@ -58,6 +58,7 @@ class InboundEoriMessageService @Inject() (
 
     List(
       "Accept"           -> MimeTypes.XML,
+      "Authorization"    -> s"Bearer ${config.authToken}",
       "Content-Type"     -> "application/soap+xml; charset=UTF-8",
       "date"             -> formattedDate,
       "x-forwarded-host" -> "MDTP",

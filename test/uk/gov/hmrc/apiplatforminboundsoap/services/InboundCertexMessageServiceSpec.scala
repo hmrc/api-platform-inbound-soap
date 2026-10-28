@@ -21,6 +21,7 @@ import scala.io.Source
 import scala.xml.NodeSeq
 
 import org.apache.pekko.stream.Materializer
+import org.mockito.Mockito.when
 import org.mockito.captor.ArgCaptor
 import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
@@ -53,12 +54,14 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
   }
 
   trait Setup extends CertexSdesServiceMockModule with CertexServiceConnectorMockModule {
+    val authToken = "some-auth-token-value"
 
     val forwardedHeaders = Seq[(String, String)](
-      "Accept"       -> "application/xml",
-      "Content-Type" -> "application/xml;charset=utf-8",
-      "date"         -> dateHeaderValue,
-      "source"       -> "MDTP"
+      "Accept"        -> "application/xml",
+      "Authorization" -> s"Bearer $authToken",
+      "Content-Type"  -> "application/xml;charset=utf-8",
+      "date"          -> dateHeaderValue,
+      "source"        -> "MDTP"
     )
 
     val forwardedHeadersWithAttachment = forwardedHeaders ++ Map(
@@ -76,6 +79,7 @@ class InboundCertexMessageServiceSpec extends AnyWordSpec with Matchers with Gui
       "x-files-included" -> "false"
     )
     val configMock: CertexServiceConnector.Config = mock[CertexServiceConnector.Config]
+    when(configMock.authToken).thenReturn(authToken)
     val workingXmlTransformer: XmlTransformer     = new CertexAttachmentReplacingTransformer()
     val failingXmlTransformer: XmlTransformer     = new NoChangeTransformer()
     val staticUuidGenerator: StaticUuidGenerator  = new StaticUuidGenerator()
