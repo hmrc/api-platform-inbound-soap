@@ -20,6 +20,7 @@ import scala.io.Source
 import scala.xml.{Elem, NodeSeq}
 
 import org.apache.pekko.stream.Materializer
+import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -48,10 +49,12 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
   }
 
   trait Setup extends EoriServiceConnectorMockModule {
+    val authToken         = "some-auth-token-value"
     val requestBody: Elem = <xml>foo</xml>
 
     private val forwardedHeaders = Seq[(String, String)](
       "Accept"           -> "application/xml",
+      "Authorization"    -> s"Bearer $authToken",
       "Content-Type"     -> "application/soap+xml; charset=UTF-8",
       "date"             -> dateHeaderValue,
       "x-forwarded-host" -> "MDTP"
@@ -61,6 +64,7 @@ class InboundEoriMessageServiceSpec extends AnyWordSpec with Matchers with Guice
       "x-correlation-id" -> "c23823ba-34cd-4d32-894a-0910e6007557"
     )
     val configMock: EoriServiceConnector.Config  = mock[EoriServiceConnector.Config]
+    when(configMock.authToken).thenReturn(authToken)
     val uuidGenerator: StaticUuidGenerator       = new StaticUuidGenerator()
     val staticZonedDTHelper: ZonedDateTimeHelper = new StaticZonedDTHelper()
     val xmlBodyIsAlive                           = readFromFile("eori/isAliveRequest.xml")
